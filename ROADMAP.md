@@ -165,7 +165,7 @@
 
 ---
 
-### [ ] Brick 9: FastAPI Microservice Core & Audio Ingestion Gateway
+### [x] Brick 9: FastAPI Microservice Core & Audio Ingestion Gateway (COMPLETED)
 * **Core Objective:** Build a production-grade, asynchronous FastAPI backend microservice capable of ingesting raw client audio and handling multi-format uploads.
 * **Concrete Implementation Tasks:**
   - Create `backend/app/main.py` with CORS middleware configured for the Next.js frontend origin.
@@ -374,3 +374,28 @@
 * **Mastery Milestone:** Unstop submission timestamped and verified **prior to November 7, 2026, 11:59 PM IST**.
 
 ---
+## 📊 Live Progress Tracker
+
+| Brick | Title | Target Date | Lead | Status |
+| :---: | :--- | :---: | :---: | :---: |
+| **01** | Colab T4 & TORGO HF Streaming Setup | Oct 31 | Aaliya / Talha | UP NEXT ⏳ |
+| **02** | Zero-Shot Baseline Whisper Benchmark (WER/CER) | Oct 31 | Aaliya / Manas | PENDING |
+| **03** | Healthy Control Comparison & Failure Taxonomy | Oct 31 | Manas / Aaliya | PENDING |
+| **04** | PEFT / LoRA Attention Injection (=16, \alpha=32$) | Nov 01 | Aaliya | PENDING |
+| **05** | Speaker-Disjoint Patient Validation Split | Nov 01 | Aaliya / Talha | PENDING |
+| **06** | Colab LoRA Training Loop & Checkpoint Export | Nov 02 | Aaliya | PENDING |
+| **07** | Held-Out Test Evaluation & Scorecard Generation | Nov 02 | Aaliya / Manas | PENDING |
+| **08** | Dysarthria-Tuned Silero VAD Endpointer | Nov 03 | Talha / Aaliya | PENDING |
+| **09** | FastAPI Microservice Core & Ingestion Gateway | Nov 03 | Talha | **COMPLETED** ✅ |
+| **10** | ONNX INT8 Quantization, Edge Acceleration & Low-Latency API | Nov 03 | Moulika / Talha | UP NEXT ⏳ |
+| **11** | Next.js 14 App Shell & WCAG AAA Dark UI | Nov 04 | Talha | **COMPLETED** ✅ |
+| **12** | Web Audio API 16kHz PCM Downsampler Engine | Nov 04 | Talha | **COMPLETED** ✅ |
+| **13** | Live 64-Band FFT Waveform Canvas Visualizer | Nov 04 | Talha | **COMPLETED** ✅ |
+| **14** | Visual Transcription Display & Auto-TTS Engine | Nov 05 | Talha | **COMPLETED** ✅ |
+| **15** | Fail-Safe Offline University Audio Chip Matrix | Nov 05 | Talha / Manas | **COMPLETED** ✅ |
+| **16** | 300 DPI Publication Benchmark Figures Export | Nov 06 | Manas / Aaliya | PENDING |
+| **17** | Sarvam AI / Big Tech Competitive Dossier | Nov 06 | Manas | PENDING |
+| **18** | IEEE-Style Research Abstract & System Paper | Nov 06 | Manas / Talha / Moulika | PENDING |
+| **19** | GitHub Repository Hygiene & Live Deployment | Nov 07 | Talha | PENDING |
+| **20** | 2-Minute High-Impact Demo Video Production | Nov 07 | Manas / Talha / Moulika | PENDING |
+| **21** | Final Unstop Filing & 4-Person Panel Viva Rehearsal | Nov 07 | Whole Team | PENDING |

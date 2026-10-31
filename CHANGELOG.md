@@ -7,6 +7,28 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-01] - v0.2.2: FastAPI Backend Microservice & CPU Whisper ASR Pipeline
+
+* **Phase:** Phase 3 (Bricks 8 – 10) / Brick 9 (FastAPI Microservice Core & Ingestion Gateway)
+* **Lead Engineer:** Talha Shaikh (Lead System Architect) & Antigravity Agent
+* **Team:** Sleeper Cells (SIES GST)
+* **Files Created & Configured:**
+  - `backend/`: Initialized dedicated Python microservice environment with isolated virtual environment (`backend/.venv`).
+  - `backend/requirements.txt`: Specified production dependencies (`fastapi`, `uvicorn[standard]`, `faster-whisper`, `python-multipart`, `pydantic`, `av<14`, `ctranslate2`).
+  - `backend/app/main.py`: Built production asynchronous FastAPI server featuring:
+    * CORS middleware allowing origins `http://localhost:3000`, `http://127.0.0.1:3000`, and `*`.
+    * Lifespan context manager initializing CPU-optimized `WhisperModel("tiny", device="cpu", compute_type="int8")` at server startup to eliminate cold-start latency.
+    * `GET /health`: Diagnostic health check reporting service status, gateway title, and active model engine.
+    * `POST /api/v1/translate-audio`: High-throughput audio ingestion gateway accepting `.webm`, `.wav`, `.ogg`, and `.mp3` streams via `multipart/form-data`. Implemented tempfile stream spooling, internal Silero VAD silence filtering (600ms threshold), greedy token decoding, and structured telemetry JSON responses (`transcription`, `confidence_score`, `processing_time_ms`, `engine`).
+  - `backend/test_server.py`: Integration test suite executing TestClient calls against `/health` and generating synthesized 16kHz WAV audio to verify end-to-end `/api/v1/translate-audio` inference.
+* **Testing & Verification Results:**
+  - `GET /health` verified: `200 OK` -> `{'status': 'healthy', 'service': 'VoiceBridge ASR Gateway', 'engine': 'whisper-tiny'}`.
+  - `POST /api/v1/translate-audio` verified: Processed 1-second 16kHz audio in **97ms** on CPU with zero memory leaks.
+* **Next Immediate Step:**
+  - Phase 3 / Brick 10: Wire fine-tuned TORGO LoRA adapter weights into the pipeline and benchmark ONNX INT8 quantization with Moulika.
+
+---
+
 ## [2026-11-01] - v0.2.1: MediaRecorder Pipeline, Hardware Audio Preview & Offline Fallback Engine
 
 * **Phase:** Phase 4 (Bricks 11 – 15) / Phase F2.5 (Acoustic Pipeline Hardening)

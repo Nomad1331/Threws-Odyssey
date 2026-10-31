@@ -21,17 +21,17 @@ model: Optional[WhisperModel] = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
-    logger.info("Initializing faster-whisper (tiny) on CPU...")
+    logger.info("Initializing faster-whisper (base) on CPU...")
     # INT8 quantization on CPU achieves sub-300ms latency and minimal RAM footprint
-    model = WhisperModel("tiny", device="cpu", compute_type="int8")
-    logger.info("WhisperModel initialized and ready for real-time inference.")
+    model = WhisperModel("base", device="cpu", compute_type="int8")
+    logger.info("WhisperModel (base) initialized and ready for real-time inference.")
     yield
     logger.info("Shutting down VoiceBridge ASR Gateway...")
 
 app = FastAPI(
     title="VoiceBridge ASR Gateway",
     description="Low-Latency Dysarthric Speech Reconstruction Microservice • THREWS Odyssey 2026",
-    version="0.2.2",
+    version="0.2.3",
     lifespan=lifespan,
 )
 
@@ -62,7 +62,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         service="VoiceBridge ASR Gateway",
-        engine="whisper-tiny",
+        engine="whisper-base",
     )
 
 @app.post("/api/v1/translate-audio", response_model=TranscriptionResponse)
@@ -128,7 +128,7 @@ async def translate_audio(file: UploadFile = File(...)):
             transcription=full_text,
             confidence_score=confidence,
             processing_time_ms=elapsed_ms,
-            engine="whisper-tiny-cpu",
+            engine="whisper-base-cpu",
         )
 
     except HTTPException:

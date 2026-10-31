@@ -1,30 +1,23 @@
 import os
 import time
-import math
 import tempfile
 import logging
 from contextlib import asynccontextmanager
-from typing import Optional
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from faster_whisper import WhisperModel
+from backend.app.inference import load_model, transcribe_audio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("voicebridge-backend")
 
-# Global model holder
-model: Optional[WhisperModel] = None
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model
-    logger.info("Initializing faster-whisper (base) on CPU...")
-    # INT8 quantization on CPU achieves sub-300ms latency and minimal RAM footprint
-    model = WhisperModel("base", device="cpu", compute_type="int8")
-    logger.info("WhisperModel (base) initialized and ready for real-time inference.")
+    logger.info("Initializing VoiceBridge Whisper Tiny + LoRA...")
+    load_model()
+    logger.info("VoiceBridge model initialized and ready.")
     yield
     logger.info("Shutting down VoiceBridge ASR Gateway...")
 
@@ -62,7 +55,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         service="VoiceBridge ASR Gateway",
-        engine="whisper-base",
+        engine="whisper-tiny-lora",
     )
 
 @app.post("/api/v1/translate-audio", response_model=TranscriptionResponse)
@@ -72,10 +65,6 @@ async def translate_audio(file: UploadFile = File(...)):
     processes it through the CPU-optimized Whisper-tiny model,
     and returns reconstructed text with telemetry metrics.
     """
-    global model
-    if model is None:
-        raise HTTPException(status_code=503, detail="Whisper speech model not loaded")
-
     start_time = time.perf_counter()
 
     # Determine file extension from uploaded filename or default to .webm
@@ -97,39 +86,24 @@ async def translate_audio(file: UploadFile = File(...)):
         temp_file.flush()
         temp_file.close()
 
-        # Run faster-whisper greedy decoding on CPU
-        # vad_filter=True applies internal Silero VAD to prune silent segments
-        segments, info = model.transcribe(
-            temp_path,
-            beam_size=1,
-            language="en",
-            task="transcribe",
-            vad_filter=True,
-            vad_parameters=dict(min_silence_duration_ms=600),
-        )
+        # Run VoiceBridge Whisper Tiny + LoRA inference
+        full_text = transcribe_audio(temp_path)
 
-        segment_list = list(segments)
-
-        if segment_list:
-            full_text = " ".join([s.text.strip() for s in segment_list if s.text]).strip()
-            # Calculate geometric mean confidence from avg_logprob
-            avg_logprob = sum(s.avg_logprob for s in segment_list) / len(segment_list)
-            # Clip between 0.0 and 1.0
-            confidence = round(max(0.0, min(1.0, math.exp(avg_logprob))), 3)
-        else:
-            full_text = ""
-            confidence = 0.0
+        # Confidence score is not currently calculated
+        confidence = 0.0
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
 
-        logger.info(f"Processed '{filename}' in {elapsed_ms}ms -> '{full_text}' (conf={confidence})")
+        logger.info(
+            f"Processed '{filename}' in {elapsed_ms}ms -> '{full_text}'"
+        )
 
         return TranscriptionResponse(
             transcription=full_text,
             confidence_score=confidence,
             processing_time_ms=elapsed_ms,
-            engine="whisper-base-cpu",
-        )
+            engine="whisper-tiny-lora",
+)
 
     except HTTPException:
         raise

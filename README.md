@@ -46,7 +46,7 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
 | Member | Branch / Year | Engineering Domain & Responsibilities |
 | :--- | :--- | :--- |
 | **Talha Shaikh** | 1st Year EXTC | **Lead System Architect & Frontend Lead:** Next.js 14 App Router, Web Audio API 16kHz PCM downsampler, 60 FPS Canvas FFT visualizer, WCAG 2.1 AAA physical accessibility, and overall system integration. |
-| **Aaliya Hussain** | 3rd Year CS/EXTC | **Machine Learning & Model Adaptation Lead:** Hugging Face TORGO streaming pipeline on Google Colab (T4 GPU), parameter-efficient LoRA fine-tuning ($r=16, \alpha=32$), and adapter checkpoint export. |
+| **Aaliya Hussain** | 3rd Year CE | **Machine Learning & Model Adaptation Lead:** Hugging Face TORGO streaming pipeline on Google Colab (T4 GPU), parameter-efficient LoRA fine-tuning ($r=16, \alpha=32$), and adapter checkpoint export. |
 | **Moulika Sanyal** | 2nd Year CE | **Edge AI Optimization & Model Quantization Lead:** PyTorch-to-ONNX computational graph conversion, dynamic INT8 quantization, CPU memory footprint optimization (~40MB), and inference latency profiling (<300ms RTF). |
 | **Manas Suryawanshi** | 3rd Year EXTC | **Clinical Research & Regulatory Documentation Lead:** Academic research writeup, Word Error Rate (WER) statistical comparison charts, clinical use-case validation, slide deck assembly, and pitch lead. |
 

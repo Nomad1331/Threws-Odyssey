@@ -255,7 +255,7 @@
 
 ---
 
-### [ ] Brick 15: Fail-Safe Offline University Audio Chip Matrix
+### [x] Brick 15: Fail-Safe Offline University Audio Chip Matrix (COMPLETED)
 * **Core Objective:** Guarantee 100% demo resilience during live judge defense even in zero-WiFi or bad-microphone conditions.
 * **Concrete Implementation Tasks:**
   - Embed curated TORGO audio clips into `frontend/public/samples/`:
@@ -271,7 +271,7 @@
 
 ## Phase 5: Scientific Benchmarking, Figures & Documentation (Day 7: Nov 6)
 
-### [ ] Brick 16: Publication-Grade Scientific Figures & Comparison Plots
+### [x] Brick 16: Publication-Grade Scientific Figures & Comparison Plots (COMPLETED)
 * **Core Objective:** Generate high-resolution, 300 DPI comparative scientific figures demonstrating VoiceBridge's statistical superiority over commercial models.
 * **Concrete Implementation Tasks:**
   - Create `benchmarks/generate_benchmark_plots.py` using Matplotlib and Seaborn.
@@ -393,7 +393,7 @@
 | **13** | Live 64-Band FFT Waveform Canvas Visualizer | Nov 04 | Talha | **COMPLETED** ✅ |
 | **14** | Visual Transcription Display & Auto-TTS Engine | Nov 05 | Talha | **COMPLETED** ✅ |
 | **15** | Fail-Safe Offline University Audio Chip Matrix | Nov 05 | Talha / Manas | **COMPLETED** ✅ |
-| **16** | 300 DPI Publication Benchmark Figures Export | Nov 06 | Manas / Aaliya | PENDING |
+| **16** | 300 DPI Publication Benchmark Figures Export | Nov 06 | Manas / Aaliya | **COMPLETED** ✅ |
 | **17** | Sarvam AI / Big Tech Competitive Dossier | Nov 06 | Manas | PENDING |
 | **18** | IEEE-Style Research Abstract & System Paper | Nov 06 | Manas / Talha / Moulika | PENDING |
 | **19** | GitHub Repository Hygiene & Live Deployment | Nov 07 | Talha | PENDING |

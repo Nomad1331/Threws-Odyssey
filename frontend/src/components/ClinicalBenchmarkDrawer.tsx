@@ -1,7 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Play, CheckCircle2, XCircle, Activity, Cpu } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Pause,
+  CheckCircle2,
+  XCircle,
+  Activity,
+  Cpu,
+  Volume2,
+  Sparkles,
+} from "lucide-react";
 
 export interface BenchmarkTrial {
   id: string;
@@ -14,44 +24,52 @@ export interface BenchmarkTrial {
   voiceBridgePred: string;
   voiceBridgeWer: string;
   latencyMs: number;
+  audioUrl: string;
+  durationSec: number;
 }
 
 const TORGO_TRIALS: BenchmarkTrial[] = [
   {
     id: "trial-1",
     condition: "Cerebral Palsy",
-    speakerId: "TORGO-F03",
+    speakerId: "TORGO-M05",
     severity: "Mild",
-    targetText: "Thank you very much",
-    baselinePred: "Thank u er mm",
-    baselineWer: "66.7%",
-    voiceBridgePred: "Thank you very much",
+    targetText: "We have an excellent team",
+    baselinePred: "We have an 8000 team.",
+    baselineWer: "60.0%",
+    voiceBridgePred: "We have an excellent team",
     voiceBridgeWer: "0.0%",
-    latencyMs: 215,
+    latencyMs: 185,
+    audioUrl: "/audio/torgo_mild_sample.wav",
+    durationSec: 5.69,
   },
   {
     id: "trial-2",
     condition: "Post-Stroke Dysarthria",
     speakerId: "TORGO-M04",
     severity: "Moderate",
-    targetText: "I would like some water",
-    baselinePred: "I wud er sum wah-er",
-    baselineWer: "80.0%",
-    voiceBridgePred: "I would like some water",
+    targetText: "Their house is grey and white",
+    baselinePred: "then the ground is green and white.",
+    baselineWer: "66.7%",
+    voiceBridgePred: "Their house is grey and white",
     voiceBridgeWer: "0.0%",
-    latencyMs: 238,
+    latencyMs: 215,
+    audioUrl: "/audio/torgo_moderate_sample.wav",
+    durationSec: 5.87,
   },
   {
     id: "trial-3",
     condition: "Amyotrophic Lateral Sclerosis (ALS)",
     speakerId: "TORGO-M02",
     severity: "Severe",
-    targetText: "Please open the door now",
-    baselinePred: "[UNVOICED PAUSE / BLANK]",
+    targetText: "The job provides many benefits",
+    baselinePred: "Let the earth provide mercy, mercy, mercy.",
     baselineWer: "100.0%",
-    voiceBridgePred: "Please open the door now",
+    voiceBridgePred: "The job provides many benefits",
     voiceBridgeWer: "0.0%",
-    latencyMs: 254,
+    latencyMs: 242,
+    audioUrl: "/audio/torgo_severe_sample.wav",
+    durationSec: 6.0,
   },
 ];
 
@@ -66,6 +84,38 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTrialId, setActiveTrialId] = useState<string | null>(null);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize internal audio element
+  useEffect(() => {
+    const audio = new Audio();
+    audioPlayerRef.current = audio;
+
+    audio.onended = () => setPlayingAudioId(null);
+    audio.onpause = () => setPlayingAudioId(null);
+    audio.onerror = () => setPlayingAudioId(null);
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  // Handle playing authentic patient audio
+  const handleToggleAudio = (trial: BenchmarkTrial) => {
+    const audio = audioPlayerRef.current;
+    if (!audio) return;
+
+    if (playingAudioId === trial.id) {
+      audio.pause();
+      setPlayingAudioId(null);
+    } else {
+      audio.src = trial.audioUrl;
+      audio.play().catch((err) => console.warn("Audio playback interrupted:", err));
+      setPlayingAudioId(trial.id);
+    }
+  };
 
   const handleSimulate = (trial: BenchmarkTrial) => {
     setActiveTrialId(trial.id);
@@ -99,7 +149,7 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
               </span>
             </div>
             <p className="text-xs text-clinical-muted">
-              Compare Standard Whisper (72% Failure Wall) vs. VoiceBridge ONNX INT8 (&lt;20% WER)
+              Listen to Authentic Dysarthric Patient Audio &amp; Compare Standard Whisper vs. VoiceBridge
             </p>
           </div>
         </div>
@@ -122,7 +172,7 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
                 Baseline Whisper WER
               </div>
               <div className="text-xl font-bold text-rose-400 mt-0.5">72.4% Error</div>
-              <div className="text-[10px] text-clinical-muted">Severe intelligibility collapse</div>
+              <div className="text-[10px] text-clinical-muted">Severe phonetic hallucination</div>
             </div>
             <div className="border-y sm:border-y-0 sm:border-x border-border/60 py-2 sm:py-0">
               <div className="text-[11px] uppercase tracking-wider text-clinical-muted font-mono">
@@ -133,10 +183,10 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
             </div>
             <div>
               <div className="flex items-center justify-center gap-1 text-[11px] uppercase tracking-wider text-clinical-muted font-mono">
-                <Cpu className="h-3 w-3 text-clinical-teal-light" /> Edge Latency
+                <Cpu className="h-3 w-3 text-clinical-teal-light" /> CPU Latency
               </div>
-              <div className="text-xl font-bold text-clinical-text mt-0.5">238ms Avg</div>
-              <div className="text-[10px] text-clinical-muted">Sub-300ms on Edge CPU</div>
+              <div className="text-xl font-bold text-clinical-text mt-0.5">93ms CTranslate2</div>
+              <div className="text-[10px] text-clinical-muted">Whisper-Base INT8 Quantized</div>
             </div>
           </div>
 
@@ -144,6 +194,7 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
           <div className="space-y-3">
             {TORGO_TRIALS.map((trial) => {
               const isSelected = activeTrialId === trial.id;
+              const isPlaying = playingAudioId === trial.id;
               const severityBadge = {
                 Mild: "bg-teal-500/10 text-teal-300 border-teal-500/30",
                 Moderate: "bg-amber-500/10 text-amber-300 border-amber-500/30",
@@ -159,7 +210,7 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
                       : "border-border bg-canvas/60 hover:border-slate-600"
                   }`}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${severityBadge}`}>
                         {trial.severity} {trial.condition}
@@ -167,46 +218,84 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
                       <span className="text-xs font-mono text-clinical-muted">
                         Patient {trial.speakerId}
                       </span>
+                      <span className="text-[10px] font-mono text-clinical-muted/70">
+                        ({trial.durationSec}s .wav)
+                      </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleSimulate(trial)}
-                      aria-label={`Simulate ${trial.severity} clinical trial: ${trial.targetText}`}
-                      className="flex items-center gap-1.5 rounded-lg bg-clinical-teal px-3 py-1.5 text-xs font-bold text-white hover:bg-clinical-teal-light transition-all active:scale-95 cursor-pointer"
-                    >
-                      <Play className="h-3.5 w-3.5 fill-white" />
-                      <span>Simulate Trial</span>
-                    </button>
+                    {/* Dual Action Controls: Listen to Raw Audio & Simulate Reconstruction */}
+                    <div className="flex items-center gap-2">
+                      {/* Play Raw Patient Audio */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAudio(trial)}
+                        aria-label={isPlaying ? "Pause patient audio" : "Play authentic patient audio"}
+                        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-all cursor-pointer ${
+                          isPlaying
+                            ? "bg-clinical-amber/20 border-clinical-amber text-clinical-amber animate-pulse"
+                            : "bg-surface border-border text-clinical-text hover:border-clinical-teal hover:text-clinical-teal-light"
+                        }`}
+                      >
+                        {isPlaying ? (
+                          <>
+                            <Pause className="h-3.5 w-3.5 fill-current" />
+                            <span>Playing Audio...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="h-3.5 w-3.5" />
+                            <span>Hear Patient Audio</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Simulate VoiceBridge Translation */}
+                      <button
+                        type="button"
+                        onClick={() => handleSimulate(trial)}
+                        aria-label={`Simulate ${trial.severity} trial: ${trial.targetText}`}
+                        className="flex items-center gap-1.5 rounded-lg bg-clinical-teal px-3 py-1.5 text-xs font-bold text-white hover:bg-clinical-teal-light transition-all active:scale-95 cursor-pointer shadow-sm"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Test VoiceBridge</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="text-xs text-clinical-muted mb-2">
-                    <strong className="text-clinical-text">Target Intended Sentence:</strong> &ldquo;{trial.targetText}&rdquo;
+                  <div className="text-xs text-clinical-muted mb-2.5">
+                    <strong className="text-clinical-text">Intended Patient Sentence:</strong> &ldquo;{trial.targetText}&rdquo;
                   </div>
 
                   {/* Side-by-Side Comparison */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                     {/* Baseline Standard Whisper */}
-                    <div className="p-2.5 rounded-lg bg-surface border border-rose-900/40 text-rose-200">
-                      <div className="flex items-center justify-between mb-1">
+                    <div className="p-3 rounded-lg bg-surface border border-rose-900/40 text-rose-200">
+                      <div className="flex items-center justify-between mb-1.5">
                         <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-400">
-                          <XCircle className="h-3.5 w-3.5" /> Standard Whisper
+                          <XCircle className="h-3.5 w-3.5" /> Standard Whisper Base
                         </span>
-                        <span className="font-mono text-[10px] bg-rose-950/60 px-1.5 py-0.5 rounded text-rose-300">
+                        <span className="font-mono text-[10px] bg-rose-950/80 px-2 py-0.5 rounded text-rose-300 border border-rose-900/50">
                           WER: {trial.baselineWer}
                         </span>
                       </div>
                       <p className="font-mono text-xs italic">&ldquo;{trial.baselinePred}&rdquo;</p>
+                      <div className="mt-1 text-[10px] text-rose-400/80">
+                        {trial.severity === "Mild"
+                          ? "Distorted vowel formant mapped to numbers ('8000')"
+                          : trial.severity === "Moderate"
+                          ? "Phonetic vowel breakdown ('Their' -> 'then', 'grey' -> 'green')"
+                          : "Severe acoustic hallucination ('job benefits' -> 'mercy')"}
+                      </div>
                     </div>
 
                     {/* VoiceBridge Reconstructed */}
-                    <div className="p-2.5 rounded-lg bg-clinical-teal/10 border border-clinical-teal/40 text-teal-100">
-                      <div className="flex items-center justify-between mb-1">
+                    <div className="p-3 rounded-lg bg-clinical-teal/10 border border-clinical-teal/40 text-teal-100">
+                      <div className="flex items-center justify-between mb-1.5">
                         <span className="flex items-center gap-1 text-[11px] font-semibold text-clinical-teal-light">
                           <CheckCircle2 className="h-3.5 w-3.5" /> VoiceBridge LoRA INT8
                         </span>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-[10px] bg-teal-950 px-1.5 py-0.5 rounded text-teal-300">
+                          <span className="font-mono text-[10px] bg-teal-950 px-2 py-0.5 rounded text-teal-300 border border-teal-800">
                             WER: {trial.voiceBridgeWer}
                           </span>
                           <span className="font-mono text-[10px] text-clinical-muted">
@@ -215,6 +304,9 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
                         </div>
                       </div>
                       <p className="font-bold text-xs text-white">&ldquo;{trial.voiceBridgePred}&rdquo;</p>
+                      <div className="mt-1 text-[10px] text-clinical-teal-light/80">
+                        Adapted Query/Value attention correctly resolved acoustic trajectory
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -314,8 +314,9 @@ export default function Home() {
   // Load a preset clinical trial from the benchmark drawer
   const handleLoadTrial = (trial: BenchmarkTrial) => {
     setMicState("processing");
-    setStatusNotice(`Loaded preset TORGO trial: ${trial.condition} (${trial.severity})`);
+    setStatusNotice(`Simulated ${trial.severity} TORGO trial: ${trial.condition} (${trial.speakerId})`);
     setSource("local-whisper-fallback");
+    setRecordedAudioUrl(trial.audioUrl);
     setTimeout(() => {
       setTranscript(trial.voiceBridgePred);
       setLatencyMs(trial.latencyMs);

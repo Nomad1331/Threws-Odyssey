@@ -353,8 +353,8 @@ def load_and_prepare_audio(wav_path: str, target_sr: int = 16000):
         audio = np.mean(audio, axis=1)
     if sr != target_sr:
         audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
-    # Strip leading & trailing silence (below 25 dB) so Whisper doesn't decode empty room hiss
-    audio, _ = librosa.effects.trim(audio, top_db=25)
+    # Preserve soft dysarthric phonemes (top_db=45 prevents clipping hypophonic patient speech)
+    audio, _ = librosa.effects.trim(audio, top_db=45)
     return audio.astype(np.float32), target_sr
 
 
@@ -435,8 +435,8 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             max_new_tokens=16,
             language="en",
             task="transcribe",
-            condition_on_prev_tokens=False,
             no_speech_threshold=0.6,
+            logprob_threshold=-1.0,
         )
 
     # Timed smoke test runs
@@ -448,8 +448,8 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             max_new_tokens=32,
             language="en",
             task="transcribe",
-            condition_on_prev_tokens=False,
             no_speech_threshold=0.6,
+            logprob_threshold=-1.0,
         )
         synth_latencies_ms.append((time.perf_counter() - t0) * 1000.0)
 
@@ -481,20 +481,20 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             # Warmup on clip
             int8_ort_model.generate(
                 inputs.input_features,
-                max_new_tokens=32,
+                max_new_tokens=64,
                 language="en",
                 task="transcribe",
-                condition_on_prev_tokens=False,
                 no_speech_threshold=0.6,
+                logprob_threshold=-1.0,
                 compression_ratio_threshold=2.4,
             )
             fp32_ort_model.generate(
                 inputs.input_features,
-                max_new_tokens=32,
+                max_new_tokens=64,
                 language="en",
                 task="transcribe",
-                condition_on_prev_tokens=False,
                 no_speech_threshold=0.6,
+                logprob_threshold=-1.0,
                 compression_ratio_threshold=2.4,
             )
 
@@ -504,11 +504,11 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
                 t0_fp32 = time.perf_counter()
                 fp32_ids = fp32_ort_model.generate(
                     inputs.input_features,
-                    max_new_tokens=32,
+                    max_new_tokens=64,
                     language="en",
                     task="transcribe",
-                    condition_on_prev_tokens=False,
                     no_speech_threshold=0.6,
+                    logprob_threshold=-1.0,
                     compression_ratio_threshold=2.4,
                 )
                 fp32_clip_latencies.append((time.perf_counter() - t0_fp32) * 1000.0)
@@ -521,11 +521,11 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
                 t0_int8 = time.perf_counter()
                 int8_ids = int8_ort_model.generate(
                     inputs.input_features,
-                    max_new_tokens=32,
+                    max_new_tokens=64,
                     language="en",
                     task="transcribe",
-                    condition_on_prev_tokens=False,
                     no_speech_threshold=0.6,
+                    logprob_threshold=-1.0,
                     compression_ratio_threshold=2.4,
                 )
                 clip_latencies.append((time.perf_counter() - t0_int8) * 1000.0)

@@ -353,6 +353,8 @@ def load_and_prepare_audio(wav_path: str, target_sr: int = 16000):
         audio = np.mean(audio, axis=1)
     if sr != target_sr:
         audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
+    # Strip leading & trailing silence (below 25 dB) so Whisper doesn't decode empty room hiss
+    audio, _ = librosa.effects.trim(audio, top_db=25)
     return audio.astype(np.float32), target_sr
 
 
@@ -429,7 +431,12 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
     # Warmup runs
     for _ in range(2):
         int8_ort_model.generate(
-            synth_inputs.input_features, max_new_tokens=16, language="en", task="transcribe"
+            synth_inputs.input_features,
+            max_new_tokens=16,
+            language="en",
+            task="transcribe",
+            condition_on_prev_tokens=False,
+            no_speech_threshold=0.6,
         )
 
     # Timed smoke test runs
@@ -437,7 +444,12 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
     for _ in range(5):
         t0 = time.perf_counter()
         synth_pred_ids = int8_ort_model.generate(
-            synth_inputs.input_features, max_new_tokens=32, language="en", task="transcribe"
+            synth_inputs.input_features,
+            max_new_tokens=32,
+            language="en",
+            task="transcribe",
+            condition_on_prev_tokens=False,
+            no_speech_threshold=0.6,
         )
         synth_latencies_ms.append((time.perf_counter() - t0) * 1000.0)
 
@@ -467,15 +479,37 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             inputs = processor(audio_arr, sampling_rate=sr, return_tensors="pt")
 
             # Warmup on clip
-            int8_ort_model.generate(inputs.input_features, max_new_tokens=32, language="en", task="transcribe")
-            fp32_ort_model.generate(inputs.input_features, max_new_tokens=32, language="en", task="transcribe")
+            int8_ort_model.generate(
+                inputs.input_features,
+                max_new_tokens=32,
+                language="en",
+                task="transcribe",
+                condition_on_prev_tokens=False,
+                no_speech_threshold=0.6,
+                compression_ratio_threshold=2.4,
+            )
+            fp32_ort_model.generate(
+                inputs.input_features,
+                max_new_tokens=32,
+                language="en",
+                task="transcribe",
+                condition_on_prev_tokens=False,
+                no_speech_threshold=0.6,
+                compression_ratio_threshold=2.4,
+            )
 
             # FP32 timed runs (3 iterations)
             fp32_clip_latencies = []
             for _ in range(3):
                 t0_fp32 = time.perf_counter()
                 fp32_ids = fp32_ort_model.generate(
-                    inputs.input_features, max_new_tokens=32, language="en", task="transcribe"
+                    inputs.input_features,
+                    max_new_tokens=32,
+                    language="en",
+                    task="transcribe",
+                    condition_on_prev_tokens=False,
+                    no_speech_threshold=0.6,
+                    compression_ratio_threshold=2.4,
                 )
                 fp32_clip_latencies.append((time.perf_counter() - t0_fp32) * 1000.0)
             fp32_latency_ms = sum(fp32_clip_latencies) / len(fp32_clip_latencies)
@@ -486,7 +520,13 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             for _ in range(5):
                 t0_int8 = time.perf_counter()
                 int8_ids = int8_ort_model.generate(
-                    inputs.input_features, max_new_tokens=32, language="en", task="transcribe"
+                    inputs.input_features,
+                    max_new_tokens=32,
+                    language="en",
+                    task="transcribe",
+                    condition_on_prev_tokens=False,
+                    no_speech_threshold=0.6,
+                    compression_ratio_threshold=2.4,
                 )
                 clip_latencies.append((time.perf_counter() - t0_int8) * 1000.0)
 

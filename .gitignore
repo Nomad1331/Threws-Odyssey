@@ -38,11 +38,15 @@ ENV/
 *.pth
 *.safetensors
 *.onnx
+*.onnx_data
 *.zip
 *.tar.gz
 checkpoints/
 voicebridge_training_checkpoints/
 voicebridge_lora_weights/
+model_training/voicebridge_merged/
+model_training/voicebridge_onnx/
+model_training/voicebridge_onnx_int8/
 
 # Logs
 logs/

@@ -13,7 +13,7 @@
 ### 1.1 Lead Architect & Founder
 * **Talha** (1st Year, Dept. of Electronics & Telecommunication Engineering / EXTC, SIES GST, Navi Mumbai).
   * **Role:** Lead System Architect, Frontend Engineer, Product UI/UX & Integration Lead.
-  * **Core Profile & Skills:** Full-stack engineer (Next.js, TypeScript, Tailwind, Web Audio API). Creator of **Nomad Labs** (`https://nomad1331.vercel.app`), **Cyberdeck Launcher**, and **Memory Sequence Launcher** on Google Play Console.
+  * **Core Profile & Skills:** Full-stack engineer (Next.js, TypeScript, Tailwind, Web Audio API). Creator of **[Nomad Labs](https://nomad1331.vercel.app)**, **[Cyberdeck Launcher](https://nomad1331.vercel.app/creations/cyberdeck-launcher/)**, and **[Memory Sequence Launcher](https://nomad1331.vercel.app/creations/memory-sequence-launcher)** on Google Play Console.
   * **LinkedIn:** `https://www.linkedin.com/in/talha-shaikh-engg`
 
 ### 1.2 Senior Teammates
@@ -40,7 +40,7 @@
 ## 2. Hackathon Intelligence: THREWS Odyssey 2026
 
 * **Organizing Body:** *Threws – The Research World* (Academic & Research Focus).
-* **Platform:** Unstop (`https://unstop.com/hackathons/threws-odyssey-2026-threws-the-research-world-1766434`).
+* **Platform:** [Unstop](https://unstop.com/hackathons/threws-odyssey-2026-threws-the-research-world-1766434).
 * **Prize Pool:** **₹1,50,000 (Cash Prizes)**.
 * **Key Milestones:**
   * **Registration Deadline:** October 31, 2026 *(Team is already registered)*.
@@ -100,7 +100,7 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
 ```
 
 ### 4.2 Machine Learning Innovation (Parameter-Efficient Adaptation)
-* **Backbone:** `[openai/whisper-base](https://huggingface.co/openai/whisper-base)` (74M parameters, CTranslate2 INT8 CPU quantization).
+* **Backbone:** [openai/whisper-base](https://huggingface.co/openai/whisper-base) (74M parameters, CTranslate2 INT8 CPU quantization).
 * **The PEFT/LoRA Breakthrough:** Freeze 99.6% of Whisper's weights and inject low-rank trainable decomposition matrices ($r=16, \alpha=32$) exclusively into the Query (`q_proj`) and Value (`v_proj`) attention projection layers of the acoustic encoder.
 * **Moulika's Edge Optimization:** Quantize the adapted model to INT8/ONNX to run locally on low-cost hardware with sub-100ms latency and ~42MB RAM working set.
 
@@ -110,7 +110,7 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
 
 * **Source Institution:** University of Toronto (Department of Computer Science & Speech-Language Pathology; Dr. Frank Rudzicz et al.).
 * **Official Academic Archive:** `https://www.cs.toronto.edu/~complingweb/data/TORGO/torgo.html`
-* **Hugging Face Hub Direct Access:** `[abnerh/TORGO-database](https://huggingface.co/datasets/abnerh/TORGO-database)`
+* **Hugging Face Hub Direct Access:** [abnerh/TORGO-database](https://huggingface.co/datasets/abnerh/TORGO-database)
 * **Dataset Characteristics:**
   * Over 12,000 acoustic recordings (`.wav` format at 16kHz).
   * 8 dysarthric speakers (Cerebral Palsy and ALS) across mild, moderate, and severe classifications, plus matched healthy control speakers.
@@ -147,21 +147,21 @@ The live defense and 2-minute video pitch are structured as a synchronized, 4-wa
 
 ### 8.1 Authentic Clinical Audio Samples (`frontend/public/audio/`)
 Extracted directly from the University of Toronto TORGO dysarthria archive for interactive jury evaluation:
-1. `[torgo_mild_sample.wav](https://github.com/Nomad1331/Threws-Odyssey/blob/main/frontend/public/audio/torgo_mild_sample.wav)` (Patient TORGO-M05, Cerebral Palsy, Mild):
+1. [torgo_mild_sample.wav](https://github.com/Nomad1331/Threws-Odyssey/blob/main/frontend/public/audio/torgo_mild_sample.wav) (Patient TORGO-M05, Cerebral Palsy, Mild):
    - Intended: *"We have an excellent team"*
    - Standard Whisper Baseline: *"We have an 8000 team."* (Formant distortion mapped to numbers, 60.0% WER)
    - VoiceBridge LoRA: *"We have an excellent team"* (0.0% WER, 185ms)
-2. `[torgo_moderate_sample.wav](https://github.com/Nomad1331/Threws-Odyssey/blob/main/frontend/public/audio/torgo_moderate_sample.wav)` (Patient TORGO-M04, Post-Stroke, Moderate):
+2. [torgo_moderate_sample.wav](https://github.com/Nomad1331/Threws-Odyssey/blob/main/frontend/public/audio/torgo_moderate_sample.wav) (Patient TORGO-M04, Post-Stroke, Moderate):
    - Intended: *"Their house is grey and white"*
    - Standard Whisper Baseline: *"then the ground is green and white."* (Vowel breakdown, 66.7% WER)
    - VoiceBridge LoRA: *"Their house is grey and white"* (0.0% WER, 215ms)
-3. `[torgo_severe_sample.wav](https://github.com/Nomad1331/Threws-Odyssey/blob/main/frontend/public/audio/torgo_severe_sample.wav)` (Patient TORGO-M02, ALS, Severe):
+3. [torgo_severe_sample.wav](https://github.com/Nomad1331/Threws-Odyssey/blob/main/frontend/public/audio/torgo_severe_sample.wav) (Patient TORGO-M02, ALS, Severe):
    - Intended: *"The job provides many benefits"*
    - Standard Whisper Baseline: *"Let the earth provide mercy, mercy, mercy."* (Severe phonetic hallucination, 100.0% WER)
    - VoiceBridge LoRA: *"The job provides many benefits"* (0.0% WER, 242ms)
 
 ### 8.2 Publication-Ready 300 DPI Scientific Figures (`assets/benchmarks/`)
-Generated via `[benchmarks/generate_figures.py](https://github.com/Nomad1331/Threws-Odyssey/blob/main/benchmarks/generate_figures.py)` by the team for hackathon pitch decks and technical documentation:
-* `[figure1_wer_comparison.png](https://github.com/Nomad1331/Threws-Odyssey/blob/main/assets/benchmarks/figure1_wer_comparison.png)`: Word Error Rate bar chart showing the 70% foundation failure wall (Siri 74.1%, Whisper 72.4%, Sarvam 71.8%, Google 68.2% vs. VoiceBridge 18.2% — a -74.8% relative error reduction).
-* `[figure2_formant_centralization.png](https://github.com/Nomad1331/Threws-Odyssey/blob/main/assets/benchmarks/figure2_formant_centralization.png)`: $F_1$ vs. $F_2$ vowel space quadrilateral collapse demonstrating acoustic formant centralization toward the neutral schwa `/ə/`.
-* `[figure3_latency_vs_footprint.png](https://github.com/Nomad1331/Threws-Odyssey/blob/main/assets/benchmarks/figure3_latency_vs_footprint.png)`: CPU inference latency vs. memory working set comparing cloud foundation models against VoiceBridge INT8 (93ms latency, 42MB RAM).
+Generated via [benchmarks/generate_figures.py](https://github.com/Nomad1331/Threws-Odyssey/blob/main/benchmarks/generate_figures.py) by the team for hackathon pitch decks and technical documentation:
+* [figure1_wer_comparison.png](https://github.com/Nomad1331/Threws-Odyssey/blob/main/assets/benchmarks/figure1_wer_comparison.png): Word Error Rate bar chart showing the 70% foundation failure wall (Siri 74.1%, Whisper 72.4%, Sarvam 71.8%, Google 68.2% vs. VoiceBridge 18.2% — a -74.8% relative error reduction).
+* [figure2_formant_centralization.png](https://github.com/Nomad1331/Threws-Odyssey/blob/main/assets/benchmarks/figure2_formant_centralization.png): $F_1$ vs. $F_2$ vowel space quadrilateral collapse demonstrating acoustic formant centralization toward the neutral schwa `/ə/`.
+* [figure3_latency_vs_footprint.png](https://github.com/Nomad1331/Threws-Odyssey/blob/main/assets/benchmarks/figure3_latency_vs_footprint.png): CPU inference latency vs. memory working set comparing cloud foundation models against VoiceBridge INT8 (93ms latency, 42MB RAM).

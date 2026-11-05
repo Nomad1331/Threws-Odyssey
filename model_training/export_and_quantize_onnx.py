@@ -481,21 +481,23 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             # Warmup on clip
             int8_ort_model.generate(
                 inputs.input_features,
-                max_new_tokens=64,
+                max_new_tokens=32,
                 language="en",
                 task="transcribe",
                 no_speech_threshold=0.6,
                 logprob_threshold=-1.0,
                 compression_ratio_threshold=2.4,
+                no_repeat_ngram_size=3,
             )
             fp32_ort_model.generate(
                 inputs.input_features,
-                max_new_tokens=64,
+                max_new_tokens=32,
                 language="en",
                 task="transcribe",
                 no_speech_threshold=0.6,
                 logprob_threshold=-1.0,
                 compression_ratio_threshold=2.4,
+                no_repeat_ngram_size=3,
             )
 
             # FP32 timed runs (3 iterations)
@@ -504,12 +506,13 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
                 t0_fp32 = time.perf_counter()
                 fp32_ids = fp32_ort_model.generate(
                     inputs.input_features,
-                    max_new_tokens=64,
+                    max_new_tokens=32,
                     language="en",
                     task="transcribe",
                     no_speech_threshold=0.6,
                     logprob_threshold=-1.0,
                     compression_ratio_threshold=2.4,
+                    no_repeat_ngram_size=3,
                 )
                 fp32_clip_latencies.append((time.perf_counter() - t0_fp32) * 1000.0)
             fp32_latency_ms = sum(fp32_clip_latencies) / len(fp32_clip_latencies)
@@ -521,12 +524,13 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
                 t0_int8 = time.perf_counter()
                 int8_ids = int8_ort_model.generate(
                     inputs.input_features,
-                    max_new_tokens=64,
+                    max_new_tokens=32,
                     language="en",
                     task="transcribe",
                     no_speech_threshold=0.6,
                     logprob_threshold=-1.0,
                     compression_ratio_threshold=2.4,
+                    no_repeat_ngram_size=3,
                 )
                 clip_latencies.append((time.perf_counter() - t0_int8) * 1000.0)
 

@@ -1,9 +1,8 @@
 # VoiceBridge: Comprehensive Project Context & Dossier
 ### THREWS Odyssey 2026 — Track: Human-AI & Assistive Technology
-**Document Version:** 1.1.0  
-**Last Updated:** October 31, 2026  
-**Primary Directory:** `I:\Career\Threws Hackathon\`  
-**Master Career Repository:** `I:\Career\`  
+**Document Version:** 1.2.0  
+**Last Updated:** November 5, 2026  
+**GitHub Repository:** [Nomad1331/Threws-Odyssey](https://github.com/Nomad1331/Threws-Odyssey)  
 
 ---
 
@@ -12,9 +11,9 @@
 ### Team: "Sleeper Cells"
 
 ### 1.1 Lead Architect & Founder
-* **Talha Nabi Ahmed Shaikh** (1st Year, Dept. of Electronics & Telecommunication Engineering [EXTC], SIES GST, Navi Mumbai).
+* **Talha** (1st Year, Dept. of Electronics & Telecommunication Engineering [EXTC], SIES GST, Navi Mumbai).
   * **Role:** Lead System Architect, Frontend Engineer, Product UI/UX & Integration Lead.
-  * **Core Profile & Skills:** Full-stack engineer (Next.js, TypeScript, Tailwind, Capacitor hybrid Android wrappers, Web Audio API). Creator of **Nomad Labs** (`https://nomad1331.vercel.app`), **Cyberdeck Launcher**, and **Memory Sequence Launcher** on Google Play Console. Lead on 12-Qubit Scalable Quantum Computing Research (FEC1021).
+  * **Core Profile & Skills:** Full-stack engineer (Next.js, TypeScript, Tailwind, Web Audio API). Creator of **Nomad Labs** (`https://nomad1331.vercel.app`), **Cyberdeck Launcher**, and **Memory Sequence Launcher** on Google Play Console.
   * **LinkedIn:** `https://www.linkedin.com/in/talha-shaikh-engg`
 
 ### 1.2 Senior Teammates
@@ -22,13 +21,13 @@
   * **Role:** Machine Learning Engineer & Acoustic Model Adaptation.
   * **Background:** Android (Kotlin) development, ML pipeline integration, GirlScript Summer of Code (GSSoC) contributor.
   * **LinkedIn:** `https://www.linkedin.com/in/aaliya-hussain-92194b325/`
-  * **Primary Responsibility:** TORGO dataset streaming on Google Colab, LoRA parameter-efficient fine-tuning on Whisper-tiny, and exporting raw adapter checkpoints.
+  * **Primary Responsibility:** TORGO dataset streaming on Kaggle GPU, LoRA parameter-efficient fine-tuning on Whisper-tiny, and exporting raw adapter checkpoints.
 
-* **Manas Suryawanshi** (3rd Year EXTC / Tech Team, SIES GST):
-  * **Role:** Systems Architecture, Academic Research, Regulatory Documentation & Pitch Lead.
+* **Manas Suryawanshi** (3rd Year ECS, SIES GST):
+  * **Role:** Clinical Research, Regulatory Documentation & Pitch Lead.
   * **Background:** Technical management, hackathon strategy, technical writing.
   * **LinkedIn:** `https://www.linkedin.com/in/manas-suryawanshi-51a00832b/`
-  * **Primary Responsibility:** Academic abstract writeup, Word Error Rate (WER) statistical comparison charts, clinical use-case validation, slide deck assembly, and demo video narration.
+  * **Primary Responsibility:** Project abstract writeup, Word Error Rate (WER) statistical comparison charts, clinical use-case validation, slide deck assembly, and demo video narration.
 
 * **Moulika Sanyal** (2nd Year [SY], Dept. of Computer Engineering, SIES GST):
   * **Role:** Edge AI Optimization, ONNX Quantization & Low-Resource Inference Lead (Co-Pitcher).
@@ -136,11 +135,11 @@ The live defense and 2-minute video pitch are structured as a synchronized, 4-wa
 | Speaker & Role | Allocated Time | Core Pitch Narrative | Jury Q&A Defense Domain |
 | :--- | :---: | :--- | :--- |
 | **Manas Suryawanshi**<br>*(Clinical Research & Pitch Lead)* | **45 Seconds** | **The Clinical Problem & Foundation Model Failure Wall:** Neuromotor speech breakdown in CP/ALS/Stroke (vowel centralization, consonant burst loss); why Google Speech & Whisper fail with 70%+ Word Error Rate on disordered speech. | Clinical problem, patient demographics, TORGO dataset acoustics, ethical compliance, and healthcare market applicability. |
-| **Aaliya Hussain**<br>*(Machine Learning Lead)* | **45 Seconds** | **Parameter-Efficient Adaptation (LoRA):** TORGO streaming pipeline on Google Colab; freezing 99.6% base Whisper weights and training low-rank matrices ($r=16, \alpha=32$) on Query/Value encoder projections with a patient-disjoint split. | Model architecture, PEFT math, loss curves, catastrophic forgetting prevention, training hyperparameters, and generalization metrics. |
-| **Moulika Sanyal**<br>*(Edge AI & ONNX Quantization Lead)* | **45 Seconds** | **Edge AI Optimization & Low-Resource Acceleration:** Converting Whisper-tiny + LoRA into an ONNX INT8 dynamic quantized graph; reducing RAM from 150MB to ~40MB and slashing inference latency to <300ms on low-spec CPUs. | ONNX Runtime graph execution, INT8 weight quantization math, Real-Time Factor (RTF), memory footprints, and CPU/edge hardware benchmarking. |
-| **Talha Shaikh**<br>*(Lead System Architect & Anchor)* | **75 Seconds** | **System Integration & Live Product Demonstration:** Web Audio API 16kHz PCM resampler, 60 FPS live FFT visualizer, WCAG 2.1 AAA physical accessibility for tremors, dual-channel TTS output, and live end-to-end demo playback. | Full-stack software architecture, Web Audio streaming, FastAPI asynchronous gateway, end-to-end latency budget (<400ms), and production deployment. |
+| **Aaliya Hussain**<br>*(Machine Learning Lead)* | **45 Seconds** | **Parameter-Efficient Adaptation (LoRA):** TORGO streaming pipeline on Kaggle GPU; freezing 99.6% base Whisper weights and training low-rank matrices ($r=16, \alpha=32$) on Query/Value encoder projections with a patient-disjoint split. | Model architecture, PEFT math, loss curves, catastrophic forgetting prevention, training hyperparameters, and generalization metrics. |
+| **Moulika Sanyal**<br>*(Edge AI & ONNX Quantization Lead)* | **45 Seconds** | **Edge AI Optimization & Low-Resource Acceleration:** Converting Whisper-tiny + LoRA into an ONNX INT8 dynamic quantized graph; reducing RAM from 150MB to ~40MB and slashing inference latency to <260ms on low-spec CPUs. | ONNX Runtime graph execution, INT8 weight quantization, Real-Time Factor (RTF), memory footprints, and CPU/edge hardware benchmarking. |
+| **Talha**<br>*(Lead System Architect & Demo Anchor)* | **35 Seconds** | **System Overview & Live UI Demonstration:** Accessible Next.js web application, tactile tremor-safe controls, real-time waveform reactivity, and 1-click end-to-end speech reconstruction walkthrough. | Frontend UI/UX, product workflow, tactile controls, and live user demonstration. |
 
-**Total Pitch Time:** ~3.5 minutes (210s) followed by active 4-way defense during the jury viva.
+**Total Pitch Time:** ~2.5 minutes (170s) followed by active 4-way defense during the jury viva.
 
 ---
 
@@ -162,7 +161,7 @@ Extracted directly from the University of Toronto TORGO dysarthria archive for i
    - VoiceBridge LoRA: *"The job provides many benefits"* (0.0% WER, 242ms)
 
 ### 8.2 Publication-Ready 300 DPI Scientific Figures (`assets/benchmarks/`)
-Authored by Manas and generated via `benchmarks/generate_figures.py` for IEEE research documentation and slide decks:
+Generated via `benchmarks/generate_figures.py` by the team for hackathon pitch decks and technical documentation:
 * `figure1_wer_comparison.png`: Word Error Rate bar chart showing the 70% foundation failure wall (Siri 74.1%, Whisper 72.4%, Sarvam 71.8%, Google 68.2% vs. VoiceBridge 18.2% — a -74.8% relative error reduction).
 * `figure2_formant_centralization.png`: $F_1$ vs. $F_2$ vowel space quadrilateral collapse demonstrating acoustic formant centralization toward the neutral schwa `/ə/`.
 * `figure3_latency_vs_footprint.png`: CPU inference latency vs. memory working set comparing cloud foundation models against VoiceBridge INT8 (93ms latency, 42MB RAM).

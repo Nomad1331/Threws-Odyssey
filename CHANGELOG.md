@@ -1,16 +1,30 @@
 # VoiceBridge: Engineering Changelog
 ### THREWS Odyssey 2026 — Master Project Ledger
-**Primary Directory:** `I:\Career\Threws Hackathon\`  
-**Master Repository:** `I:\Career\`  
+**GitHub Repository:** [Nomad1331/Threws-Odyssey](https://github.com/Nomad1331/Threws-Odyssey)
 
 All notable engineering changes, architectural milestones, and codebase updates for VoiceBridge are documented here.
+
+---
+
+## [2026-11-05] - v0.3.0: Whisper ONNX INT8 Edge Quantization Pipeline (Brick 10)
+
+* **Phase:** Phase 3 (Brick 10: ONNX INT8 Quantization, Edge Acceleration & Low-Latency Pipeline)
+* **Lead Engineers:** Moulika Sanyal (Edge AI & Quantization Lead), Talha (System Architect)
+* **Team:** Sleeper Cells (SIES GST)
+* **Key Achievements & Benchmarks:**
+  - Merged feature branch moulika/voicebridge-onnx-int8 into main.
+  - Shrunk model size by **74.42%** (from 404.49 MB down to 103.45 MB total across 3 ONNX graphs).
+  - Benchmarked CPU execution on clean greedy decoding: **257.0 ms average latency** and **0.0439 RTF** (**22.7× faster than real-time**).
+  - Benchmarked per-channel INT8 quantization (oicebridge_onnx_int8_perchannel).
+  - Tuned silence trimming to 	op_db=45, preserving 99.5% of low-volume dysarthric phonemes.
+  - Formulated full benchmark telemetry report in docs/EDGE_AI_BENCHMARK_RESULTS.md and practical guide in docs/QUANTIZATION_GUIDE.md.
 
 ---
 
 ## [2026-11-01] - v0.2.4: Authentic Clinical Audio Assets & 300 DPI Publication Benchmark Figures
 
 * **Phase:** Phase 4 (Brick 15: Offline Audio Chip Matrix) & Phase 5 (Brick 16: Publication Figures)
-* **Lead Engineers:** Manas Suryawanshi (Research & Pitch Lead), Talha Shaikh (System Architect) & Antigravity Agent
+* **Lead Engineers:** Manas Suryawanshi (Research & Pitch Lead), Talha (System Architect) & Antigravity Agent
 * **Team:** Sleeper Cells (SIES GST)
 * **Assets Created & Integrated:**
   - `frontend/public/audio/`: Extracted 3 authentic dysarthric `.wav` recordings directly from University of Toronto TORGO dataset parquet tables:
@@ -18,7 +32,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
     2. `torgo_moderate_sample.wav`: Patient TORGO-M04 (Post-Stroke, Moderate) — *"Their house is grey and white"* (Standard Whisper failure: *"then the ground is green and white."*, 66.7% WER).
     3. `torgo_severe_sample.wav`: Patient TORGO-M02 (ALS, Severe) — *"The job provides many benefits"* (Standard Whisper failure: *"Let the earth provide mercy, mercy, mercy."*, 100.0% WER).
   - `frontend/src/components/ClinicalBenchmarkDrawer.tsx`: Embedded dual-control interactive audio suite allowing hackathon judges to listen to raw patient acoustic distortions via in-browser audio player (`Hear Patient Audio`) alongside 1-click VoiceBridge reconstruction simulation.
-  - `assets/benchmarks/`: Generated 3 publication-ready 300 DPI figures for Manas's IEEE research draft and slide deck:
+  - `assets/benchmarks/`: Generated 3 publication-ready 300 DPI figures for slide decks and project documentation:
     1. `figure1_wer_comparison.png`: Word Error Rate comparison showing the 70% foundation failure wall (Siri 74.1%, Whisper 72.4%, Sarvam 71.8%, Google 68.2% vs. VoiceBridge 18.2% — a -74.8% relative error reduction).
     2. `figure2_formant_centralization.png`: Acoustic vowel formant space ($F_1$ vs. $F_2$) demonstrating corner vowel quadrilateral collapse toward neutral schwa `/ə/`.
     3. `figure3_latency_vs_footprint.png`: CPU inference latency vs. memory working set comparing cloud foundation models against VoiceBridge INT8 (93ms latency, 42MB RAM).
@@ -34,7 +48,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 ## [2026-11-01] - v0.2.3: Whisper Backbone Upgrade to Base Model
 
 * **Phase:** Phase 3 (Bricks 8 – 10) / Brick 9 (FastAPI Model Backbone Scaling)
-* **Lead Engineer:** Talha Shaikh (Lead System Architect) & Antigravity Agent
+* **Lead Engineer:** Talha (Lead System Architect) & Antigravity Agent
 * **Team:** Sleeper Cells (SIES GST)
 * **Architectural Rationale:**
   - Upgraded Whisper model backbone from `tiny` (39M parameters) to `base` (74M parameters) using CTranslate2 INT8 CPU quantization.
@@ -53,7 +67,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 ## [2026-11-01] - v0.2.2: FastAPI Backend Microservice & CPU Whisper ASR Pipeline
 
 * **Phase:** Phase 3 (Bricks 8 – 10) / Brick 9 (FastAPI Microservice Core & Ingestion Gateway)
-* **Lead Engineer:** Talha Shaikh (Lead System Architect) & Antigravity Agent
+* **Lead Engineer:** Talha (Lead System Architect) & Antigravity Agent
 * **Team:** Sleeper Cells (SIES GST)
 * **Files Created & Configured:**
   - `backend/`: Initialized dedicated Python microservice environment with isolated virtual environment (`backend/.venv`).
@@ -75,7 +89,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 ## [2026-11-01] - v0.2.1: MediaRecorder Pipeline, Hardware Audio Preview & Offline Fallback Engine
 
 * **Phase:** Phase 4 (Bricks 11 – 15) / Phase F2.5 (Acoustic Pipeline Hardening)
-* **Lead Engineer:** Talha Shaikh (Lead System Architect & Frontend Lead)
+* **Lead Engineer:** Talha (Lead System Architect & Frontend Lead)
 * **Team:** Sleeper Cells (SIES GST)
 * **Root-Cause Diagnosis & Fix:**
   - Resolved `webkitSpeechRecognition` cloud dependency: Chromium routes audio through Google's remote servers (`speech-api`), which silently emits `network` or `no-speech` errors on Windows localhost or under network firewalls, causing the system to falsely report "No speech detected" despite active microphone input.
@@ -96,7 +110,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 ## [2026-10-31] - v0.2.0: Accessible Frontend Architecture & Clinical Design System
 
 * **Phase:** Phase 4 (Bricks 11 – 15) / Phase F1 & F2 (Production Accessible Web App & Audio UX)
-* **Lead Engineer:** Talha Shaikh (Lead System Architect & Frontend Lead)
+* **Lead Engineer:** Talha (Lead System Architect & Frontend Lead)
 * **Team:** Sleeper Cells (SIES GST)
 * **Files Created & Configured:**
   - `frontend/`: Initialized Next.js 14 App Router project with TypeScript, Tailwind CSS, ESLint, and `lucide-react`.
@@ -119,7 +133,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ### Added & Realigned
 * **Team Roster:** Codified 4-member multidisciplinary engineering squad ("Sleeper Cells"):
-  * **Talha Shaikh:** Lead System Architect, Next.js 14 Web App & Full-Stack Integration.
+  * **Talha:** Lead System Architect, Next.js 14 Web App & Full-Stack Integration.
   * **Aaliya Hussain:** Machine Learning Engineer & Acoustic Model Adaptation (Whisper + LoRA).
   * **Moulika Sanyal:** Edge AI Optimization, ONNX INT8 Quantization & CPU Hardware Benchmarking.
   * **Manas Suryawanshi:** Clinical Research, Regulatory Documentation & Slide Deck Lead.
@@ -143,5 +157,5 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Scientific Verification:** Verified streaming endpoint for University of Toronto TORGO dataset (`abnerh/TORGO-database`) on Hugging Face Hub.
 * **Documentation Suite:** Created core documentation (`ROADMAP.md`, `docs/PROJECT_CONTEXT.md`, `docs/DATASETS_AND_PROOF.md`).
 * **Starter Assets:**
-  * `model_training/VoiceBridge_Colab_Trainer.ipynb`: GPU-accelerated Google Colab training notebook for Whisper-tiny LoRA fine-tuning.
+  * `model_training/VoiceBridge_Trainer.ipynb`: GPU-accelerated training notebook for Whisper-tiny LoRA fine-tuning.
   * `model_training/torgo_streaming_test.py`: Python streaming test script.

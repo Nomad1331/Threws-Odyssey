@@ -13,7 +13,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Team:** Sleeper Cells (SIES GST)
 * **Key Deliverables Completed:**
   - docs/COMPETITIVE_ANALYSIS.md: Exhaustive competitive landscape dossier comparing VoiceBridge against Google Cloud Speech, Apple Siri, base Whisper, and Sarvam AI. Details the foundation model catastrophic forgetting trap, HIPAA patient data privacy, and a 5-question technical jury defense matrix.
-  - docs/TECHNICAL_REPORT.md / docs/RESEARCH_PAPER_DRAFT.md: Formal 8-section technical system architecture report detailing neuromotor dysarthric acoustic pathology (formant centralization, plosive transient attenuation), LoRA mathematical derivation (=16, \alpha=32$), and verified ONNX INT8 benchmarks (**257.0 ms latency**, **0.0439 RTF**, **74.42% storage cut**).
+  - docs/TECHNICAL_REPORT.md: Formal 8-section technical system architecture report detailing neuromotor dysarthric acoustic pathology (formant centralization, plosive transient attenuation), LoRA mathematical derivation (=16, \alpha=32$), and verified ONNX INT8 benchmarks (**257.0 ms latency**, **0.0439 RTF**, **74.42% storage cut**).
   - Roadmap progress synchronized to **19 out of 21 Bricks COMPLETED (90%)**.
 
 ---

@@ -261,7 +261,7 @@
 ### [ ] Brick 18: System Architecture & Clinical Differentiation Report (UP NEXT ⏳)
 * **Core Objective:** Compile a formal academic project paper that elevates VoiceBridge from a hackathon project to a peer-reviewed research standard.
 * **Concrete Implementation Tasks:**
-  - Author docs/RESEARCH_PAPER_DRAFT.md following comprehensive hackathon technical report format:
+  - Author docs/TECHNICAL_REPORT.md following comprehensive hackathon technical report format:
     1. *Abstract & Clinical Problem Statement* (The 70% failure wall in dysarthria).
     2. *Neuromotor Acoustic Distortions* (Vowel centralization, transient collapse).
     3. *PEFT / LoRA Adaptation Methodology* ($r=16, \alpha=32$ on Whisper encoder).

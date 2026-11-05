@@ -114,22 +114,22 @@ def detect_cpu_quantization_config():
 
     if "aarch64" in arch or "arm64" in arch or "arm" in arch:
         logger.info(f"Detected ARM architecture ({arch}). Using AutoQuantizationConfig.arm64(is_static=False).")
-        return AutoQuantizationConfig.arm64(is_static=False, per_channel=False), f"ARM64 ({arch})"
+        return AutoQuantizationConfig.arm64(is_static=False, per_channel=True), f"ARM64 ({arch})"
 
     if "avx512_vnni" in cpu_flags:
         logger.info("Detected x86_64 CPU with AVX512-VNNI support. Using AutoQuantizationConfig.avx512_vnni(is_static=False).")
-        return AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False), f"x86_64 (AVX512-VNNI)"
+        return AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=True), f"x86_64 (AVX512-VNNI)"
 
     if "avx512" in cpu_flags:
         logger.info("Detected x86_64 CPU with AVX512 support. Using AutoQuantizationConfig.avx512(is_static=False).")
-        return AutoQuantizationConfig.avx512(is_static=False, per_channel=False), f"x86_64 (AVX512)"
+        return AutoQuantizationConfig.avx512(is_static=False, per_channel=True), f"x86_64 (AVX512)"
 
     if "avx2" in cpu_flags:
         logger.info("Detected x86_64 CPU with AVX2 support. Using AutoQuantizationConfig.avx2(is_static=False).")
-        return AutoQuantizationConfig.avx2(is_static=False, per_channel=False), f"x86_64 (AVX2)"
+        return AutoQuantizationConfig.avx2(is_static=False, per_channel=True), f"x86_64 (AVX2)"
 
     logger.warning(f"CPU flags did not explicitly advertise AVX2 on {arch}; falling back to default dynamic INT8 configuration.")
-    return AutoQuantizationConfig.arm64(is_static=False, per_channel=False), f"{arch} (Generic Dynamic INT8)"
+    return AutoQuantizationConfig.arm64(is_static=False, per_channel=True), f"{arch} (Generic Dynamic INT8)"
 
 
 def normalize_text(text: str) -> List[str]:
@@ -353,9 +353,11 @@ def load_and_prepare_audio(wav_path: str, target_sr: int = 16000):
         audio = np.mean(audio, axis=1)
     if sr != target_sr:
         audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
+    # Capture original unclipped audio duration before trim for faithful RTF calculation
+    orig_duration_s = len(audio) / float(target_sr)
     # Preserve soft dysarthric phonemes (top_db=45 prevents clipping hypophonic patient speech)
     audio, _ = librosa.effects.trim(audio, top_db=45)
-    return audio.astype(np.float32), target_sr
+    return audio.astype(np.float32), target_sr, orig_duration_s
 
 
 def create_cpu_session_options():
@@ -435,8 +437,6 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             max_new_tokens=16,
             language="en",
             task="transcribe",
-            no_speech_threshold=0.6,
-            logprob_threshold=-1.0,
         )
 
     # Timed smoke test runs
@@ -448,8 +448,6 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
             max_new_tokens=32,
             language="en",
             task="transcribe",
-            no_speech_threshold=0.6,
-            logprob_threshold=-1.0,
         )
         synth_latencies_ms.append((time.perf_counter() - t0) * 1000.0)
 
@@ -473,31 +471,23 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
         )
         for sample in available_torgo:
             wav_path = str(audio_dir / sample["filename"])
-            audio_arr, sr = load_and_prepare_audio(wav_path, target_sr=16000)
+            audio_arr, sr, orig_duration_s = load_and_prepare_audio(wav_path, target_sr=16000)
             duration_s = len(audio_arr) / float(sr)
 
             inputs = processor(audio_arr, sampling_rate=sr, return_tensors="pt")
 
-            # Warmup on clip
+            # Warmup on clip (clean short-form greedy)
             int8_ort_model.generate(
                 inputs.input_features,
                 max_new_tokens=32,
                 language="en",
                 task="transcribe",
-                no_speech_threshold=0.6,
-                logprob_threshold=-1.0,
-                compression_ratio_threshold=2.4,
-                no_repeat_ngram_size=3,
             )
             fp32_ort_model.generate(
                 inputs.input_features,
                 max_new_tokens=32,
                 language="en",
                 task="transcribe",
-                no_speech_threshold=0.6,
-                logprob_threshold=-1.0,
-                compression_ratio_threshold=2.4,
-                no_repeat_ngram_size=3,
             )
 
             # FP32 timed runs (3 iterations)
@@ -509,10 +499,6 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
                     max_new_tokens=32,
                     language="en",
                     task="transcribe",
-                    no_speech_threshold=0.6,
-                    logprob_threshold=-1.0,
-                    compression_ratio_threshold=2.4,
-                    no_repeat_ngram_size=3,
                 )
                 fp32_clip_latencies.append((time.perf_counter() - t0_fp32) * 1000.0)
             fp32_latency_ms = sum(fp32_clip_latencies) / len(fp32_clip_latencies)
@@ -527,15 +513,11 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
                     max_new_tokens=32,
                     language="en",
                     task="transcribe",
-                    no_speech_threshold=0.6,
-                    logprob_threshold=-1.0,
-                    compression_ratio_threshold=2.4,
-                    no_repeat_ngram_size=3,
                 )
                 clip_latencies.append((time.perf_counter() - t0_int8) * 1000.0)
 
             int8_latency_ms = sum(clip_latencies) / len(clip_latencies)
-            int8_rtf = (int8_latency_ms / 1000.0) / duration_s
+            int8_rtf = (int8_latency_ms / 1000.0) / orig_duration_s
             int8_text = processor.batch_decode(int8_ids, skip_special_tokens=True)[0].strip()
 
             ref_text = sample["reference"]

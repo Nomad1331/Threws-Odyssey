@@ -21,7 +21,7 @@ const AAC_PRESETS: AACCard[] = [
   },
   {
     id: "nurse",
-    label: "Nurse / Caregiver",
+    label: "Caregiver",
     spokenText: "Please call the caregiver or nurse immediately.",
     icon: BellRing,
     tone: "neutral",
@@ -81,23 +81,23 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
 
   return (
     <div
-      className={`rounded-xl bg-zinc-900/60 border border-zinc-800 p-5 ${className}`}
+      className={`rounded-2xl bg-zinc-900/80 border border-zinc-800/80 p-4 sm:p-5 ${className}`}
       role="region"
-      aria-label="AAC Quick Assist Pads"
+      aria-label="Quick Assist Soundboard"
     >
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800 font-mono text-xs">
         <div className="flex items-center gap-2 text-zinc-300">
           <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-          <span className="font-semibold uppercase tracking-wider">
-            Tactile AAC Soundboard (Instant Speech)
+          <span className="font-semibold uppercase tracking-wider text-[11px]">
+            Quick Assist Pads
           </span>
         </div>
-        <span className="text-[11px] text-zinc-500 font-mono">
-          Single-touch vocalization for vocal fatigue
+        <span className="text-[10px] sm:text-[11px] text-zinc-500 font-mono">
+          Single-touch speech for vocal fatigue
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
         {AAC_PRESETS.map((card) => {
           const Icon = card.icon;
           const isActive = activeCardId === card.id;
@@ -109,22 +109,22 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
               type="button"
               onClick={() => handleCardClick(card)}
               className={`
-                flex flex-col items-center justify-center p-4 rounded-lg border text-center transition-all duration-100 select-none
+                flex flex-col items-center justify-center min-h-[76px] sm:min-h-[86px] p-3 rounded-xl border text-center transition-all duration-100 select-none
                 ${
                   isActive
                     ? "bg-zinc-800 border-zinc-500 translate-y-0.5 shadow-inner"
                     : isUrgent
-                    ? "bg-red-950/20 border-red-900/40 text-red-300 hover:border-red-700 hover:bg-red-950/30 tactile-bezel"
-                    : "bg-zinc-950/60 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900 tactile-bezel"
+                    ? "bg-red-950/20 border-red-900/40 text-red-200 hover:border-red-700 hover:bg-red-950/30 tactile-bezel active:scale-95"
+                    : "bg-zinc-950/70 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900 tactile-bezel active:scale-95"
                 }
               `}
             >
               <Icon
-                className={`h-5 w-5 mb-2 ${
+                className={`h-5 w-5 mb-1.5 ${
                   isUrgent ? "text-red-400" : "text-zinc-400"
                 }`}
               />
-              <span className="text-xs font-mono font-medium tracking-tight">
+              <span className="text-xs sm:text-sm font-sans font-medium tracking-tight">
                 {card.label}
               </span>
             </button>

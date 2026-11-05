@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { GlassWater, BellRing, AlertCircle, Check, X } from "lucide-react";
 
 interface AACCard {
@@ -60,30 +60,42 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
 }) => {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
-  const handleCardClick = (card: AACCard) => {
-    setActiveCardId(card.id);
-    setTimeout(() => setActiveCardId(null), 800);
+  const handleCardClick = useCallback(
+    (card: AACCard) => {
+      // Haptic confirmation for motor tremor users
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        try {
+          navigator.vibrate(30);
+        } catch {
+          // Ignore
+        }
+      }
 
-    // Speak aloud using client-side Web Speech API
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(card.spokenText);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.lang = "en-US";
-      window.speechSynthesis.speak(utterance);
-    }
+      setActiveCardId(card.id);
+      setTimeout(() => setActiveCardId(null), 800);
 
-    if (onSpeakPhrase) {
-      onSpeakPhrase(card.spokenText);
-    }
-  };
+      // Speak aloud using client-side Web Speech API
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(card.spokenText);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.lang = "en-US";
+        window.speechSynthesis.speak(utterance);
+      }
+
+      if (onSpeakPhrase) {
+        onSpeakPhrase(card.spokenText);
+      }
+    },
+    [onSpeakPhrase]
+  );
 
   return (
     <div
-      className={`flex flex-wrap items-center justify-center gap-2 max-w-lg mx-auto ${className}`}
+      className={`flex flex-wrap items-center justify-center gap-2.5 max-w-lg mx-auto ${className}`}
       role="region"
-      aria-label="Quick Assist Soundboard"
+      aria-label="Tactile AAC Soundboard"
     >
       {AAC_PRESETS.map((card) => {
         const Icon = card.icon;
@@ -96,18 +108,18 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
             type="button"
             onClick={() => handleCardClick(card)}
             className={`
-              inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full border text-xs sm:text-sm font-sans font-medium transition-all duration-100 select-none active:scale-95
+              inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[44px] rounded-full border text-xs sm:text-sm font-sans font-medium transition-all duration-100 select-none active:scale-95 shadow-sm
               ${
                 isActive
-                  ? "bg-zinc-800 border-zinc-500 text-white translate-y-0.5"
+                  ? "bg-zinc-800 border-amber-500 text-white ring-2 ring-amber-500/30"
                   : isUrgent
-                  ? "bg-red-950/30 border-red-900/50 text-red-300 hover:border-red-700 hover:bg-red-950/50"
+                  ? "bg-red-950/40 border-red-800/60 text-red-300 hover:border-red-600 hover:bg-red-950/60"
                   : "bg-zinc-900/90 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-zinc-100"
               }
             `}
           >
             <Icon
-              className={`h-3.5 w-3.5 ${
+              className={`h-4 w-4 ${
                 isUrgent ? "text-red-400" : "text-zinc-400"
               }`}
             />

@@ -343,8 +343,8 @@
 | **14** | Visual Transcription Display & Auto-TTS Engine | Nov 04 | Talha | **COMPLETED** ✅ |
 | **15** | Fail-Safe Offline University Audio Chip Matrix | Nov 04 | Talha / Manas | **COMPLETED** ✅ |
 | **16** | 300 DPI Publication Benchmark Figures Export | Nov 04 | Manas / Talha | **COMPLETED** ✅ |
-| **17** | Sarvam AI / Big Tech Competitive Dossier | Nov 05 | Manas / Talha | UP NEXT ⏳ |
-| **18** | System Architecture & Clinical Report | Nov 05 | Manas / Talha / Moulika | UP NEXT ⏳ |
-| **19** | GitHub Repository Hygiene & Live Deployment | Nov 06 | Talha | PENDING |
+| **17** | Sarvam AI / Big Tech Competitive Dossier | Nov 05 | Manas / Talha | **COMPLETED** ✅ |
+| **18** | System Architecture & Clinical Report | Nov 05 | Manas / Talha / Moulika | **COMPLETED** ✅ |
+| **19** | GitHub Repository Hygiene & Live Deployment | Nov 06 | Talha | UP NEXT ⏳ |
 | **20** | 2-Minute High-Impact Demo Video Production | Nov 07 | Manas / Talha / Moulika | PENDING |
 | **21** | Final Unstop Filing & 4-Person Panel Viva Rehearsal | Nov 07 | Whole Team | PENDING |

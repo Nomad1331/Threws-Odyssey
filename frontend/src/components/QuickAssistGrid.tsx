@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { GlassWater, BellRing, AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import { GlassWater, BellRing, AlertCircle, Check, X } from "lucide-react";
 
 interface AACCard {
   id: string;
@@ -27,25 +27,25 @@ const AAC_PRESETS: AACCard[] = [
     tone: "neutral",
   },
   {
-    id: "pain",
-    label: "Pain Alert",
-    spokenText: "I am in physical pain, please assist me right now.",
-    icon: AlertCircle,
-    tone: "urgent",
-  },
-  {
     id: "yes",
     label: "Yes",
     spokenText: "Yes, that is correct.",
-    icon: CheckCircle,
+    icon: Check,
     tone: "affirmative",
   },
   {
     id: "no",
     label: "No",
     spokenText: "No, I do not want that.",
-    icon: XCircle,
+    icon: X,
     tone: "negative",
+  },
+  {
+    id: "pain",
+    label: "Pain Alert",
+    spokenText: "I am in physical pain, please assist me right now.",
+    icon: AlertCircle,
+    tone: "urgent",
   },
 ];
 
@@ -62,7 +62,7 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
 
   const handleCardClick = (card: AACCard) => {
     setActiveCardId(card.id);
-    setTimeout(() => setActiveCardId(null), 1000);
+    setTimeout(() => setActiveCardId(null), 800);
 
     // Speak aloud using client-side Web Speech API
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -81,56 +81,40 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
 
   return (
     <div
-      className={`rounded-2xl bg-zinc-900/80 border border-zinc-800/80 p-4 sm:p-5 ${className}`}
+      className={`flex flex-wrap items-center justify-center gap-2 max-w-lg mx-auto ${className}`}
       role="region"
       aria-label="Quick Assist Soundboard"
     >
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800 font-mono text-xs">
-        <div className="flex items-center gap-2 text-zinc-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-          <span className="font-semibold uppercase tracking-wider text-[11px]">
-            Quick Assist Pads
-          </span>
-        </div>
-        <span className="text-[10px] sm:text-[11px] text-zinc-500 font-mono">
-          Single-touch speech for vocal fatigue
-        </span>
-      </div>
+      {AAC_PRESETS.map((card) => {
+        const Icon = card.icon;
+        const isActive = activeCardId === card.id;
+        const isUrgent = card.tone === "urgent";
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
-        {AAC_PRESETS.map((card) => {
-          const Icon = card.icon;
-          const isActive = activeCardId === card.id;
-          const isUrgent = card.tone === "urgent";
-
-          return (
-            <button
-              key={card.id}
-              type="button"
-              onClick={() => handleCardClick(card)}
-              className={`
-                flex flex-col items-center justify-center min-h-[76px] sm:min-h-[86px] p-3 rounded-xl border text-center transition-all duration-100 select-none
-                ${
-                  isActive
-                    ? "bg-zinc-800 border-zinc-500 translate-y-0.5 shadow-inner"
-                    : isUrgent
-                    ? "bg-red-950/20 border-red-900/40 text-red-200 hover:border-red-700 hover:bg-red-950/30 tactile-bezel active:scale-95"
-                    : "bg-zinc-950/70 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900 tactile-bezel active:scale-95"
-                }
-              `}
-            >
-              <Icon
-                className={`h-5 w-5 mb-1.5 ${
-                  isUrgent ? "text-red-400" : "text-zinc-400"
-                }`}
-              />
-              <span className="text-xs sm:text-sm font-sans font-medium tracking-tight">
-                {card.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+        return (
+          <button
+            key={card.id}
+            type="button"
+            onClick={() => handleCardClick(card)}
+            className={`
+              inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full border text-xs sm:text-sm font-sans font-medium transition-all duration-100 select-none active:scale-95
+              ${
+                isActive
+                  ? "bg-zinc-800 border-zinc-500 text-white translate-y-0.5"
+                  : isUrgent
+                  ? "bg-red-950/30 border-red-900/50 text-red-300 hover:border-red-700 hover:bg-red-950/50"
+                  : "bg-zinc-900/90 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-zinc-100"
+              }
+            `}
+          >
+            <Icon
+              className={`h-3.5 w-3.5 ${
+                isUrgent ? "text-red-400" : "text-zinc-400"
+              }`}
+            />
+            <span>{card.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 };

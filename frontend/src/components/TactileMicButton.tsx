@@ -9,7 +9,7 @@ interface TactileMicButtonProps {
   state: MicState;
   onToggle: () => void;
   disabled?: boolean;
-  audioLevel?: number; // 0.0 to 1.0 real-time microphone volume
+  audioLevel?: number;
 }
 
 export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
@@ -40,90 +40,73 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
   const isListening = state === "listening";
   const isProcessing = state === "processing";
 
-
   return (
     <div className="relative flex flex-col items-center justify-center select-none">
-      {/* Precision Hardware Outer Housing Ring */}
+      {/* Outer Illuminated Hardware Amber Ring (Matches Mockup) */}
       <div
-        className={`relative flex items-center justify-center rounded-full p-2 transition-all duration-100 ${
+        className={`relative flex items-center justify-center rounded-full p-1.5 transition-all duration-300 ${
           isListening
-            ? "bg-zinc-900/90 ring-2 ring-red-500/50 shadow-[0_0_25px_rgba(239,68,68,0.2)]"
+            ? "ring-4 ring-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.45)] scale-105"
             : isProcessing
-            ? "bg-zinc-900/90 ring-2 ring-amber-500/50"
-            : "bg-zinc-900/50 ring-1 ring-zinc-800"
+            ? "ring-2 ring-amber-500/70 animate-pulse"
+            : "ring-2 ring-zinc-800 hover:ring-zinc-700"
         }`}
         style={{
-          transform: isListening ? `scale(${1 + Math.min(audioLevel * 0.2, 0.15)})` : "scale(1)",
+          transform: isListening
+            ? `scale(${1.02 + Math.min(audioLevel * 0.15, 0.12)})`
+            : "scale(1)",
         }}
       >
-        {/* Physical Mechanical Recording Button */}
+        {/* Physical Weighted Mechanical Switch */}
         <button
           type="button"
           onClick={onToggle}
           disabled={disabled || isProcessing}
           aria-label={
             isListening
-              ? "Stop recording. Audio buffer will process."
+              ? "Stop recording. Transcribing speech..."
               : isProcessing
               ? "Reconstructing dysarthric speech..."
-              : "Toggle recording. Press Spacebar or click."
+              : "Start recording speech. Press Spacebar or tap."
           }
           aria-pressed={isListening}
           className={`
-            relative flex h-36 w-36 flex-col items-center justify-center rounded-full
-            border transition-all duration-150 ease-out focus:outline-none
+            relative flex h-24 w-24 sm:h-28 sm:w-28 flex-col items-center justify-center rounded-full
+            transition-all duration-150 ease-out focus:outline-none
             ${
               isListening
-                ? "border-red-500/80 bg-gradient-to-b from-zinc-900 to-zinc-950 text-red-400 tactile-pressed"
+                ? "bg-gradient-to-b from-zinc-850 to-zinc-950 text-amber-400 border border-amber-500/50 shadow-inner"
                 : isProcessing
-                ? "border-amber-500/80 bg-gradient-to-b from-zinc-900 to-zinc-950 text-amber-400"
-                : "border-zinc-700/80 bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-100 hover:border-zinc-500 hover:from-zinc-750 hover:to-zinc-850 tactile-bezel active:scale-[0.98]"
+                ? "bg-gradient-to-b from-zinc-850 to-zinc-950 text-amber-400 border border-amber-500/40"
+                : "bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border border-zinc-700/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_4px_12px_rgba(0,0,0,0.6)] hover:border-zinc-500 active:scale-95"
             }
             ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
           `}
         >
-          {/* LED Tally Light Indicator */}
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span
-              className={`h-2 w-2 rounded-full transition-colors duration-150 ${
-                isListening
-                  ? "bg-red-500 shadow-led-red animate-pulse"
-                  : isProcessing
-                  ? "bg-amber-400 shadow-led-amber animate-pulse"
-                  : "bg-emerald-500/70"
-              }`}
-            />
-            <span className="text-[10px] font-mono tracking-widest uppercase font-semibold text-zinc-400">
-              {isListening ? "REC" : isProcessing ? "BUSY" : "READY"}
-            </span>
-          </div>
-
-          {/* Central Physical Icon */}
-          <div className="my-1">
-            {isListening ? (
-              <Square className="h-7 w-7 text-red-500 fill-red-500" />
-            ) : isProcessing ? (
-              <Loader2 className="h-7 w-7 animate-spin text-amber-400" />
-            ) : (
-              <Mic className="h-7 w-7 text-zinc-100" />
-            )}
-          </div>
-
-          {/* Subdued Status Action Label */}
-          <span className="text-[11px] font-medium tracking-tight text-zinc-300">
-            {isListening ? "Stop Capture" : isProcessing ? "Processing" : "Record Speech"}
-          </span>
+          {/* Status Indicator */}
+          {isListening ? (
+            <Square className="h-6 w-6 text-amber-400 fill-amber-400" />
+          ) : isProcessing ? (
+            <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+          ) : (
+            <div className="flex flex-col items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-amber-400/90 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+              <Mic className="h-6 w-6 text-zinc-100 mt-0.5" />
+            </div>
+          )}
         </button>
       </div>
 
-      {/* Hardware Hotkey Keycap Hint */}
-      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-500 font-mono">
-        <span>Press</span>
-        <kbd className="px-2 py-0.5 rounded bg-zinc-800/90 border border-zinc-700 text-[10px] font-mono text-zinc-300 shadow-sm">
-          SPACE
-        </kbd>
-        <span>to toggle</span>
-      </div>
+      {/* Discreet Keycap Hint */}
+      <span className="mt-2.5 text-[11px] font-mono text-zinc-500">
+        {isListening ? (
+          <span className="text-amber-400 font-semibold animate-pulse">● RECORDING</span>
+        ) : isProcessing ? (
+          <span className="text-amber-400/90">PROCESSING...</span>
+        ) : (
+          "Press SPACE to speak"
+        )}
+      </span>
     </div>
   );
 };

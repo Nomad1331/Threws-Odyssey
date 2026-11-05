@@ -23,7 +23,7 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // High-DPI screen compensation
+    // Handle High-DPI screens cleanly
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -38,83 +38,57 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
       ? new Uint8Array(audioAnalyser.frequencyBinCount)
       : null;
 
+    const barCount = 48; // Number of vertical waveform bars
+    const barSpacing = width / barCount;
+    const barWidth = Math.max(2, barSpacing * 0.45);
+
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Subtle hardware oscilloscope background grid line
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 6]);
-      ctx.beginPath();
-      ctx.moveTo(0, centerY);
-      ctx.lineTo(width, centerY);
-      ctx.stroke();
-      ctx.setLineDash([]); // Reset line dash
+      let effectiveRms = 0.05;
+      if (isRecording && audioAnalyser && dataArray) {
+        audioAnalyser.getByteTimeDomainData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const norm = (dataArray[i] - 128) / 128;
+          sum += norm * norm;
+        }
+        effectiveRms = Math.min(Math.sqrt(sum / dataArray.length) * 5.0, 1.0);
+      }
 
-      if (isRecording) {
-        let rms = 0;
-        if (audioAnalyser && dataArray) {
-          audioAnalyser.getByteTimeDomainData(dataArray);
-          let sumSquares = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            const normalized = (dataArray[i] - 128) / 128;
-            sumSquares += normalized * normalized;
-          }
-          rms = Math.sqrt(sumSquares / dataArray.length);
+      phaseRef.current += isRecording ? 0.08 : 0.03;
+
+      for (let i = 0; i < barCount; i++) {
+        const x = i * barSpacing + (barSpacing - barWidth) / 2;
+        const progress = i / (barCount - 1);
+        
+        // Bell-curve envelope to taper bars towards edges
+        const envelope = Math.sin(progress * Math.PI);
+
+        let barHeight = 4;
+        if (isRecording) {
+          // Dynamic soundwave reaction
+          const wave =
+            Math.sin(progress * 12 + phaseRef.current) * 0.6 +
+            Math.cos(progress * 20 - phaseRef.current * 1.5) * 0.4;
+          barHeight = Math.max(
+            4,
+            height * 0.8 * effectiveRms * envelope * (0.4 + 0.6 * Math.abs(wave))
+          );
+          ctx.fillStyle = progress > 0.4 && progress < 0.6 ? "#f59e0b" : "#e4e4e7";
         } else {
-          rms = 0.03;
+          // Calm resting breath wave
+          const wave = Math.sin(progress * 6 + phaseRef.current);
+          barHeight = Math.max(3, (height * 0.2) * envelope * (0.5 + 0.5 * Math.abs(wave)));
+          ctx.fillStyle = "#3f3f46";
         }
 
-        phaseRef.current += 0.08;
-
-        // Studio Phosphor Trace (Precision Amber)
-        ctx.strokeStyle = "#f59e0b";
-        ctx.lineWidth = 2.0;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
+        const y = centerY - barHeight / 2;
+        
+        // Draw rounded vertical bar
         ctx.beginPath();
-
-        const points = 96;
-        const effectiveRms = audioAnalyser ? Math.min(rms * 6.0, 1.0) : 0.05;
-
-        for (let i = 0; i <= points; i++) {
-          const x = (i / points) * width;
-          const progress = i / points;
-          // Gaussian envelope to smoothly taper the line ends
-          const envelope = Math.sin(progress * Math.PI);
-          const amplitude = (height * 0.38) * effectiveRms * envelope;
-
-          const y =
-            centerY +
-            Math.sin(progress * 14 + phaseRef.current) * amplitude * 0.75 +
-            Math.cos(progress * 26 - phaseRef.current * 1.8) * amplitude * 0.25;
-
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.stroke();
-      } else {
-        // Calm resting standby sweep
-        phaseRef.current += 0.02;
-        const baselineAmplitude = 1.5 * Math.sin(phaseRef.current);
-
-        ctx.strokeStyle = "rgba(113, 113, 122, 0.4)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(0, centerY);
-
-        const points = 48;
-        for (let i = 0; i <= points; i++) {
-          const x = (i / points) * width;
-          const progress = i / points;
-          const envelope = Math.sin(progress * Math.PI);
-          const y = centerY + Math.sin(progress * 6 + phaseRef.current) * baselineAmplitude * envelope;
-          ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+        ctx.roundRect(x, y, barWidth, barHeight, barWidth / 2);
+        ctx.fill();
       }
 
       animationFrameRef.current = requestAnimationFrame(render);
@@ -131,13 +105,10 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
 
   return (
     <div
-      className={`relative h-14 w-full rounded-lg bg-zinc-950/80 border border-zinc-800/80 p-1 flex items-center justify-center overflow-hidden ${className}`}
+      className={`relative h-14 sm:h-16 w-full max-w-md mx-auto flex items-center justify-center ${className}`}
       aria-hidden="true"
     >
       <canvas ref={canvasRef} className="h-full w-full block" />
-      <div className="absolute top-1 left-2 text-[9px] font-mono tracking-widest uppercase text-zinc-600">
-        {isRecording ? "OSC • 16KHZ LIVE" : "OSC • STANDBY"}
-      </div>
     </div>
   );
 };

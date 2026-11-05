@@ -23,7 +23,7 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Handle High-DPI screens cleanly
+    // High-DPI screen compensation
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -41,24 +41,20 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Create calm clinical gradient (Therapeutic Teal)
-      const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, "rgba(13, 148, 136, 0.2)");
-      gradient.addColorStop(0.5, "rgba(20, 184, 166, 0.95)");
-      gradient.addColorStop(1, "rgba(13, 148, 136, 0.2)");
-
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = gradient;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
+      // Subtle hardware oscilloscope background grid line
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 6]);
       ctx.beginPath();
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(width, centerY);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset line dash
 
       if (isRecording) {
         let rms = 0;
         if (audioAnalyser && dataArray) {
           audioAnalyser.getByteTimeDomainData(dataArray);
-          // Calculate true RMS energy from real hardware audio stream
           let sumSquares = 0;
           for (let i = 0; i < dataArray.length; i++) {
             const normalized = (dataArray[i] - 128) / 128;
@@ -66,26 +62,32 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
           }
           rms = Math.sqrt(sumSquares / dataArray.length);
         } else {
-          // Resting telemetry baseline when microphone is waiting
-          rms = 0.02;
+          rms = 0.03;
         }
 
-        phaseRef.current += 0.06;
+        phaseRef.current += 0.08;
 
-        // Render multi-harmonic smooth sine wave scaled to vocal energy
-        const points = 80;
-        const effectiveRms = audioAnalyser ? rms * 5.0 : 0.02;
+        // Studio Phosphor Trace (Precision Amber)
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 2.0;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+
+        const points = 96;
+        const effectiveRms = audioAnalyser ? Math.min(rms * 6.0, 1.0) : 0.05;
+
         for (let i = 0; i <= points; i++) {
           const x = (i / points) * width;
           const progress = i / points;
-          // Apply Gaussian envelope to taper edges smoothly
+          // Gaussian envelope to smoothly taper the line ends
           const envelope = Math.sin(progress * Math.PI);
-          const amplitude = (height * 0.42) * Math.min(effectiveRms, 1) * envelope;
-          
+          const amplitude = (height * 0.38) * effectiveRms * envelope;
+
           const y =
             centerY +
-            Math.sin(progress * 10 + phaseRef.current) * amplitude * 0.7 +
-            Math.cos(progress * 18 - phaseRef.current * 1.5) * amplitude * 0.3;
+            Math.sin(progress * 14 + phaseRef.current) * amplitude * 0.75 +
+            Math.cos(progress * 26 - phaseRef.current * 1.8) * amplitude * 0.25;
 
           if (i === 0) {
             ctx.moveTo(x, y);
@@ -93,22 +95,27 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
             ctx.lineTo(x, y);
           }
         }
+        ctx.stroke();
       } else {
-        // Calm resting baseline pulse (medical telemetry look)
+        // Calm resting standby sweep
         phaseRef.current += 0.02;
-        const baselineAmplitude = 2.5 * Math.sin(phaseRef.current);
-        ctx.moveTo(0, centerY);
-        ctx.bezierCurveTo(
-          width * 0.35,
-          centerY - baselineAmplitude,
-          width * 0.65,
-          centerY + baselineAmplitude,
-          width,
-          centerY
-        );
-      }
+        const baselineAmplitude = 1.5 * Math.sin(phaseRef.current);
 
-      ctx.stroke();
+        ctx.strokeStyle = "rgba(113, 113, 122, 0.4)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, centerY);
+
+        const points = 48;
+        for (let i = 0; i <= points; i++) {
+          const x = (i / points) * width;
+          const progress = i / points;
+          const envelope = Math.sin(progress * Math.PI);
+          const y = centerY + Math.sin(progress * 6 + phaseRef.current) * baselineAmplitude * envelope;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
 
       animationFrameRef.current = requestAnimationFrame(render);
     };
@@ -124,23 +131,12 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-xl bg-surface/40 border border-border/50 backdrop-blur-sm ${className}`}
+      className={`relative h-14 w-full rounded-lg bg-zinc-950/80 border border-zinc-800/80 p-1 flex items-center justify-center overflow-hidden ${className}`}
       aria-hidden="true"
     >
-      <canvas
-        ref={canvasRef}
-        className="w-full h-16 block"
-        style={{ width: "100%", height: "64px" }}
-      />
-      <div className="absolute top-2 left-3 flex items-center gap-1.5 pointer-events-none">
-        <span
-          className={`h-1.5 w-1.5 rounded-full ${
-            isRecording ? "bg-clinical-teal-light animate-pulse" : "bg-slate-600"
-          }`}
-        />
-        <span className="text-[10px] font-mono tracking-wider text-clinical-muted/70 uppercase">
-          {isRecording ? "16kHz Mono Stream" : "Audio Idle"}
-        </span>
+      <canvas ref={canvasRef} className="h-full w-full block" />
+      <div className="absolute top-1 left-2 text-[9px] font-mono tracking-widest uppercase text-zinc-600">
+        {isRecording ? "OSC • 16KHZ LIVE" : "OSC • STANDBY"}
       </div>
     </div>
   );

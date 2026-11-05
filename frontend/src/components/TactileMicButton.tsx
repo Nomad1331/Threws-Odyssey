@@ -18,11 +18,10 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
   disabled = false,
   audioLevel = 0,
 }) => {
-  // Handle Spacebar toggle globally for users with limited motor dexterity
+  // Global spacebar listener for hands-free / motor dexterity support
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.code === "Space" && !disabled) {
-        // Prevent default only if not typing in an input/textarea
         const activeTag = (document.activeElement?.tagName || "").toLowerCase();
         if (activeTag !== "input" && activeTag !== "textarea") {
           e.preventDefault();
@@ -41,107 +40,89 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
   const isListening = state === "listening";
   const isProcessing = state === "processing";
 
-  // Dynamic voice reactivity: scale rings based on real vocal energy
-  const voiceScale = isListening ? 1 + Math.min(audioLevel * 0.5, 0.4) : 1;
-  const outerScale = isListening ? 1 + Math.min(audioLevel * 0.8, 0.6) : 1;
-  const isSpeaking = isListening && audioLevel > 0.05;
 
   return (
     <div className="relative flex flex-col items-center justify-center select-none">
-      {/* Real-time Voice Reactive Pulse Rings (Only expand when sound is detected) */}
-      {isListening && (
-        <>
-          <div
-            className="absolute h-52 w-52 rounded-full bg-clinical-teal/20 transition-transform duration-75 ease-out pointer-events-none"
-            style={{ transform: `scale(${outerScale})`, opacity: isSpeaking ? 0.45 : 0.15 }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute h-44 w-44 rounded-full bg-clinical-teal-light/30 transition-transform duration-75 ease-out pointer-events-none"
-            style={{ transform: `scale(${voiceScale})`, opacity: isSpeaking ? 0.6 : 0.2 }}
-            aria-hidden="true"
-          />
-        </>
-      )}
-
-      {/* Gentle Aura when Idle */}
-      {!isListening && !isProcessing && (
-        <div
-          className="absolute h-44 w-44 rounded-full bg-clinical-teal/10 blur-xl pointer-events-none"
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Primary Giant Tactile Button (160px x 160px) */}
-      <button
-        type="button"
-        onClick={onToggle}
-        disabled={disabled || isProcessing}
-        aria-label={
+      {/* Precision Hardware Outer Housing Ring */}
+      <div
+        className={`relative flex items-center justify-center rounded-full p-2 transition-all duration-100 ${
           isListening
-            ? "Stop listening. Recording in progress."
+            ? "bg-zinc-900/90 ring-2 ring-red-500/50 shadow-[0_0_25px_rgba(239,68,68,0.2)]"
             : isProcessing
-            ? "Reconstructing speech via ONNX Whisper..."
-            : "Start listening. Speak naturally."
-        }
-        aria-pressed={isListening}
-        className={`
-          relative z-10 flex h-40 w-40 flex-col items-center justify-center rounded-full
-          border-4 transition-all duration-300 ease-out focus:outline-none
-          active:scale-95 shadow-card-subtle
-          ${
-            isListening
-              ? "border-clinical-teal-light bg-surface text-clinical-teal-light shadow-aura-active scale-105"
-              : isProcessing
-              ? "border-clinical-amber/60 bg-surface/90 text-clinical-amber shadow-aura-idle"
-              : "border-border bg-surface text-clinical-text hover:border-clinical-teal hover:text-clinical-teal-light shadow-aura-idle"
-          }
-          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-        `}
+            ? "bg-zinc-900/90 ring-2 ring-amber-500/50"
+            : "bg-zinc-900/50 ring-1 ring-zinc-800"
+        }`}
+        style={{
+          transform: isListening ? `scale(${1 + Math.min(audioLevel * 0.2, 0.15)})` : "scale(1)",
+        }}
       >
-        {isListening ? (
-          <>
-            <Square className="h-12 w-12 text-clinical-teal-light fill-clinical-teal-light/20 transition-transform" />
-            <span className="mt-2 text-xs font-semibold tracking-wider uppercase text-clinical-teal-light">
-              Listening
-            </span>
-          </>
-        ) : isProcessing ? (
-          <>
-            <Loader2 className="h-12 w-12 animate-spin text-clinical-amber" />
-            <span className="mt-2 text-xs font-semibold tracking-wider uppercase text-clinical-amber">
-              Decoding
-            </span>
-          </>
-        ) : (
-          <>
-            <Mic className="h-12 w-12 text-clinical-teal-light transition-transform group-hover:scale-110" />
-            <span className="mt-2 text-xs font-semibold tracking-wider uppercase text-clinical-muted">
-              Tap to Speak
-            </span>
-          </>
-        )}
-      </button>
-
-      {/* Motor-Accessible Assistive Status Indicator */}
-      <div className="mt-4 flex items-center gap-2">
-        <span
-          className={`h-2.5 w-2.5 rounded-full transition-colors duration-300 ${
+        {/* Physical Mechanical Recording Button */}
+        <button
+          type="button"
+          onClick={onToggle}
+          disabled={disabled || isProcessing}
+          aria-label={
             isListening
-              ? "bg-clinical-teal-light animate-ping"
+              ? "Stop recording. Audio buffer will process."
               : isProcessing
-              ? "bg-clinical-amber animate-pulse"
-              : "bg-slate-600"
-          }`}
-          aria-hidden="true"
-        />
-        <p className="text-xs font-medium text-clinical-muted">
-          {isListening
-            ? "Capturing 16kHz audio stream... Press Space or Tap to Finish"
-            : isProcessing
-            ? "Whisper-LoRA ONNX INT8 decoding in progress..."
-            : "Touch anywhere or press Spacebar"}
-        </p>
+              ? "Reconstructing dysarthric speech..."
+              : "Toggle recording. Press Spacebar or click."
+          }
+          aria-pressed={isListening}
+          className={`
+            relative flex h-36 w-36 flex-col items-center justify-center rounded-full
+            border transition-all duration-150 ease-out focus:outline-none
+            ${
+              isListening
+                ? "border-red-500/80 bg-gradient-to-b from-zinc-900 to-zinc-950 text-red-400 tactile-pressed"
+                : isProcessing
+                ? "border-amber-500/80 bg-gradient-to-b from-zinc-900 to-zinc-950 text-amber-400"
+                : "border-zinc-700/80 bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-100 hover:border-zinc-500 hover:from-zinc-750 hover:to-zinc-850 tactile-bezel active:scale-[0.98]"
+            }
+            ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+          `}
+        >
+          {/* LED Tally Light Indicator */}
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span
+              className={`h-2 w-2 rounded-full transition-colors duration-150 ${
+                isListening
+                  ? "bg-red-500 shadow-led-red animate-pulse"
+                  : isProcessing
+                  ? "bg-amber-400 shadow-led-amber animate-pulse"
+                  : "bg-emerald-500/70"
+              }`}
+            />
+            <span className="text-[10px] font-mono tracking-widest uppercase font-semibold text-zinc-400">
+              {isListening ? "REC" : isProcessing ? "BUSY" : "READY"}
+            </span>
+          </div>
+
+          {/* Central Physical Icon */}
+          <div className="my-1">
+            {isListening ? (
+              <Square className="h-7 w-7 text-red-500 fill-red-500" />
+            ) : isProcessing ? (
+              <Loader2 className="h-7 w-7 animate-spin text-amber-400" />
+            ) : (
+              <Mic className="h-7 w-7 text-zinc-100" />
+            )}
+          </div>
+
+          {/* Subdued Status Action Label */}
+          <span className="text-[11px] font-medium tracking-tight text-zinc-300">
+            {isListening ? "Stop Capture" : isProcessing ? "Processing" : "Record Speech"}
+          </span>
+        </button>
+      </div>
+
+      {/* Hardware Hotkey Keycap Hint */}
+      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-500 font-mono">
+        <span>Press</span>
+        <kbd className="px-2 py-0.5 rounded bg-zinc-800/90 border border-zinc-700 text-[10px] font-mono text-zinc-300 shadow-sm">
+          SPACE
+        </kbd>
+        <span>to toggle</span>
       </div>
     </div>
   );

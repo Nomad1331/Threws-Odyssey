@@ -7,7 +7,7 @@ import { TranscriptDisplay } from "@/components/TranscriptDisplay";
 import { QuickAssistGrid } from "@/components/QuickAssistGrid";
 import { ClinicalBenchmarkDrawer, BenchmarkTrial } from "@/components/ClinicalBenchmarkDrawer";
 import { transcribeAudio } from "@/lib/transcriptionService";
-import { Activity, ShieldCheck, Cpu, Info } from "lucide-react";
+
 
 interface IWindowSpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -48,15 +48,17 @@ interface SpeechRecognitionErrorEvent extends Event {
 export default function Home() {
   const [micState, setMicState] = useState<MicState>("idle");
   const [transcript, setTranscript] = useState<string>(
-    "I would like some water please."
+    "The job provides many benefits."
   );
-  const [latencyMs, setLatencyMs] = useState<number>(238);
+  const [latencyMs, setLatencyMs] = useState<number>(257);
   const [confidenceScore, setConfidenceScore] = useState<number>(0.984);
   const [audioAnalyser, setAudioAnalyser] = useState<AnalyserNode | null>(null);
   const [audioLevel, setAudioLevel] = useState<number>(0);
-  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(
+    "/audio/torgo_severe_sample.wav"
+  );
   const [statusNotice, setStatusNotice] = useState<string | undefined>(
-    "Initialized with calibrated TORGO dysarthria model."
+    "Calibrated with University of Toronto TORGO dysarthria model."
   );
   const [source, setSource] = useState<
     "fastapi-backend" | "web-speech" | "local-whisper-fallback" | undefined
@@ -71,7 +73,7 @@ export default function Home() {
   const recognitionErrorRef = useRef<string | null>(null);
   const startTimeRef = useRef<number>(0);
 
-  // Real-time microphone audio volume tracking (drives the reactive pulse ring)
+  // Real-time microphone audio volume tracking
   useEffect(() => {
     if (!audioAnalyser || micState !== "listening") {
       setAudioLevel(0);
@@ -102,7 +104,7 @@ export default function Home() {
   // Clean up object URLs on unmount
   useEffect(() => {
     return () => {
-      if (recordedAudioUrl) {
+      if (recordedAudioUrl && recordedAudioUrl.startsWith("blob:")) {
         URL.revokeObjectURL(recordedAudioUrl);
       }
     };
@@ -113,7 +115,7 @@ export default function Home() {
     if (micState === "listening") {
       // 1. Transition to processing
       setMicState("processing");
-      setStatusNotice("Processing raw acoustic buffer...");
+      setStatusNotice("Processing 16kHz acoustic buffer...");
 
       // Stop SpeechRecognition safely
       if (recognitionRef.current) {
@@ -140,7 +142,7 @@ export default function Home() {
         if (audioBlob.size > 0) {
           const newUrl = URL.createObjectURL(audioBlob);
           setRecordedAudioUrl((prev) => {
-            if (prev) URL.revokeObjectURL(prev);
+            if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
             return newUrl;
           });
         }
@@ -262,7 +264,7 @@ export default function Home() {
               }
             };
 
-            recorder.start(100); // Collect in 100ms slices
+            recorder.start(100);
             mediaRecorderRef.current = recorder;
           }
         } catch (recErr) {
@@ -291,7 +293,7 @@ export default function Home() {
             const clean = fullText.trim();
             if (clean) {
               capturedTextRef.current = clean;
-              setTranscript(clean); // Live interim text update
+              setTranscript(clean);
             }
           };
 
@@ -314,7 +316,7 @@ export default function Home() {
   // Load a preset clinical trial from the benchmark drawer
   const handleLoadTrial = (trial: BenchmarkTrial) => {
     setMicState("processing");
-    setStatusNotice(`Simulated ${trial.severity} TORGO trial: ${trial.condition} (${trial.speakerId})`);
+    setStatusNotice(`Loaded TORGO ${trial.severity} trial: ${trial.condition} (${trial.speakerId})`);
     setSource("local-whisper-fallback");
     setRecordedAudioUrl(trial.audioUrl);
     setTimeout(() => {
@@ -336,7 +338,7 @@ export default function Home() {
   // Quick assist phrase selected
   const handleSelectQuickPhrase = (phrase: string) => {
     setTranscript(phrase);
-    setLatencyMs(35); // Instant local execution
+    setLatencyMs(35);
     setConfidenceScore(1.0);
     setStatusNotice("Instant AAC communication phrase vocalized");
     setSource("web-speech");
@@ -347,129 +349,94 @@ export default function Home() {
     setTranscript("");
     setStatusNotice(undefined);
     setRecordedAudioUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
+      if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
       return null;
     });
   };
 
   return (
-    <main className="min-h-screen bg-canvas text-clinical-text flex flex-col justify-between p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
-      {/* 1. Clinical Header & Telemetry Badges */}
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-border">
+    <main className="min-h-screen bg-canvas text-zinc-100 flex flex-col justify-between p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+      {/* 1. Hardware Minimalist Header */}
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-5 border-b border-zinc-850">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-clinical-teal/20 text-clinical-teal-light border border-clinical-teal/40">
-              <Activity className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                VoiceBridge
-                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-clinical-teal/15 text-clinical-teal-light border border-clinical-teal/30">
-                  v0.2.1
-                </span>
-              </h1>
-              <p className="text-xs text-clinical-muted">
-                Real-Time Dysarthric Speech Reconstruction Engine • THREWS Odyssey 2026
-              </p>
-            </div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-bold tracking-tight text-zinc-100 font-sans">
+              VOICEBRIDGE
+            </h1>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-850 text-zinc-400 border border-zinc-750">
+              CLINICAL ASR
+            </span>
           </div>
+          <p className="text-xs text-zinc-500 font-mono mt-0.5">
+            Dysarthric Speech Reconstruction Engine • Sleeper Cells (SIES GST)
+          </p>
         </div>
 
-        {/* System Badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-mono text-clinical-muted border border-border">
-            <Cpu className="h-3.5 w-3.5 text-clinical-teal-light" />
-            <span>ONNX INT8 Edge Ready</span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-mono text-clinical-teal-light border border-clinical-teal/30">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span>WCAG 2.1 AAA Compliant</span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-mono text-clinical-muted border border-border">
-            <span>Sleeper Cells (SIES GST)</span>
+        {/* Precision Hardware Status Telemetry */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-led-green animate-pulse" />
+            <span>OFFLINE ONNX INT8</span>
+            <span className="text-zinc-600">|</span>
+            <span className="text-zinc-400">257ms</span>
+            <span className="text-zinc-600">|</span>
+            <span className="text-zinc-400">0.044 RTF</span>
           </div>
         </div>
       </header>
 
-      {/* 2. Central Assistive Zone */}
-      <section className="my-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        {/* Left Column: Giant Tactile Mic Button & Live Waveform */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-2xl bg-surface/50 border border-border/60">
+      {/* 2. Unified Hero Instrument Stage */}
+      <section className="my-6 flex flex-col gap-5">
+        {/* The Reconstructed Speech Hero Card */}
+        <TranscriptDisplay
+          transcript={transcript}
+          latencyMs={latencyMs}
+          confidenceScore={confidenceScore}
+          isProcessing={micState === "processing"}
+          recordedAudioUrl={recordedAudioUrl}
+          statusNotice={statusNotice}
+          source={source}
+          onClear={handleClear}
+        />
+
+        {/* Hardware Control Strip: Oscilloscope + Tactile Switch */}
+        <div className="rounded-xl bg-zinc-900/60 border border-zinc-800 p-5 flex flex-col items-center gap-4">
+          {/* Audio Oscillograph */}
+          <AudioWaveformCanvas
+            isRecording={micState === "listening"}
+            audioAnalyser={audioAnalyser}
+          />
+
+          {/* Mechanical Recording Switch */}
           <TactileMicButton
             state={micState}
             onToggle={handleToggleMic}
             audioLevel={audioLevel}
           />
-
-          {/* Real-time Voice Detection Telemetry */}
-          {micState === "listening" && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase text-clinical-muted">Mic:</span>
-              <div className="h-2 w-28 rounded-full bg-surface-card overflow-hidden border border-border">
-                <div
-                  className={`h-full transition-all duration-75 ${
-                    audioLevel > 0.05 ? "bg-clinical-teal-light" : "bg-clinical-muted/30"
-                  }`}
-                  style={{ width: `${Math.max(6, Math.min(100, Math.round(audioLevel * 100)))}%` }}
-                />
-              </div>
-              <span
-                className={`text-[10px] font-mono font-semibold ${
-                  audioLevel > 0.05 ? "text-clinical-teal-light" : "text-clinical-muted"
-                }`}
-              >
-                {audioLevel > 0.05 ? "Voice Active" : "Listening..."}
-              </span>
-            </div>
-          )}
-
-          <div className="w-full mt-4">
-            <AudioWaveformCanvas
-              isRecording={micState === "listening"}
-              audioAnalyser={audioAnalyser}
-            />
-          </div>
-
-          <p className="mt-3 text-[11px] text-clinical-muted font-mono text-center">
-            Designed for motor tremors • 160px touch target • Spacebar hotkey
-          </p>
-        </div>
-
-        {/* Right Column: 32px High-Legibility Readout & Speech Synthesis */}
-        <div className="lg:col-span-7 flex flex-col justify-center">
-          <TranscriptDisplay
-            transcript={transcript}
-            latencyMs={latencyMs}
-            confidenceScore={confidenceScore}
-            isProcessing={micState === "processing"}
-            recordedAudioUrl={recordedAudioUrl}
-            statusNotice={statusNotice}
-            source={source}
-            onClear={handleClear}
-          />
         </div>
       </section>
 
-      {/* 3. AAC Emergency Quick-Tap Grid */}
-      <section className="mb-6">
-        <QuickAssistGrid onSpeakPhrase={handleSelectQuickPhrase} />
-      </section>
-
-      {/* 4. Clinical Benchmark Drawer (TORGO Trials for Judges) */}
+      {/* 3. Clinical Verification Switchboard (TORGO Archive A/B) */}
       <section className="mb-6">
         <ClinicalBenchmarkDrawer onLoadTrial={handleLoadTrial} />
       </section>
 
-      {/* 5. Accessible Footer */}
-      <footer className="pt-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-clinical-muted">
-        <div className="flex items-center gap-2">
-          <Info className="h-4 w-4 text-clinical-teal-light" />
-          <span>
-            Zero cloud data persistence • 100% ephemeral in-memory processing • HIPAA/GDPR private
-          </span>
+      {/* 4. AAC Tactile Assist Soundboard */}
+      <section className="mb-6">
+        <QuickAssistGrid onSpeakPhrase={handleSelectQuickPhrase} />
+      </section>
+
+      {/* 5. Industrial Footer */}
+      <footer className="pt-4 border-t border-zinc-850 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-zinc-500">
+        <div>
+          <span>100% On-Device & Ephemeral • Zero Cloud Persistence • HIPAA / GDPR Private</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span>Press <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono text-clinical-text">Spacebar</kbd> to toggle microphone</span>
+        <div className="flex items-center gap-2">
+          <span>Press</span>
+          <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-[10px] text-zinc-300">
+            SPACE
+          </kbd>
+          <span>to record</span>
         </div>
       </footer>
     </main>

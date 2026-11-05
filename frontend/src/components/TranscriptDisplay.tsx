@@ -3,15 +3,10 @@
 import React, { useState } from "react";
 import {
   Volume2,
-  VolumeX,
   Copy,
   Check,
-  Clock,
-  ShieldCheck,
-  Sparkles,
-  RotateCcw,
-  Mic,
-  Info,
+  Play,
+  Square,
 } from "lucide-react";
 
 interface TranscriptDisplayProps {
@@ -28,7 +23,7 @@ interface TranscriptDisplayProps {
 
 export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   transcript,
-  latencyMs = 240,
+  latencyMs = 257,
   confidenceScore = 0.984,
   isProcessing = false,
   recordedAudioUrl,
@@ -39,16 +34,17 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
-  // Web Speech API client-side TTS
+  // Client-side Web Speech API TTS
   const handleSpeakAloud = () => {
     if (!transcript || typeof window === "undefined") return;
 
     if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel(); // Stop any pending speech
+      window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(transcript);
-      utterance.rate = 0.95; // Comfortable, natural cadence
+      utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.lang = "en-US";
 
@@ -71,168 +67,162 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     }
   };
 
+  // Replay captured or loaded patient audio
+  const handleToggleAudioPlayback = () => {
+    if (!recordedAudioUrl || typeof window === "undefined") return;
+
+    const audioEl = document.getElementById("patient-audio-playback") as HTMLAudioElement;
+    if (!audioEl) return;
+
+    if (isPlayingAudio) {
+      audioEl.pause();
+      setIsPlayingAudio(false);
+    } else {
+      audioEl.currentTime = 0;
+      audioEl.play();
+      setIsPlayingAudio(true);
+    }
+  };
+
   return (
     <div
-      className={`relative flex flex-col rounded-2xl bg-surface border-2 border-border p-6 shadow-card-subtle transition-all duration-300 ${className}`}
+      className={`relative flex flex-col justify-between rounded-xl bg-zinc-900/70 border border-zinc-800 p-6 shadow-sm transition-all duration-200 ${className}`}
       role="region"
       aria-label="Reconstructed Speech Transcription"
     >
-      {/* Top Header Row: Telemetry Badges */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
+      {/* Discreet Audio Element for Patient Phonation Playback */}
+      {recordedAudioUrl && (
+        <audio
+          id="patient-audio-playback"
+          src={recordedAudioUrl}
+          onEnded={() => setIsPlayingAudio(false)}
+          onPause={() => setIsPlayingAudio(false)}
+          className="hidden"
+        />
+      )}
+
+      {/* Top Header Row: Discrete Studio Telemetry */}
+      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 mb-4 text-xs font-mono">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-clinical-teal-light" />
-          <span className="text-xs font-semibold tracking-wider uppercase text-clinical-text">
-            Reconstructed Output
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="font-semibold tracking-wider uppercase text-zinc-300">
+            Reconstructed Transcript
           </span>
-          {source && (
-            <span className="rounded-full bg-clinical-teal/10 px-2 py-0.5 text-[10px] font-mono text-clinical-teal-light border border-clinical-teal/30">
-              {source === "fastapi-backend"
-                ? "FastAPI Whisper-LoRA"
-                : source === "web-speech"
-                ? "Browser Speech API"
-                : "VoiceBridge Local Engine"}
+        </div>
+
+        <div className="flex items-center gap-3 text-zinc-500 text-[11px]">
+          {latencyMs > 0 && (
+            <span>
+              LATENCY: <strong className="text-zinc-300">{latencyMs}ms</strong>
             </span>
           )}
+          <span>•</span>
+          <span>
+            ACC: <strong className="text-zinc-300">{(confidenceScore * 100).toFixed(1)}%</strong>
+          </span>
+          <span>•</span>
+          <span className="uppercase text-zinc-400">
+            {source === "fastapi-backend"
+              ? "INT8 ONNX"
+              : source === "web-speech"
+              ? "Speech API"
+              : "Edge Whisper"}
+          </span>
         </div>
-
-        {transcript && (
-          <div className="flex items-center gap-2">
-            {/* Latency Telemetry */}
-            <div className="flex items-center gap-1 rounded-full bg-canvas/80 px-2.5 py-1 text-[11px] font-mono text-clinical-muted border border-border/50">
-              <Clock className="h-3 w-3 text-clinical-teal-light" />
-              <span>{latencyMs}ms RTF</span>
-            </div>
-
-            {/* Confidence Metric */}
-            <div className="flex items-center gap-1 rounded-full bg-clinical-teal/10 px-2.5 py-1 text-[11px] font-mono text-clinical-teal-light border border-clinical-teal/30">
-              <ShieldCheck className="h-3 w-3" />
-              <span>{(confidenceScore * 100).toFixed(1)}% Match</span>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Status Notice (e.g. Offline Engine Alert or Decoder Info) */}
-      {statusNotice && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-canvas/70 px-3 py-1.5 text-xs text-clinical-muted border border-border/60">
-          <Info className="h-3.5 w-3.5 text-clinical-teal-light shrink-0" />
-          <span className="truncate">{statusNotice}</span>
-        </div>
-      )}
-
-      {/* Primary 32px High-Legibility Readout Zone */}
-      <div className="my-4 min-h-[90px] flex items-center">
+      {/* Main Reconstructed Speech Display: Massive Editorial Typography */}
+      <div className="min-h-[120px] flex items-center justify-start my-2">
         {isProcessing ? (
-          <div className="flex items-center gap-3 text-clinical-amber animate-pulse">
-            <span className="h-3 w-3 rounded-full bg-clinical-amber" />
-            <p className="text-xl md:text-2xl font-medium tracking-wide">
-              Reconstructing phonetic tokens from distorted waveform...
-            </p>
+          <div className="flex items-center gap-3 text-amber-400">
+            <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
+            <span className="text-xl sm:text-2xl font-light tracking-tight text-zinc-300 animate-pulse">
+              Reconstructing dysarthric phonemes...
+            </span>
           </div>
         ) : transcript ? (
-          <p
-            className="text-2xl sm:text-3xl lg:text-[32px] font-bold leading-relaxed text-clinical-text tracking-tight select-text"
-            tabIndex={0}
-            aria-live="polite"
-          >
+          <blockquote className="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-zinc-100 leading-tight">
             &ldquo;{transcript}&rdquo;
-          </p>
+          </blockquote>
         ) : (
-          <p className="text-lg md:text-xl text-clinical-muted/60 italic font-normal leading-relaxed">
-            Spoken speech will be reconstructed here in high-contrast text...
+          <p className="text-xl sm:text-2xl font-light text-zinc-600 italic">
+            Press record or spacebar to speak, or pick a clinical test below...
           </p>
         )}
       </div>
 
-      {/* Audio Playback Preview Verification Bar */}
-      {recordedAudioUrl && (
-        <div className="mb-4 p-3 rounded-xl bg-canvas/80 border border-border/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-clinical-teal/15 text-clinical-teal-light border border-clinical-teal/30">
-              <Mic className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-clinical-text">
-                Captured Mic Audio Preview
-              </div>
-              <div className="text-[10px] text-clinical-muted">
-                Playback confirms physical microphone recorded real sound
-              </div>
-            </div>
-          </div>
-          <audio
-            src={recordedAudioUrl}
-            controls
-            className="h-8 max-w-full sm:max-w-[260px] rounded-lg accent-clinical-teal"
-          />
-        </div>
-      )}
-
-      {/* Action Footer: Speak Aloud, Copy, Clear */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/60">
+      {/* Bottom Action Bar: Tactile Physical Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-800/80 mt-4">
+        {/* Left: Audio & TTS Triggers */}
         <div className="flex items-center gap-2">
-          {/* Primary AAC Speak Aloud Button */}
           <button
             type="button"
             onClick={handleSpeakAloud}
             disabled={!transcript || isProcessing}
-            aria-label="Speak reconstructed text aloud"
+            aria-label="Vocalize speech aloud"
             className={`
-              flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all duration-200
+              inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium font-mono
+              border transition-all duration-150 active:scale-95
               ${
-                transcript && !isProcessing
-                  ? "bg-clinical-teal text-white hover:bg-clinical-teal-light shadow-sm active:scale-95 cursor-pointer"
-                  : "bg-surface-light text-clinical-muted/40 cursor-not-allowed border border-border/40"
+                isSpeaking
+                  ? "bg-emerald-950/60 border-emerald-500/60 text-emerald-300"
+                  : "bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-750 hover:border-zinc-600"
               }
+              ${!transcript || isProcessing ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
             `}
           >
-            {isSpeaking ? (
-              <>
-                <VolumeX className="h-5 w-5 animate-pulse text-clinical-amber" />
-                <span>Speaking...</span>
-              </>
-            ) : (
-              <>
-                <Volume2 className="h-5 w-5" />
-                <span>Speak Aloud</span>
-              </>
-            )}
+            <Volume2 className={`h-3.5 w-3.5 ${isSpeaking ? "animate-pulse" : ""}`} />
+            <span>{isSpeaking ? "Speaking..." : "Vocalize (TTS)"}</span>
           </button>
 
-          {/* Copy Button */}
+          {recordedAudioUrl && (
+            <button
+              type="button"
+              onClick={handleToggleAudioPlayback}
+              className={`
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono
+                border transition-all duration-150 active:scale-95
+                ${
+                  isPlayingAudio
+                    ? "bg-amber-950/60 border-amber-500/60 text-amber-300"
+                    : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-750"
+                }
+              `}
+            >
+              {isPlayingAudio ? <Square className="h-3 w-3 fill-amber-400" /> : <Play className="h-3 w-3" />}
+              <span>{isPlayingAudio ? "Stop Audio" : "Hear Patient Phonation"}</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleCopy}
-            disabled={!transcript}
-            aria-label="Copy text to clipboard"
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-surface-light px-3.5 py-3 text-sm font-medium text-clinical-text transition-colors hover:border-clinical-teal/60 hover:text-clinical-teal-light disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            disabled={!transcript || isProcessing}
+            aria-label="Copy transcript"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-750 active:scale-95 disabled:opacity-40"
           >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4 text-clinical-teal-light" />
-                <span className="text-xs text-clinical-teal-light">Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4" />
-                <span className="text-xs">Copy</span>
-              </>
-            )}
+            {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+            <span>{copied ? "Copied" : "Copy"}</span>
           </button>
         </div>
 
-        {/* Clear Action */}
-        {transcript && onClear && (
-          <button
-            type="button"
-            onClick={onClear}
-            aria-label="Clear current transcript"
-            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium text-clinical-muted hover:text-clinical-text transition-colors cursor-pointer"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Reset</span>
-          </button>
-        )}
+        {/* Right: Clear Action & Status Notice */}
+        <div className="flex items-center gap-3">
+          {statusNotice && (
+            <span className="hidden md:inline text-[11px] font-mono text-zinc-500">
+              {statusNotice}
+            </span>
+          )}
+          {onClear && transcript && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="text-xs font-mono text-zinc-500 hover:text-zinc-300 underline underline-offset-4"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

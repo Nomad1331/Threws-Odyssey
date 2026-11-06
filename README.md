@@ -74,12 +74,33 @@ VoiceBridge/
 
 ## 🚀 Quickstart
 
-### 1. Acoustic Model LoRA Training (Kaggle GPU)
-1. Open [`model_training/VoiceBridge_Trainer.ipynb`](model_training/VoiceBridge_Trainer.ipynb) on Kaggle GPU.
-2. Enable GPU: `Runtime` $\rightarrow$ `Change runtime type` $\rightarrow$ **T4 GPU**.
-3. Select **Run All**. The notebook streams the TORGO database, benchmarks standard Whisper WER, trains the LoRA adapter ($r=16$), and packages `voicebridge_lora_weights.zip`.
+### 1. Start the trained-model inference backend
 
-### 2. Dataset Streaming Verification (Local Python)
+The model is already trained and available as
+[`Aaliya05/voicebridge`](https://huggingface.co/Aaliya05/voicebridge). Training
+is not required to run the application.
+
+```bash
+pip install -r backend/requirements.txt
+uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+The backend downloads the base `openai/whisper-tiny` model and the trained LoRA
+adapter on first startup. It uses CUDA when available and otherwise runs on CPU.
+
+### 2. Start the frontend
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+### 3. Optional dataset streaming verification
 ```bash
 cd model_training
 pip install datasets transformers evaluate soundfile jiwer

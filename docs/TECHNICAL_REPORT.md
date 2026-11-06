@@ -17,7 +17,7 @@
 
 Automated Speech Recognition (ASR) foundation models achieve remarkable accuracy on normative speech but exhibit catastrophic failure on dysarthric speech, routinely exceeding **70% Word Error Rate (WER)** on speakers with neuromotor disorders such as Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), and Stroke. This failure stems from acoustic distortions—primarily vowel formant centralization toward a neutral schwa (`/ə/`) and the attenuation of high-frequency stop consonant bursts—which normative acoustic encoders classify as background noise or silence. Retraining multi-billion-parameter foundation models is computationally prohibitive, causes catastrophic forgetting on general vocabulary, and relies on cloud APIs that introduce critical patient privacy risks and latency bottlenecks (>800ms).
 
-In this work, we present **VoiceBridge**, an open, edge-accelerated speech reconstruction system designed specifically for clinical dysarthria. VoiceBridge decouples acoustic adaptation from computational throughput using a two-stage pipeline: (1) Parameter-Efficient Fine-Tuning (PEFT) via Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on the University of Toronto TORGO clinical archive, freezing 99.6% of base `openai/whisper-tiny` weights while adapting Query and Value encoder attention projections using only ~1.5 MB of trainable parameters; and (2) Computational graph decomposition and dynamic **ONNX INT8 quantization** optimized for multi-core consumer CPUs. 
+In this work, we present **VoiceBridge**, an open, edge-accelerated speech reconstruction system designed specifically for clinical dysarthria. VoiceBridge decouples acoustic adaptation from computational throughput using a two-stage pipeline: (1) Parameter-Efficient Fine-Tuning (PEFT) via Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on the University of Toronto TORGO clinical archive, freezing 99.6% of base `openai/whisper-tiny` weights while adapting Query and Value attention projections in the encoder and decoder using only ~1.5 MB of trainable parameters; and (2) Computational graph decomposition and dynamic **ONNX INT8 quantization** optimized for multi-core consumer CPUs.
 
 Empirical benchmarks demonstrate that VoiceBridge shrinks model storage by **74.42%** (from 404.49 MB down to **103.45 MB** across three ONNX graphs) and achieves an average inference latency of **257.0 ms** with a **Real-Time Factor (RTF) of 0.0439** (**22.7× faster than real-time**). Integrated with a WCAG 2.1 AAA accessible Next.js web interface featuring a 160px tactile touch target, real-time 60 FPS waveform feedback, and dual-channel Text-to-Speech (TTS) resynthesis, VoiceBridge establishes a viable, zero-cloud, privacy-preserving communication companion for motor-impaired individuals.
 
@@ -45,8 +45,8 @@ Speech is the primary mechanism of human autonomy. However, dysarthria—a neuro
 ### 1.1 The "70% Failure Wall" in Commercial ASR
 Modern foundation speech models (OpenAI Whisper, Google Cloud Speech, Apple Siri) rely on deep Conformer and Transformer encoders trained on tens of thousands of hours of normative, fluent speech. When exposed to dysarthric utterances, these encoders encounter three fatal acoustic discrepancies:
 1. **Vowel Formant Centralization:** Restricted tongue mobility prevents speakers from achieving extreme vocal tract postures. Consequently, first ($F_1$) and second ($F_2$) formants collapse toward the neutral frequency of the vocal tract (~500 Hz and ~1500 Hz), causing models to confuse distinct vowels (e.g., mapping *"feed"* or *"food"* to *"fad"* or neutral murmurs).
-2. **Consonant Transient Attenuation:** Weak oral-motor closure prevents the build-up of intraoral air pressure required for plosive consonant releases ($p, b, t, d$). Instead of sharp acoustic spikes, plosives appear as soft fricative noise, which normative VAD and acoustic filters discard as ambient noise.
-3. **Involuntary Prosodic Arrests:** Spasticity leads to extended, irregular pauses mid-phrase (400ms–900ms). Standard endpointers misinterpret these pauses as phrase boundaries, prematurely truncating sentences before the speaker can finish.
+2. **Consonant Transient Attenuation:** Weak oral-motor closure prevents the build-up of intraoral air pressure required for plosive consonant releases ($p, b, t, d$). Instead of sharp acoustic spikes, plosives appear as soft fricative noise.
+3. **Involuntary Prosodic Arrests:** Spasticity can produce extended, irregular pauses mid-phrase, contributing to recognition difficulty.
 
 As verified in our baseline benchmarks on held-out TORGO samples, standard `openai/whisper-tiny` yields a mean **72.4% Word Error Rate**, with severe samples collapsing into total acoustic hallucinations (e.g., transcribing *"The job provides many benefits"* as *"Let the earth provide mercy, mercy, mercy."*).
 
@@ -72,7 +72,7 @@ To eliminate speaker memorization and evaluate true clinical generalization, Voi
 
 ## 3. Acoustic Adaptation via Low-Rank Adaptation (PEFT / LoRA)
 
-Rather than undertaking full parameter fine-tuning—which demands high-end GPU clusters and triggers catastrophic forgetting of foundation language knowledge—we implement **Low-Rank Adaptation (LoRA)** into the Transformer encoder of `openai/whisper-tiny` (39M base parameters).
+Rather than undertaking full parameter fine-tuning—which demands high-end GPU clusters and triggers catastrophic forgetting of foundation language knowledge—we implement **Low-Rank Adaptation (LoRA)** in the attention projections of `openai/whisper-tiny` (39M base parameters). LoRA on q_proj and v_proj, matching attention in the encoder and decoder.
 
 ```
                       LoRA ATTENTION PROJECTION ADAPTATION
@@ -99,7 +99,7 @@ $$h = W_0 x + \Delta W x = W_0 x + \frac{\alpha}{r} (B A) x$$
 where $\alpha$ is a constant scaling hyperparameter. Matrix $A$ is initialized from a random Gaussian distribution $\mathcal{N}(0, \sigma^2)$, while matrix $B$ is initialized to zero, ensuring $\Delta W = 0$ at the onset of training.
 
 ### 3.2 Hyperparameter Configuration
-* **Target Modules:** Query (`q_proj`) and Value (`v_proj`) projection matrices inside all 4 encoder self-attention blocks.
+* **Target Modules:** Query (`q_proj`) and Value (`v_proj`) projection matrices in attention across the encoder and decoder. LoRA on q_proj and v_proj, matching attention in the encoder and decoder.
 * **Rank ($r$):** 16.
 * **Scaling Alpha ($\alpha$):** 32 (effective scaling factor $\alpha/r = 2.0$).
 * **Dropout:** 0.05.
@@ -125,11 +125,11 @@ We apply dynamic asymmetric integer quantization (`quantization_mode=IntegerOps`
 
 $$q = \text{round}\left(\frac{w}{S}\right) + Z$$
 
-where $S$ is the scale factor and $Z$ is the zero-point offset. Dynamic quantization preserves high-precision FP32 activations while quantizing static model weights to 8-bit integers, slashing memory bandwidth requirements by 4× without requiring calibration data.
+where $S$ is the scale factor and $Z$ is the zero-point offset. The quantization uses weights stored in 8-bit, activations quantized at runtime, slashing memory bandwidth requirements by 4× without requiring calibration data.
 
-### 4.3 Audio Pre-Processing & Anti-Hallucination Tuning
-* **Relaxed Silence Boundary (`top_db=45`):** Standard silence trimming (`top_db=25`) was found to cut off up to 1.85s of quiet patient phonemes due to hypophonia. Relaxing the threshold to 45 dB preserves **99.5% of patient speech duration** while stripping ambient system hum.
-* **Clean Short-Form Greedy Decoding:** Flags intended for >30-second long-form transcription (`no_speech_threshold`, `logprob_threshold`) trigger expensive multi-temperature fallback loops on short 5-second clinical clips. Stripping fallback loops and enforcing clean greedy decoding with `max_new_tokens=32` reduced latency from 1,144 ms to **257.0 ms**.
+### 4.3 Not implemented: Audio Pre-Processing and Decoding
+* **Pause-specific preprocessing and anti-hallucination decoding:** Not implemented.
+* **Special decoding settings:** Not implemented.
 
 ### 4.4 Verified Empirical Edge Telemetry
 
@@ -178,7 +178,7 @@ VoiceBridge is constructed as an end-to-end accessible web platform engineered t
 │   [ Whisper Log-Mel Spectrogram ] ──► [ ONNX Runtime Dynamic INT8 Engine (257ms) ]     │
 │                                                          │                             │
 │                                                          ▼                             │
-│   [ Phonetic Greedy Token Decoder ] ◄────────────────────┘                             │
+│   [ Encoder-decoder, autoregressive decoding ] ◄────────┘                             │
 └───────────────────────────────────────────────────────────────┼────────────────────────┘
                                                                 │ JSON Response {text, latency}
                                                                 ▼
@@ -232,7 +232,7 @@ VoiceBridge demonstrates that clinical accessibility does not require multi-bill
 ### Future Development Milestones
 1. **Multilingual Indic Adaptation:** Extending LoRA adapters to Indian regional languages (Hindi, Marathi, Tamil) using the AI4Bharat IndicVoice and Bhashini speech archives.
 2. **Selective Quantization:** Applying mixed-precision INT8/FP32 layer selection to optimize decoder attention projections on severe dysarthric phonemes.
-3. **Dedicated Assistive Hardware:** Porting the ONNX INT8 runtime directly to low-cost embedded hardware (Raspberry Pi 5 / Coral Edge TPU) to manufacture standalone wearable speech communication aids.
+3. **Dedicated Assistive Hardware:** Porting the ONNX runtime directly to low-cost embedded hardware (Raspberry Pi 5) to manufacture standalone wearable speech communication aids.
 
 ---
 

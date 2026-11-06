@@ -53,26 +53,24 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Testing & Verification:**
   - `npm run build` executed and passed with exit code 0 (zero TypeScript errors, zero ESLint warnings, all 5 pages static optimized).
 * **Next Immediate Step:**
-  - Phase 3 / Brick 10 & Brick 8: Calibrate Silero VAD endpointer thresholds and proceed with LoRA training adaptation.
+  - Phase 3 / Brick 10: Proceed with LoRA training adaptation.
 
 ---
 
-## [2026-11-01] - v0.2.3: Whisper Backbone Upgrade to Base Model
+## [2026-11-01] - v0.2.3: Whisper Backbone Experiment
 
 * **Phase:** Phase 3 (Bricks 8 – 10) / Brick 9 (FastAPI Model Backbone Scaling)
 * **Lead Engineer:** Talha (Lead System Architect) & Antigravity Agent
 * **Team:** Sleeper Cells (SIES GST)
 * **Architectural Rationale:**
-  - Upgraded Whisper model backbone from `tiny` (39M parameters) to `base` (74M parameters) using CTranslate2 INT8 CPU quantization.
-  - Doubles acoustic encoder layer capacity to better resolve distorted vowel formants and impaired consonant burst transients in dysarthric speech, while maintaining sub-100ms inference latency.
+  - Recorded a historical backbone experiment; it was not used in the measured results. Served model: Whisper-tiny.
 * **Files Modified:**
-  - `backend/app/main.py`: Updated lifespan initialization to `WhisperModel("base", device="cpu", compute_type="int8")`. Updated `/health` response to `engine: "whisper-base"` and `/api/v1/translate-audio` response payload to `engine: "whisper-base-cpu"`.
-  - `backend/test_server.py`: Updated test assertions to validate `whisper-base` and `whisper-base-cpu` contract compliance.
+  - Historical backend and test changes from this experiment were not used in the measured results.
 * **Testing & Latency Benchmark Results:**
-  - `GET /health` verified: `200 OK` -> `{'status': 'healthy', 'service': 'VoiceBridge ASR Gateway', 'engine': 'whisper-base'}`.
+  - `GET /health` was verified during a historical experiment; those results were not used in the measured results.
   - `POST /api/v1/translate-audio` verified: Processed 1-second 16kHz audio in **93ms** on CPU.
 * **Next Immediate Step:**
-  - Phase 3 / Brick 10: Wire fine-tuned TORGO LoRA adapter weights onto `base` and profile ONNX INT8 quantization with Moulika.
+  - Phase 3 / Brick 10: Wire fine-tuned TORGO LoRA adapter weights onto Whisper-tiny and profile ONNX quantization with Moulika.
 
 ---
 
@@ -83,12 +81,12 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Team:** Sleeper Cells (SIES GST)
 * **Files Created & Configured:**
   - `backend/`: Initialized dedicated Python microservice environment with isolated virtual environment (`backend/.venv`).
-  - `backend/requirements.txt`: Specified production dependencies (`fastapi`, `uvicorn[standard]`, `faster-whisper`, `python-multipart`, `pydantic`, `av<14`, `ctranslate2`).
+  - `backend/requirements.txt`: Specified production dependencies (`fastapi`, `uvicorn[standard]`, `faster-whisper`, `python-multipart`, `pydantic`, `av<14`).
   - `backend/app/main.py`: Built production asynchronous FastAPI server featuring:
-    * CORS middleware allowing origins `http://localhost:3000`, `http://127.0.0.1:3000`, and `*`.
+    * CORS middleware allowing origins `http://localhost:3000` and `http://127.0.0.1:3000`.
     * Lifespan context manager initializing CPU-optimized `WhisperModel("tiny", device="cpu", compute_type="int8")` at server startup to eliminate cold-start latency.
     * `GET /health`: Diagnostic health check reporting service status, gateway title, and active model engine.
-    * `POST /api/v1/translate-audio`: High-throughput audio ingestion gateway accepting `.webm`, `.wav`, `.ogg`, and `.mp3` streams via `multipart/form-data`. Implemented tempfile stream spooling, internal Silero VAD silence filtering (600ms threshold), greedy token decoding, and structured telemetry JSON responses (`transcription`, `confidence_score`, `processing_time_ms`, `engine`).
+    * `POST /api/v1/translate-audio`: High-throughput audio ingestion gateway accepting `.webm`, `.wav`, `.ogg`, and `.mp3` streams via `multipart/form-data`. Implemented tempfile stream spooling, greedy token decoding, and structured telemetry JSON responses (`transcription`, `confidence_score`, `processing_time_ms`, `engine`).
   - `backend/test_server.py`: Integration test suite executing TestClient calls against `/health` and generating synthesized 16kHz WAV audio to verify end-to-end `/api/v1/translate-audio` inference.
 * **Testing & Verification Results:**
   - `GET /health` verified: `200 OK` -> `{'status': 'healthy', 'service': 'VoiceBridge ASR Gateway', 'engine': 'whisper-tiny'}`.
@@ -166,8 +164,8 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ### Added
 * **Project Initiation:** Locked target into **THREWS Odyssey 2026** under the **Human-AI & Assistive Technology** track.
-* **Scientific Verification:** Verified streaming endpoint for University of Toronto TORGO dataset (`abnerh/TORGO-database`) on Hugging Face Hub.
+* **Scientific Verification:** Verified streaming access for University of Toronto TORGO dataset (`abnerh/TORGO-database`) on Hugging Face Hub.
 * **Documentation Suite:** Created core documentation (`ROADMAP.md`, `docs/PROJECT_CONTEXT.md`, `docs/DATASETS_AND_PROOF.md`).
 * **Starter Assets:**
-  * `model_training/VoiceBridge_Trainer.ipynb`: GPU-accelerated training notebook for Whisper-tiny LoRA fine-tuning.
+  * `model_training/VoiceBridge_Trainer.ipynb`: Fine-tuning notebook: Whisper-small (pending results). Served model: Whisper-tiny.
   * `model_training/torgo_streaming_test.py`: Python streaming test script.

@@ -33,7 +33,7 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
            (Compressed to ~40MB RAM Footprint)
                       │
                       ▼
-    [Phonetic CTC / Greedy Token Decoding]
+    [Encoder-decoder, autoregressive decoding]
                       │
                       ▼
    [Live Text Display + Web Speech API Re-Synthesis]
@@ -60,7 +60,7 @@ VoiceBridge/
 │   ├── PROJECT_CONTEXT.md          # Complete clinical problem formulation & architecture dossier
 │   └── DATASETS_AND_PROOF.md       # University of Toronto TORGO dataset proof & citations
 ├── model_training/
-│   ├── VoiceBridge_Trainer.ipynb # Turnkey GPU training notebook
+│   ├── VoiceBridge_Trainer.ipynb # Fine-tuning notebook: Whisper-small (pending results). Served model: Whisper-tiny.
 │   └── torgo_streaming_test.py     # Python standalone dataset streaming test script
 ├── frontend/                       # Next.js 14 Accessible Web Application (In Progress)
 ├── backend/                        # FastAPI Asynchronous Microservice (In Progress)
@@ -121,6 +121,6 @@ python torgo_streaming_test.py
 
 ## 📜 Scientific Reference & Dataset Attribution
 * **Dataset:** University of Toronto TORGO database for dysarthric articulation (*Frank Rudzicz, A. Roeck, E. Wang, 2012*).
-* **Streaming Endpoint:** `abnerh/TORGO-database` on Hugging Face Hub.
+* **Dataset source:** `abnerh/TORGO-database` on Hugging Face Hub.
 * **Target Event:** THREWS Odyssey 2026 (*The Research World*).
 * **License:** Open-source under the MIT License.

@@ -5,7 +5,7 @@ import { TactileMicButton, MicState } from "@/components/TactileMicButton";
 import { AudioWaveformCanvas } from "@/components/AudioWaveformCanvas";
 import { TranscriptDisplay } from "@/components/TranscriptDisplay";
 import { QuickAssistGrid } from "@/components/QuickAssistGrid";
-import { ClinicalBenchmarkDrawer, BenchmarkTrial } from "@/components/ClinicalBenchmarkDrawer";
+import { ClinicalBenchmarkDrawer } from "@/components/ClinicalBenchmarkDrawer";
 import { transcribeAudio } from "@/lib/transcriptionService";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -45,24 +45,19 @@ interface SpeechRecognitionErrorEvent extends Event {
   error: string;
 }
 
+type SourceType = "fastapi-backend" | "web-speech" | "unavailable";
+
 export default function Home() {
   const [micState, setMicState] = useState<MicState>("idle");
-  const [transcript, setTranscript] = useState<string>(
-    "The job provides many benefits."
-  );
-  const [latencyMs, setLatencyMs] = useState<number>(257);
-  const [confidenceScore, setConfidenceScore] = useState<number>(0.984);
+  const [transcript, setTranscript] = useState<string>("");
+  const [latencyMs, setLatencyMs] = useState<number | null>(null);
+  const [confidenceScore, setConfidenceScore] = useState<number | null>(null);
   const [audioAnalyser, setAudioAnalyser] = useState<AnalyserNode | null>(null);
   const [audioLevel, setAudioLevel] = useState<number>(0);
-  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(
-    "/audio/torgo_severe_sample.wav"
-  );
-  const [statusNotice, setStatusNotice] = useState<string | undefined>(
-    "Calibrated with University of Toronto TORGO dysarthria model."
-  );
-  const [source, setSource] = useState<
-    "fastapi-backend" | "web-speech" | "local-whisper-fallback" | undefined
-  >("local-whisper-fallback");
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [statusNotice, setStatusNotice] = useState<string | undefined>(undefined);
+  const [secondaryTranscript, setSecondaryTranscript] = useState<string | undefined>(undefined);
+  const [source, setSource] = useState<SourceType | undefined>(undefined);
   const [showJudgeConsole, setShowJudgeConsole] = useState<boolean>(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -72,7 +67,6 @@ export default function Home() {
   const recognitionRef = useRef<IWindowSpeechRecognition | null>(null);
   const capturedTextRef = useRef<string>("");
   const recognitionErrorRef = useRef<string | null>(null);
-  const startTimeRef = useRef<number>(0);
 
   // Real-time microphone audio volume tracking
   useEffect(() => {
@@ -111,11 +105,11 @@ export default function Home() {
     };
   }, [recordedAudioUrl]);
 
-  // Toggle Live Microphone Recording with MediaRecorder & Speech Recognition
+  // Toggle live microphone recording with MediaRecorder.
   const handleToggleMic = useCallback(async () => {
     if (micState === "listening") {
       setMicState("processing");
-      setStatusNotice("Processing acoustic buffer...");
+      setStatusNotice("Processing audio...");
 
       if (recognitionRef.current) {
         try {
@@ -124,8 +118,6 @@ export default function Home() {
           console.warn("Speech recognition stop notice:", e);
         }
       }
-
-      const durationMs = Math.max(150, Math.round(performance.now() - startTimeRef.current));
 
       const finalizeProcessing = async () => {
         let audioBlob: Blob;
@@ -158,28 +150,17 @@ export default function Home() {
         const result = await transcribeAudio(
           audioBlob,
           capturedTextRef.current,
-          recognitionErrorRef.current,
-          durationMs
+          recognitionErrorRef.current
         );
 
         setTranscript(result.text);
         setLatencyMs(result.latencyMs);
         setConfidenceScore(result.confidence);
         setStatusNotice(result.statusNotice);
+        setSecondaryTranscript(result.secondaryText);
         setSource(result.source);
         setMicState("idle");
-
-        if (
-          result.text &&
-          !result.text.startsWith("No speech detected") &&
-          typeof window !== "undefined" &&
-          "speechSynthesis" in window
-        ) {
-          window.speechSynthesis.cancel();
-          const u = new SpeechSynthesisUtterance(result.text);
-          u.rate = 0.95;
-          window.speechSynthesis.speak(u);
-        }
+        // No auto-speak: the user taps "Say it" to hear the result.
       };
 
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
@@ -199,8 +180,7 @@ export default function Home() {
       capturedTextRef.current = "";
       recognitionErrorRef.current = null;
       audioChunksRef.current = [];
-      startTimeRef.current = performance.now();
-      setStatusNotice("Capturing 16kHz microphone stream...");
+      setStatusNotice("Capturing microphone stream...");
 
       let stream: MediaStream | null = null;
       try {
@@ -279,10 +259,7 @@ export default function Home() {
               fullText += event.results[i][0].transcript + " ";
             }
             const clean = fullText.trim();
-            if (clean) {
-              capturedTextRef.current = clean;
-              setTranscript(clean);
-            }
+            if (clean) capturedTextRef.current = clean;
           };
 
           recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -301,38 +278,13 @@ export default function Home() {
     }
   }, [micState]);
 
-  // Load a preset clinical trial from the benchmark drawer
-  const handleLoadTrial = (trial: BenchmarkTrial) => {
-    setMicState("processing");
-    setStatusNotice(`Loaded TORGO ${trial.severity} trial: ${trial.condition} (${trial.speakerId})`);
-    setSource("local-whisper-fallback");
-    setRecordedAudioUrl(trial.audioUrl);
-    setTimeout(() => {
-      setTranscript(trial.voiceBridgePred);
-      setLatencyMs(trial.latencyMs);
-      setConfidenceScore(0.992);
-      setMicState("idle");
-
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(trial.voiceBridgePred);
-        u.rate = 0.95;
-        window.speechSynthesis.speak(u);
-      }
-    }, 280);
-  };
-
-  const handleSelectQuickPhrase = (phrase: string) => {
-    setTranscript(phrase);
-    setLatencyMs(25);
-    setConfidenceScore(1.0);
-    setStatusNotice("Instant speech phrase vocalized");
-    setSource("web-speech");
-  };
-
   const handleClear = () => {
     setTranscript("");
+    setLatencyMs(null);
+    setConfidenceScore(null);
     setStatusNotice(undefined);
+    setSecondaryTranscript(undefined);
+    setSource(undefined);
     setRecordedAudioUrl((prev) => {
       if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
       return null;
@@ -341,21 +293,19 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col justify-between p-4 sm:p-6 lg:p-8 max-w-xl mx-auto selection:bg-amber-500/30 selection:text-amber-200">
-      {/* 1. Header Matching Mockup */}
+      {/* 1. Header */}
       <header className="flex flex-col items-center justify-center pt-2 pb-4 text-center">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-sans">
           VoiceBridge
         </h1>
-        {/* Discreet Hardware Status Pill */}
         <div className="mt-1.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-400 shadow-sm">
           <span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-          <span>Offline Edge ASR • 250ms</span>
+          <span>Research prototype</span>
         </div>
       </header>
 
-      {/* 2. Hero Stage: The Pure Reconstructed Speech Card */}
+      {/* 2. Hero stage */}
       <section className="my-auto flex flex-col items-center gap-5 w-full">
-        {/* Speech Card */}
         <div className="w-full">
           <TranscriptDisplay
             transcript={transcript}
@@ -364,12 +314,12 @@ export default function Home() {
             isProcessing={micState === "processing"}
             recordedAudioUrl={recordedAudioUrl}
             statusNotice={statusNotice}
+            secondaryTranscript={secondaryTranscript}
             source={source}
             onClear={handleClear}
           />
         </div>
 
-        {/* Clean Soundwave Amplitude Monitor */}
         <div className="w-full py-1">
           <AudioWaveformCanvas
             isRecording={micState === "listening"}
@@ -377,7 +327,6 @@ export default function Home() {
           />
         </div>
 
-        {/* Tactile Hardware Dial Switch */}
         <div className="py-1">
           <TactileMicButton
             state={micState}
@@ -386,15 +335,13 @@ export default function Home() {
           />
         </div>
 
-        {/* Tactile Soundboard Pill Buttons (Natural Thumb Zone) */}
         <div className="w-full pt-1">
-          <QuickAssistGrid onSpeakPhrase={handleSelectQuickPhrase} />
+          <QuickAssistGrid />
         </div>
       </section>
 
-      {/* 3. Bottom Section: Clinical Benchmark Matrix for Evaluators */}
+      {/* 3. Clinical benchmark archive */}
       <footer className="pt-6 pb-2 border-t border-zinc-850/80 flex flex-col items-center gap-3 w-full">
-        {/* Collapsible Trigger for Hackathon Jury */}
         <button
           type="button"
           onClick={() => setShowJudgeConsole((prev) => !prev)}
@@ -408,15 +355,14 @@ export default function Home() {
           )}
         </button>
 
-        {/* Expandable Forensic Console */}
         {showJudgeConsole && (
           <div className="w-full mt-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <ClinicalBenchmarkDrawer onLoadTrial={handleLoadTrial} />
+            <ClinicalBenchmarkDrawer />
           </div>
         )}
 
         <div className="text-[10px] sm:text-[11px] font-mono text-zinc-600 text-center">
-          100% On-Device Whisper ONNX INT8 • Ephemeral In-Memory • SIES GST
+          Research prototype • Not a medical device • SIES GST
         </div>
       </footer>
     </main>

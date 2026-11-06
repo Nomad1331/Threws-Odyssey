@@ -7,7 +7,7 @@ from peft import PeftModel
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 BASE_MODEL = "openai/whisper-tiny"
-ADAPTER_MODEL = "Aaliya05/voicebridge"
+ADAPTER_MODEL = os.getenv("VOICEBRIDGE_ADAPTER_MODEL", "Aaliya05/voicebridge")
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 

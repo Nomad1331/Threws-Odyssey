@@ -38,77 +38,58 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
       ? new Uint8Array(audioAnalyser.frequencyBinCount)
       : null;
 
+    const barCount = 48; // Number of vertical waveform bars
+    const barSpacing = width / barCount;
+    const barWidth = Math.max(2, barSpacing * 0.45);
+
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Create calm clinical gradient (Therapeutic Teal)
-      const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, "rgba(13, 148, 136, 0.2)");
-      gradient.addColorStop(0.5, "rgba(20, 184, 166, 0.95)");
-      gradient.addColorStop(1, "rgba(13, 148, 136, 0.2)");
-
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = gradient;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      ctx.beginPath();
-
-      if (isRecording) {
-        let rms = 0;
-        if (audioAnalyser && dataArray) {
-          audioAnalyser.getByteTimeDomainData(dataArray);
-          // Calculate true RMS energy from real hardware audio stream
-          let sumSquares = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            const normalized = (dataArray[i] - 128) / 128;
-            sumSquares += normalized * normalized;
-          }
-          rms = Math.sqrt(sumSquares / dataArray.length);
-        } else {
-          // Resting telemetry baseline when microphone is waiting
-          rms = 0.02;
+      let effectiveRms = 0.05;
+      if (isRecording && audioAnalyser && dataArray) {
+        audioAnalyser.getByteTimeDomainData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const norm = (dataArray[i] - 128) / 128;
+          sum += norm * norm;
         }
-
-        phaseRef.current += 0.06;
-
-        // Render multi-harmonic smooth sine wave scaled to vocal energy
-        const points = 80;
-        const effectiveRms = audioAnalyser ? rms * 5.0 : 0.02;
-        for (let i = 0; i <= points; i++) {
-          const x = (i / points) * width;
-          const progress = i / points;
-          // Apply Gaussian envelope to taper edges smoothly
-          const envelope = Math.sin(progress * Math.PI);
-          const amplitude = (height * 0.42) * Math.min(effectiveRms, 1) * envelope;
-          
-          const y =
-            centerY +
-            Math.sin(progress * 10 + phaseRef.current) * amplitude * 0.7 +
-            Math.cos(progress * 18 - phaseRef.current * 1.5) * amplitude * 0.3;
-
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-      } else {
-        // Calm resting baseline pulse (medical telemetry look)
-        phaseRef.current += 0.02;
-        const baselineAmplitude = 2.5 * Math.sin(phaseRef.current);
-        ctx.moveTo(0, centerY);
-        ctx.bezierCurveTo(
-          width * 0.35,
-          centerY - baselineAmplitude,
-          width * 0.65,
-          centerY + baselineAmplitude,
-          width,
-          centerY
-        );
+        effectiveRms = Math.min(Math.sqrt(sum / dataArray.length) * 5.0, 1.0);
       }
 
-      ctx.stroke();
+      phaseRef.current += isRecording ? 0.08 : 0.03;
+
+      for (let i = 0; i < barCount; i++) {
+        const x = i * barSpacing + (barSpacing - barWidth) / 2;
+        const progress = i / (barCount - 1);
+        
+        // Bell-curve envelope to taper bars towards edges
+        const envelope = Math.sin(progress * Math.PI);
+
+        let barHeight = 4;
+        if (isRecording) {
+          // Dynamic soundwave reaction
+          const wave =
+            Math.sin(progress * 12 + phaseRef.current) * 0.6 +
+            Math.cos(progress * 20 - phaseRef.current * 1.5) * 0.4;
+          barHeight = Math.max(
+            4,
+            height * 0.8 * effectiveRms * envelope * (0.4 + 0.6 * Math.abs(wave))
+          );
+          ctx.fillStyle = progress > 0.4 && progress < 0.6 ? "#f59e0b" : "#e4e4e7";
+        } else {
+          // Calm resting breath wave
+          const wave = Math.sin(progress * 6 + phaseRef.current);
+          barHeight = Math.max(3, (height * 0.2) * envelope * (0.5 + 0.5 * Math.abs(wave)));
+          ctx.fillStyle = "#3f3f46";
+        }
+
+        const y = centerY - barHeight / 2;
+        
+        // Draw rounded vertical bar
+        ctx.beginPath();
+        ctx.roundRect(x, y, barWidth, barHeight, barWidth / 2);
+        ctx.fill();
+      }
 
       animationFrameRef.current = requestAnimationFrame(render);
     };
@@ -124,24 +105,10 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-xl bg-surface/40 border border-border/50 backdrop-blur-sm ${className}`}
+      className={`relative h-14 sm:h-16 w-full max-w-md mx-auto flex items-center justify-center ${className}`}
       aria-hidden="true"
     >
-      <canvas
-        ref={canvasRef}
-        className="w-full h-16 block"
-        style={{ width: "100%", height: "64px" }}
-      />
-      <div className="absolute top-2 left-3 flex items-center gap-1.5 pointer-events-none">
-        <span
-          className={`h-1.5 w-1.5 rounded-full ${
-            isRecording ? "bg-clinical-teal-light animate-pulse" : "bg-slate-600"
-          }`}
-        />
-        <span className="text-[10px] font-mono tracking-wider text-clinical-muted/70 uppercase">
-          {isRecording ? "16kHz Mono Stream" : "Audio Idle"}
-        </span>
-      </div>
+      <canvas ref={canvasRef} className="h-full w-full block" />
     </div>
   );
 };

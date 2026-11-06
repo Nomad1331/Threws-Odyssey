@@ -45,10 +45,10 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
 
 | Member | Branch / Year | Engineering Domain & Responsibilities |
 | :--- | :--- | :--- |
-| **Talha Shaikh** | 1st Year EXTC | **Lead System Architect & Frontend Lead:** Next.js 14 App Router, Web Audio API 16kHz PCM downsampler, 60 FPS Canvas FFT visualizer, WCAG 2.1 AAA physical accessibility, and overall system integration. |
-| **Aaliya Hussain** | 3rd Year CE | **Machine Learning & Model Adaptation Lead:** Hugging Face TORGO streaming pipeline on Google Colab (T4 GPU), parameter-efficient LoRA fine-tuning ($r=16, \alpha=32$), and adapter checkpoint export. |
+| **Talha** | 1st Year EXTC | **Lead System Architect & Frontend Lead:** Next.js 14 App Router, Web Audio API 16kHz PCM downsampler, 60 FPS Canvas FFT visualizer, WCAG 2.1 AAA physical accessibility, and overall system integration. |
+| **Aaliya Hussain** | 3rd Year CE | **Machine Learning & Model Adaptation Lead:** Hugging Face TORGO streaming pipeline on Kaggle GPU, parameter-efficient LoRA fine-tuning ($r=16, \alpha=32$), and adapter checkpoint export. |
 | **Moulika Sanyal** | 2nd Year CE | **Edge AI Optimization & Model Quantization Lead:** PyTorch-to-ONNX computational graph conversion, dynamic INT8 quantization, CPU memory footprint optimization (~40MB), and inference latency profiling (<300ms RTF). |
-| **Manas Suryawanshi** | 3rd Year EXTC | **Clinical Research & Regulatory Documentation Lead:** Academic research writeup, Word Error Rate (WER) statistical comparison charts, clinical use-case validation, slide deck assembly, and pitch lead. |
+| **Manas Suryawanshi** | 3rd Year ECS | **Clinical Research & Regulatory Documentation Lead:** Project documentation, Word Error Rate (WER) statistical comparison charts, clinical use-case validation, slide deck assembly, and pitch lead. |
 
 ---
 
@@ -60,7 +60,7 @@ VoiceBridge/
 │   ├── PROJECT_CONTEXT.md          # Complete clinical problem formulation & architecture dossier
 │   └── DATASETS_AND_PROOF.md       # University of Toronto TORGO dataset proof & citations
 ├── model_training/
-│   ├── VoiceBridge_Colab_Trainer.ipynb # Turnkey 1-click Colab training notebook (T4 GPU)
+│   ├── VoiceBridge_Trainer.ipynb # Turnkey GPU training notebook
 │   └── torgo_streaming_test.py     # Python standalone dataset streaming test script
 ├── frontend/                       # Next.js 14 Accessible Web Application (In Progress)
 ├── backend/                        # FastAPI Asynchronous Microservice (In Progress)
@@ -74,46 +74,12 @@ VoiceBridge/
 
 ## 🚀 Quickstart
 
-### 1. Start the trained-model inference backend
+### 1. Acoustic Model LoRA Training (Kaggle GPU)
+1. Open [`model_training/VoiceBridge_Trainer.ipynb`](model_training/VoiceBridge_Trainer.ipynb) on Kaggle GPU.
+2. Enable GPU: `Runtime` $\rightarrow$ `Change runtime type` $\rightarrow$ **T4 GPU**.
+3. Select **Run All**. The notebook streams the TORGO database, benchmarks standard Whisper WER, trains the LoRA adapter ($r=16$), and packages `voicebridge_lora_weights.zip`.
 
-The model has already been trained and is hosted at
-[`Aaliya05/voicebridge`](https://huggingface.co/Aaliya05/voicebridge). No
-training step is required for normal use.
-
-```bash
-pip install -r backend/requirements.txt
-uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-On first startup, the backend downloads the base `openai/whisper-tiny` model
-and the trained LoRA adapter from Hugging Face. It automatically uses CUDA
-when available and otherwise runs on CPU.
-
-### 2. Start the frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000). The frontend sends
-recorded audio to `POST /api/v1/translate-audio` on the local backend.
-
-### 3. Optional: regenerate the ONNX INT8 model
-
-The backend uses the trained Transformers + LoRA model directly. To regenerate
-the optional edge-optimized ONNX artifact:
-
-```bash
-pip install torch transformers peft "optimum[onnxruntime]" onnx onnxruntime librosa soundfile numpy
-python model_training/export_and_quantize_onnx.py
-```
-
-### 4. Dataset and training reproducibility
-
-The original training workflow is retained for reproducibility:
-
+### 2. Dataset Streaming Verification (Local Python)
 ```bash
 cd model_training
 pip install datasets transformers evaluate soundfile jiwer

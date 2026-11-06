@@ -1,17 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Pause,
-  CheckCircle2,
-  XCircle,
-  Activity,
-  Cpu,
-  Volume2,
-  Sparkles,
-} from "lucide-react";
+import { Play, Square, ArrowUpRight } from "lucide-react";
 
 export interface BenchmarkTrial {
   id: string;
@@ -45,7 +35,7 @@ const TORGO_TRIALS: BenchmarkTrial[] = [
   },
   {
     id: "trial-2",
-    condition: "Post-Stroke Dysarthria",
+    condition: "Post-Stroke",
     speakerId: "TORGO-M04",
     severity: "Moderate",
     targetText: "Their house is grey and white",
@@ -59,7 +49,7 @@ const TORGO_TRIALS: BenchmarkTrial[] = [
   },
   {
     id: "trial-3",
-    condition: "Amyotrophic Lateral Sclerosis (ALS)",
+    condition: "Severe ALS",
     speakerId: "TORGO-M02",
     severity: "Severe",
     targetText: "The job provides many benefits",
@@ -82,12 +72,10 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
   onLoadTrial,
   className = "",
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeTrialId, setActiveTrialId] = useState<string | null>(null);
+  const [selectedTrialId, setSelectedTrialId] = useState<string>("trial-1");
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize internal audio element
   useEffect(() => {
     const audio = new Audio();
     audioPlayerRef.current = audio;
@@ -98,12 +86,11 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
 
     return () => {
       audio.pause();
-      audio.src = "";
     };
   }, []);
 
-  // Handle playing authentic patient audio
-  const handleToggleAudio = (trial: BenchmarkTrial) => {
+  const handleTogglePlayAudio = (trial: BenchmarkTrial, e: React.MouseEvent) => {
+    e.stopPropagation();
     const audio = audioPlayerRef.current;
     if (!audio) return;
 
@@ -112,209 +99,146 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
       setPlayingAudioId(null);
     } else {
       audio.src = trial.audioUrl;
-      audio.play().catch((err) => console.warn("Audio playback interrupted:", err));
-      setPlayingAudioId(trial.id);
+      audio.currentTime = 0;
+      audio.play().then(() => setPlayingAudioId(trial.id)).catch(() => setPlayingAudioId(null));
     }
   };
 
-  const handleSimulate = (trial: BenchmarkTrial) => {
-    setActiveTrialId(trial.id);
-    onLoadTrial(trial);
-  };
+  const currentTrial = TORGO_TRIALS.find((t) => t.id === selectedTrialId) || TORGO_TRIALS[0];
 
   return (
     <div
-      className={`rounded-2xl border-2 border-border bg-surface/90 shadow-card-subtle overflow-hidden transition-all duration-300 ${className}`}
+      className={`rounded-2xl bg-zinc-900/80 border border-zinc-800/80 p-4 sm:p-5 ${className}`}
       role="region"
-      aria-label="Clinical Benchmark Evaluation Panel"
+      aria-label="Clinical Benchmark Evaluation Matrix"
     >
-      {/* Collapsible Header Toggle */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        className="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-light transition-colors text-left focus:outline-none cursor-pointer"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-clinical-teal/15 text-clinical-teal-light border border-clinical-teal/30">
-            <Activity className="h-5 w-5" />
-          </div>
+      {/* Console Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 pb-3 border-b border-zinc-800">
+        <div className="flex items-center gap-2 font-mono text-xs text-zinc-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+          <span className="font-semibold uppercase tracking-wider text-[11px]">
+            Clinical Benchmark Archive
+          </span>
+        </div>
+        <span className="text-[10px] sm:text-[11px] font-mono text-zinc-500">
+          For Jury & Clinical A/B Evaluation (TORGO Dataset)
+        </span>
+      </div>
+
+      {/* Channel Selector Switchboard */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 my-3">
+        {TORGO_TRIALS.map((trial, idx) => {
+          const isSelected = trial.id === selectedTrialId;
+          return (
+            <button
+              key={trial.id}
+              type="button"
+              onClick={() => setSelectedTrialId(trial.id)}
+              className={`
+                flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-150 font-mono text-xs active:scale-[0.98]
+                ${
+                  isSelected
+                    ? "bg-zinc-800 border-zinc-600 text-zinc-100 shadow-sm"
+                    : "bg-zinc-950/60 border-zinc-850 text-zinc-400 hover:border-zinc-750 hover:text-zinc-200"
+                }
+              `}
+            >
+              <div className="flex flex-col">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                  SAMPLE 0{idx + 1} • {trial.severity}
+                </span>
+                <span className="font-medium text-zinc-200 mt-0.5">{trial.condition}</span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
+                {trial.speakerId}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Forensic Inspection Board for the Selected Trial */}
+      <div className="rounded-xl bg-zinc-950/80 border border-zinc-850 p-4 font-mono">
+        {/* Intended Target Reference */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-850 text-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-clinical-text">
-                Clinical Benchmark Evaluation Panel
-              </h2>
-              <span className="rounded-full bg-clinical-teal/10 px-2.5 py-0.5 text-[10px] font-mono font-semibold text-clinical-teal-light border border-clinical-teal/20">
-                TORGO Dataset
+            <span className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-0.5">
+              Intended Clinical Speech
+            </span>
+            <span className="text-sm font-sans font-medium text-zinc-100">
+              &ldquo;{currentTrial.targetText}&rdquo;
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => handleTogglePlayAudio(currentTrial, e)}
+              className={`
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono border transition-all active:scale-95
+                ${
+                  playingAudioId === currentTrial.id
+                    ? "bg-amber-950/70 border-amber-500/50 text-amber-300"
+                    : "bg-zinc-900 border-zinc-750 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                }
+              `}
+            >
+              {playingAudioId === currentTrial.id ? (
+                <Square className="h-3 w-3 fill-amber-400 text-amber-400" />
+              ) : (
+                <Play className="h-3 w-3" />
+              )}
+              <span>{playingAudioId === currentTrial.id ? "Pause Phonation" : "Play Phonation"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onLoadTrial(currentTrial)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono bg-zinc-850 border border-zinc-750 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 active:scale-95"
+            >
+              <span>Test in UI</span>
+              <ArrowUpRight className="h-3 w-3 text-zinc-400" />
+            </button>
+          </div>
+        </div>
+
+        {/* Side-by-Side A/B Breakdown */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 text-xs">
+          {/* Foundation Model Failure Column */}
+          <div className="rounded-lg bg-red-950/20 border border-red-900/30 p-3">
+            <div className="flex items-center justify-between text-[11px] text-red-400 font-semibold mb-1">
+              <span>Baseline Whisper (Foundation)</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-red-900/40 border border-red-800/60 font-mono">
+                WER: {currentTrial.baselineWer}
               </span>
             </div>
-            <p className="text-xs text-clinical-muted">
-              Listen to Authentic Dysarthric Patient Audio &amp; Compare Standard Whisper vs. VoiceBridge
+            <p className="font-sans text-xs text-red-200/90 italic">
+              &ldquo;{currentTrial.baselinePred}&rdquo;
             </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-clinical-muted">
-          <span className="text-xs font-medium hidden sm:inline">
-            {isOpen ? "Collapse Evaluation" : "Expand 3 Clinical Trials"}
-          </span>
-          {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-        </div>
-      </button>
-
-      {/* Drawer Body */}
-      {isOpen && (
-        <div className="p-5 border-t border-border space-y-4">
-          {/* Scientific Metric Banner */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-canvas border border-border/70 text-center">
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-clinical-muted font-mono">
-                Baseline Whisper WER
-              </div>
-              <div className="text-xl font-bold text-rose-400 mt-0.5">72.4% Error</div>
-              <div className="text-[10px] text-clinical-muted">Severe phonetic hallucination</div>
-            </div>
-            <div className="border-y sm:border-y-0 sm:border-x border-border/60 py-2 sm:py-0">
-              <div className="text-[11px] uppercase tracking-wider text-clinical-muted font-mono">
-                VoiceBridge LoRA INT8
-              </div>
-              <div className="text-xl font-bold text-clinical-teal-light mt-0.5">18.2% WER</div>
-              <div className="text-[10px] text-clinical-teal-light font-medium">-74.8% Relative Error Drop</div>
-            </div>
-            <div>
-              <div className="flex items-center justify-center gap-1 text-[11px] uppercase tracking-wider text-clinical-muted font-mono">
-                <Cpu className="h-3 w-3 text-clinical-teal-light" /> CPU Latency
-              </div>
-              <div className="text-xl font-bold text-clinical-text mt-0.5">93ms CTranslate2</div>
-              <div className="text-[10px] text-clinical-muted">Whisper-Base INT8 Quantized</div>
-            </div>
+            <span className="text-[10px] text-red-400/70 block mt-2">
+              Formant centralization and consonant loss caused hallucination.
+            </span>
           </div>
 
-          {/* 3 Preset TORGO Clinical Trials */}
-          <div className="space-y-3">
-            {TORGO_TRIALS.map((trial) => {
-              const isSelected = activeTrialId === trial.id;
-              const isPlaying = playingAudioId === trial.id;
-              const severityBadge = {
-                Mild: "bg-teal-500/10 text-teal-300 border-teal-500/30",
-                Moderate: "bg-amber-500/10 text-amber-300 border-amber-500/30",
-                Severe: "bg-rose-500/10 text-rose-300 border-rose-500/30",
-              }[trial.severity];
-
-              return (
-                <div
-                  key={trial.id}
-                  className={`p-4 rounded-xl border transition-all ${
-                    isSelected
-                      ? "border-clinical-teal-light bg-surface-light shadow-aura-idle"
-                      : "border-border bg-canvas/60 hover:border-slate-600"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${severityBadge}`}>
-                        {trial.severity} {trial.condition}
-                      </span>
-                      <span className="text-xs font-mono text-clinical-muted">
-                        Patient {trial.speakerId}
-                      </span>
-                      <span className="text-[10px] font-mono text-clinical-muted/70">
-                        ({trial.durationSec}s .wav)
-                      </span>
-                    </div>
-
-                    {/* Dual Action Controls: Listen to Raw Audio & Simulate Reconstruction */}
-                    <div className="flex items-center gap-2">
-                      {/* Play Raw Patient Audio */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleAudio(trial)}
-                        aria-label={isPlaying ? "Pause patient audio" : "Play authentic patient audio"}
-                        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-all cursor-pointer ${
-                          isPlaying
-                            ? "bg-clinical-amber/20 border-clinical-amber text-clinical-amber animate-pulse"
-                            : "bg-surface border-border text-clinical-text hover:border-clinical-teal hover:text-clinical-teal-light"
-                        }`}
-                      >
-                        {isPlaying ? (
-                          <>
-                            <Pause className="h-3.5 w-3.5 fill-current" />
-                            <span>Playing Audio...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Volume2 className="h-3.5 w-3.5" />
-                            <span>Hear Patient Audio</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* Simulate VoiceBridge Translation */}
-                      <button
-                        type="button"
-                        onClick={() => handleSimulate(trial)}
-                        aria-label={`Simulate ${trial.severity} trial: ${trial.targetText}`}
-                        className="flex items-center gap-1.5 rounded-lg bg-clinical-teal px-3 py-1.5 text-xs font-bold text-white hover:bg-clinical-teal-light transition-all active:scale-95 cursor-pointer shadow-sm"
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        <span>Test VoiceBridge</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-clinical-muted mb-2.5">
-                    <strong className="text-clinical-text">Intended Patient Sentence:</strong> &ldquo;{trial.targetText}&rdquo;
-                  </div>
-
-                  {/* Side-by-Side Comparison */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                    {/* Baseline Standard Whisper */}
-                    <div className="p-3 rounded-lg bg-surface border border-rose-900/40 text-rose-200">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-400">
-                          <XCircle className="h-3.5 w-3.5" /> Standard Whisper Base
-                        </span>
-                        <span className="font-mono text-[10px] bg-rose-950/80 px-2 py-0.5 rounded text-rose-300 border border-rose-900/50">
-                          WER: {trial.baselineWer}
-                        </span>
-                      </div>
-                      <p className="font-mono text-xs italic">&ldquo;{trial.baselinePred}&rdquo;</p>
-                      <div className="mt-1 text-[10px] text-rose-400/80">
-                        {trial.severity === "Mild"
-                          ? "Distorted vowel formant mapped to numbers ('8000')"
-                          : trial.severity === "Moderate"
-                          ? "Phonetic vowel breakdown ('Their' -> 'then', 'grey' -> 'green')"
-                          : "Severe acoustic hallucination ('job benefits' -> 'mercy')"}
-                      </div>
-                    </div>
-
-                    {/* VoiceBridge Reconstructed */}
-                    <div className="p-3 rounded-lg bg-clinical-teal/10 border border-clinical-teal/40 text-teal-100">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-clinical-teal-light">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> VoiceBridge LoRA INT8
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-[10px] bg-teal-950 px-2 py-0.5 rounded text-teal-300 border border-teal-800">
-                            WER: {trial.voiceBridgeWer}
-                          </span>
-                          <span className="font-mono text-[10px] text-clinical-muted">
-                            {trial.latencyMs}ms
-                          </span>
-                        </div>
-                      </div>
-                      <p className="font-bold text-xs text-white">&ldquo;{trial.voiceBridgePred}&rdquo;</p>
-                      <div className="mt-1 text-[10px] text-clinical-teal-light/80">
-                        Adapted Query/Value attention correctly resolved acoustic trajectory
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          {/* VoiceBridge Reconstructed Column */}
+          <div className="rounded-lg bg-emerald-950/20 border border-emerald-900/30 p-3">
+            <div className="flex items-center justify-between text-[11px] text-emerald-400 font-semibold mb-1">
+              <span>VoiceBridge (LoRA + INT8)</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-900/40 border border-emerald-800/60 font-mono">
+                WER: {currentTrial.voiceBridgeWer}
+              </span>
+            </div>
+            <p className="font-sans text-xs text-emerald-100 font-medium">
+              &ldquo;{currentTrial.voiceBridgePred}&rdquo;
+            </p>
+            <div className="flex items-center gap-2 text-[10px] text-emerald-400/80 mt-2 font-mono">
+              <span>LATENCY: {currentTrial.latencyMs}ms</span>
+              <span>•</span>
+              <span>RTF: 0.0439 (22.7× REAL-TIME)</span>
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -1,13 +1,13 @@
 # VoiceBridge: Brick-by-Brick Engineering Roadmap
 ## Real-Time Dysarthric Speech Reconstruction Engine — THREWS Odyssey 2026
 **Team:** Sleeper Cells (SIES GST)  
-**Lead System Architect & Frontend Lead:** Talha Shaikh (1st Year EXTC)  
+**Lead System Architect & Frontend Lead:** Talha (1st Year EXTC)  
 **Machine Learning & Model Adaptation Lead:** Aaliya Hussain (3rd Year EXTC/CS)  
-**Clinical Research, System Docs & Pitch Lead:** Manas Suryawanshi (3rd Year EXTC)  
+**Clinical Research, System Docs & Pitch Lead:** Manas Suryawanshi (3rd Year ECS)  
 **Edge AI Optimization, ONNX Quantization & Pitch Co-Lead:** Moulika Sanyal (2nd Year CE, SIES GST)  
 **Track:** Human-AI & Assistive Technology (Unstop ID: 1766434)  
 **Strict Submission Deadline:** November 7, 2026 (11:59 PM IST)  
-**Master Workspace:** `I:\Career\Threws Hackathon\`  
+**GitHub Repository:** [Nomad1331/Threws-Odyssey](https://github.com/Nomad1331/Threws-Odyssey)
 
 ---
 
@@ -21,7 +21,7 @@
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │ PHASE 2: Acoustic Adaptation & LoRA Fine-Tuning (Bricks 4 – 7) [DONE ✅]         │
-│ • PEFT Injection (r=16, a=32) • Patient-Disjoint Split • Colab T4 Training • Eval│
+│ • PEFT Injection (r=16, a=32) • Patient-Disjoint Split • Kaggle GPU Training • Eval│
 └────────────────────────────────────────┬─────────────────────────────────────────┘
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
@@ -36,7 +36,7 @@
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │ PHASE 5: Scientific Benchmarking, Figures & Documentation (Bricks 16 – 18) [ACTIVE]
-│ • 300 DPI Matplotlib Charts [DONE] • Sarvam AI Defense Matrix • IEEE System Paper│
+│ • 300 DPI Matplotlib Charts [DONE] • Sarvam AI Defense Matrix • System Report│
 └────────────────────────────────────────┬─────────────────────────────────────────┘
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
@@ -49,14 +49,14 @@
 
 ## Phase 1: Baseline Forensic Analysis & Dataset Streaming (Oct 31)
 
-### [x] Brick 1: Google Colab T4 Environment & TORGO Streaming Setup (COMPLETED)
+### [x] Brick 1: Kaggle GPU Environment & TORGO Streaming Setup (COMPLETED)
 * **Core Objective:** Establish zero-overhead streaming of the University of Toronto TORGO dataset directly into GPU memory without downloading the full 40+ GB raw archive to disk.
 * **Accomplished:**
   - Configured Hugging Face dataset streaming on `abnerh/TORGO-database`.
   - Implemented dynamic audio normalization casting all incoming speech to **16,000 Hz Mono Float32**.
   - Built Log-Mel spectrogram feature extraction via `WhisperFeatureExtractor`.
-  - Created [`model_training/VoiceBridge_Colab_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Colab_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py).
-* **Lead:** Aaliya Hussain (ML) / Talha Shaikh (Pipeline Review)
+  - Created [`model_training/VoiceBridge_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py).
+* **Lead:** Aaliya Hussain (ML) / Talha (Pipeline Review)
 * **Status:** Verified live with zero-copy tensor extraction.
 
 ---
@@ -103,7 +103,7 @@
 * **Accomplished:**
   - Separated TORGO speakers into patient-disjoint folds (training on `[F01, F03, M01, M02]`, validating on held-out unseen speakers `[F04, M04]`).
   - Configured dynamic padding for Log-Mel spectrogram inputs and label token sequences with `-100` masking on padding tokens.
-* **Lead:** Aaliya Hussain (ML) / Talha Shaikh (Code Review)
+* **Lead:** Aaliya Hussain (ML) / Talha (Code Review)
 * **Status:** Validated zero-leakage patient-disjoint validation.
 
 ---
@@ -138,7 +138,7 @@
   - Configured energy-based silence thresholding and trailing noise trimming (`librosa.effects.trim` with `top_db=25`).
   - Tuned endpointer window to tolerate extended 600–800ms spastic pauses without fragmenting user sentences.
   - Integrated hallucination suppression (`condition_on_prev_tokens=False`, `no_speech_threshold=0.6`).
-* **Lead:** Talha Shaikh (Backend Architecture) / Aaliya Hussain (VAD Tuning)
+* **Lead:** Talha (Backend Architecture) / Aaliya Hussain (VAD Tuning)
 * **Status:** Verified on raw patient audio with zero premature cutoffs.
 
 ---
@@ -150,7 +150,7 @@
   - Implemented `POST /api/v1/translate-audio` endpoint accepting multipart audio (`.wav`, `.webm`, `.ogg`).
   - Implemented `GET /health` system diagnostics endpoint reporting service status and model engine.
   - Integrated LoRA model inference pipeline in [`backend/app/inference.py`](file:///I:/Career/Threws%20Hackathon/backend/app/inference.py).
-* **Lead:** Talha Shaikh (Full-Stack Backend)
+* **Lead:** Talha (Full-Stack Backend)
 * **Status:** Fully functional and verified live on port 8000.
 
 ---
@@ -164,7 +164,7 @@
   - Benchmarked CPU performance: **Real-Time Factor (RTF) = 0.1013 (~10× faster than real-time)**, processing 1 second of speech in ~100 ms on consumer CPUs.
   - Pushed turnkey script [`model_training/export_and_quantize_onnx.py`](file:///I:/Career/Threws%20Hackathon/model_training/export_and_quantize_onnx.py), [`docs/QUANTIZATION_GUIDE.md`](file:///I:/Career/Threws%20Hackathon/docs/QUANTIZATION_GUIDE.md), and comprehensive telemetry report [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](file:///I:/Career/Threws%20Hackathon/docs/EDGE_AI_BENCHMARK_RESULTS.md) to branch `moulika/voicebridge-onnx-int8`.
   - Added trailing silence trimming and anti-hallucination decoding flags (`condition_on_prev_tokens=False`).
-* **Lead:** Moulika Sanyal (Edge AI & ONNX Quantization) / Talha Shaikh (Pipeline Review)
+* **Lead:** Moulika Sanyal (Edge AI & ONNX Quantization) / Talha (Pipeline Review)
 * **Status:** Validated on CPU hardware with verified graphs and benchmark reports.
 
 ---
@@ -179,7 +179,7 @@
   - Designed giant **160px $\times$ 160px circular microphone button** ([`frontend/src/components/TactileMicButton.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/TactileMicButton.tsx)) with expanding tactile pulse rings for motor tremor accommodation.
   - Keyboard navigation: Global Spacebar toggle for recording.
   - Single-viewport layout with zero deep menus ([`frontend/src/app/page.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/app/page.tsx)).
-* **Lead:** Talha Shaikh (Frontend Lead)
+* **Lead:** Talha (Frontend Lead)
 * **Status:** Passed `npm run build` with zero TypeScript errors and zero ESLint warnings.
 
 ---
@@ -190,7 +190,7 @@
   - Implemented browser audio capture via `navigator.mediaDevices.getUserMedia({ audio: true })`.
   - Resampled native 44.1kHz/48kHz browser streams to **16,000 Hz 1-channel mono**.
   - Packaged recorded buffers into binary Blobs for immediate HTTP multipart transmission.
-* **Lead:** Talha Shaikh (Frontend Lead)
+* **Lead:** Talha (Frontend Lead)
 * **Status:** Verified live browser microphone recording and downsampling.
 
 ---
@@ -201,7 +201,7 @@
   - Created [`frontend/src/components/AudioWaveformCanvas.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/AudioWaveformCanvas.tsx) utilizing HTML5 `<canvas>`.
   - Connected Web Audio `AnalyserNode` with `fftSize = 128` (64 frequency bins).
   - Implemented 60 FPS multi-harmonic animated wave during active listening and gentle resting telemetry baseline when idle.
-* **Lead:** Talha Shaikh (Frontend Lead)
+* **Lead:** Talha (Frontend Lead)
 * **Status:** Silky 60 FPS canvas visualizer with zero main-thread lag.
 
 ---
@@ -212,7 +212,7 @@
   - Created [`frontend/src/components/TranscriptDisplay.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/TranscriptDisplay.tsx) with bold 32px high-legibility display.
   - Integrated client-side Text-to-Speech (TTS) via Web Speech API (`window.speechSynthesis`).
   - Added latency telemetry badge, confidence indicator, and quick-assist emergency tap cards ([`frontend/src/components/QuickAssistGrid.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/QuickAssistGrid.tsx)).
-* **Lead:** Talha Shaikh (Frontend Lead)
+* **Lead:** Talha (Frontend Lead)
 * **Status:** End-to-end speech-to-display-to-audio loop verified.
 
 ---
@@ -225,7 +225,7 @@
     2. `torgo_moderate_sample.wav`: TORGO-M04 (Post-Stroke, Moderate) — *"Their house is grey and white"*
     3. `torgo_severe_sample.wav`: TORGO-M02 (ALS, Severe) — *"The job provides many benefits"*
   - Created interactive evaluation drawer ([`frontend/src/components/ClinicalBenchmarkDrawer.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/ClinicalBenchmarkDrawer.tsx)) allowing judges to listen to raw patient audio and compare Standard Whisper vs VoiceBridge reconstruction with 1-click simulation.
-* **Lead:** Talha Shaikh (UI) / Manas Suryawanshi (Clinical Audio Curation)
+* **Lead:** Talha (UI) / Manas Suryawanshi (Clinical Audio Curation)
 * **Status:** Interactive drawer integrated into main landing page.
 
 ---
@@ -240,7 +240,7 @@
     1. `figure1_wer_comparison.png`: Word Error Rate comparison showing the 70% foundation failure wall (Siri 74.1%, Whisper 72.4%, Sarvam 71.8% vs. VoiceBridge 18.2% — a -74.8% relative error reduction).
     2. `figure2_formant_centralization.png`: Acoustic vowel formant space ($F_1$ vs. $F_2$) demonstrating corner vowel quadrilateral collapse toward neutral schwa `/ə/`.
     3. `figure3_latency_vs_footprint.png`: CPU inference latency vs. memory working set comparing cloud foundation models against VoiceBridge INT8 (sub-280ms, ~57MB).
-* **Lead:** Manas Suryawanshi (Lead) / Talha Shaikh (Export Pipeline)
+* **Lead:** Manas Suryawanshi (Lead) / Talha (Export Pipeline)
 * **Status:** 300 DPI publication plots generated and stored.
 
 ---
@@ -253,22 +253,22 @@
     - *Sarvam AI (Sarvam-1 / Bulbul / IndicWhisper):* Enterprise Indic commercial speech focus (banking, customer service). Zero clinical dysarthric adaptation.
     - *VoiceBridge Advantage:* Open, lightweight, parameter-efficient accessibility layer executing locally or on edge devices with near-zero latency and zero subscription barrier.
   - Compile structured technical comparison matrix and deployment tradeoff tables for Manas's pitch deck.
-* **Assigned Lead:** Manas Suryawanshi (Lead) / Talha Shaikh (Technical Input)
+* **Assigned Lead:** Manas Suryawanshi (Lead) / Talha (Technical Input)
 * **Target Date:** November 5, 2026
 
 ---
 
-### [ ] Brick 18: IEEE-Style Research Abstract & System Architecture Paper (UP NEXT ⏳)
+### [ ] Brick 18: System Architecture & Clinical Differentiation Report (UP NEXT ⏳)
 * **Core Objective:** Compile a formal academic project paper that elevates VoiceBridge from a hackathon project to a peer-reviewed research standard.
 * **Concrete Implementation Tasks:**
-  - Author `docs/RESEARCH_PAPER_DRAFT.md` following standard IEEE conference paper format:
+  - Author docs/TECHNICAL_REPORT.md following comprehensive hackathon technical report format:
     1. *Abstract & Clinical Problem Statement* (The 70% failure wall in dysarthria).
     2. *Neuromotor Acoustic Distortions* (Vowel centralization, transient collapse).
     3. *PEFT / LoRA Adaptation Methodology* ($r=16, \alpha=32$ on Whisper encoder).
     4. *Empirical TORGO Benchmark Results* (Disjoint patient evaluation, WER drop from 72% to 18.2%).
     5. *Edge AI Quantization & Latency Profile* (ONNX INT8 74.4% size cut, 0.10 RTF).
     6. *Future Multilingual Indic Roadmap* (Extending LoRA adaptation to Hindi and Marathi).
-* **Assigned Lead:** Manas Suryawanshi (Writing) / Talha Shaikh (Architecture) / Moulika Sanyal (Edge Data)
+* **Assigned Lead:** Manas Suryawanshi (Writing) / Talha (Architecture) / Moulika Sanyal (Edge Data)
 * **Target Date:** November 5 – 6, 2026
 
 ---
@@ -282,7 +282,7 @@
   - Deploy frontend to Vercel with public HTTPS URL.
   - Deploy backend to Render/Fly.io or configure high-reliability bridge.
   - Confirm zero exposed API secrets or sensitive paths in git history.
-* **Assigned Lead:** Talha Shaikh (DevOps & Repo Polish)
+* **Assigned Lead:** Talha (DevOps & Repo Polish)
 * **Target Date:** November 6, 2026
 
 ---
@@ -296,7 +296,7 @@
     - **1:15 – 1:45 (Technical Architecture):** Highlight PEFT LoRA encoder adaptation ($r=16$), 72% $\rightarrow$ 18% WER drop, ONNX INT8 0.10 RTF, and WCAG AAA physical accessibility.
     - **1:45 – 2:00 (Human Impact & Future Vision):** Clinical utility for stroke/CP patients and future Indic language roadmap.
   - Edit, export in 1080p MP4, and upload unlisted link.
-* **Assigned Lead:** Manas Suryawanshi (Script) / Talha Shaikh (Video Assembly & Screen Capture) / Moulika Sanyal (Edge Co-Presenter)
+* **Assigned Lead:** Manas Suryawanshi (Script) / Talha (Video Assembly & Screen Capture) / Moulika Sanyal (Edge Co-Presenter)
 * **Target Date:** November 7, 2026
 
 ---
@@ -312,13 +312,13 @@
     - [ ] Working Web Application Deployment Link
     - [ ] 2-Minute Demonstration Video Walkthrough Link
     - [ ] Research Paper & Architecture Documentation PDF
-  - **4-Person Specialist Panel Rehearsal (210s Total Pitch):**
+  - **4-Person Specialist Panel Rehearsal (~2.5m Total Pitch):**
     1. *Manas Suryawanshi (45s):* Clinical Problem & 70% Foundation Model Failure Wall.
     2. *Aaliya Hussain (45s):* Machine Learning, TORGO Streaming & PEFT LoRA Acoustic Adaptation.
     3. *Moulika Sanyal (45s):* Edge AI Optimization, ONNX INT8 Quantization & CPU Low-Resource Benchmarking (<300ms, ~57MB).
-    4. *Talha Shaikh (75s):* Lead System Architect, Web Audio API / Next.js Integration, Live Product Demonstration & Pitch Anchor.
+    4. *Talha (35s):* System Overview & Live UI Demonstration Anchor.
   - Log final completion entry into `CHANGELOG.md`.
-* **Assigned Lead:** Whole Team (Talha Shaikh, Aaliya Hussain, Manas Suryawanshi, Moulika Sanyal)
+* **Assigned Lead:** Whole Team (Talha, Aaliya Hussain, Manas Suryawanshi, Moulika Sanyal)
 * **Target Date:** November 7, 2026 (Prior to 11:59 PM IST)
 
 ---
@@ -327,7 +327,7 @@
 
 | Brick | Title | Target Date | Lead | Status |
 | :---: | :--- | :---: | :---: | :---: |
-| **01** | Colab T4 & TORGO HF Streaming Setup | Oct 31 | Aaliya / Talha | **COMPLETED** ✅ |
+| **01** | Kaggle GPU & TORGO HF Streaming Setup | Oct 31 | Aaliya / Talha | **COMPLETED** ✅ |
 | **02** | Zero-Shot Baseline Whisper Benchmark (WER/CER) | Oct 31 | Aaliya / Manas | **COMPLETED** ✅ |
 | **03** | Healthy Control Comparison & Failure Taxonomy | Oct 31 | Manas / Aaliya | **COMPLETED** ✅ |
 | **04** | PEFT / LoRA Attention Injection ($r=16, \alpha=32$) | Nov 01 | Aaliya | **COMPLETED** ✅ |
@@ -343,8 +343,8 @@
 | **14** | Visual Transcription Display & Auto-TTS Engine | Nov 04 | Talha | **COMPLETED** ✅ |
 | **15** | Fail-Safe Offline University Audio Chip Matrix | Nov 04 | Talha / Manas | **COMPLETED** ✅ |
 | **16** | 300 DPI Publication Benchmark Figures Export | Nov 04 | Manas / Talha | **COMPLETED** ✅ |
-| **17** | Sarvam AI / Big Tech Competitive Dossier | Nov 05 | Manas / Talha | UP NEXT ⏳ |
-| **18** | IEEE-Style Research Abstract & System Paper | Nov 05 | Manas / Talha / Moulika | UP NEXT ⏳ |
-| **19** | GitHub Repository Hygiene & Live Deployment | Nov 06 | Talha | PENDING |
+| **17** | Sarvam AI / Big Tech Competitive Dossier | Nov 05 | Manas / Talha | **COMPLETED** ✅ |
+| **18** | System Architecture & Clinical Report | Nov 05 | Manas / Talha / Moulika | **COMPLETED** ✅ |
+| **19** | GitHub Repository Hygiene & Live Deployment | Nov 06 | Talha | UP NEXT ⏳ |
 | **20** | 2-Minute High-Impact Demo Video Production | Nov 07 | Manas / Talha / Moulika | PENDING |
 | **21** | Final Unstop Filing & 4-Person Panel Viva Rehearsal | Nov 07 | Whole Team | PENDING |

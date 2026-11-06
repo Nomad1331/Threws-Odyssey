@@ -74,12 +74,46 @@ VoiceBridge/
 
 ## 🚀 Quickstart
 
-### 1. Acoustic Model LoRA Training (Google Colab)
-1. Open [`model_training/VoiceBridge_Colab_Trainer.ipynb`](model_training/VoiceBridge_Colab_Trainer.ipynb) in [Google Colab](https://colab.research.google.com/).
-2. Enable GPU: `Runtime` $\rightarrow$ `Change runtime type` $\rightarrow$ **T4 GPU**.
-3. Select **Run All**. The notebook streams the TORGO database, benchmarks standard Whisper WER, trains the LoRA adapter ($r=16$), and packages `voicebridge_lora_weights.zip`.
+### 1. Start the trained-model inference backend
 
-### 2. Dataset Streaming Verification (Local Python)
+The model has already been trained and is hosted at
+[`Aaliya05/voicebridge`](https://huggingface.co/Aaliya05/voicebridge). No
+training step is required for normal use.
+
+```bash
+pip install -r backend/requirements.txt
+uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+On first startup, the backend downloads the base `openai/whisper-tiny` model
+and the trained LoRA adapter from Hugging Face. It automatically uses CUDA
+when available and otherwise runs on CPU.
+
+### 2. Start the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The frontend sends
+recorded audio to `POST /api/v1/translate-audio` on the local backend.
+
+### 3. Optional: regenerate the ONNX INT8 model
+
+The backend uses the trained Transformers + LoRA model directly. To regenerate
+the optional edge-optimized ONNX artifact:
+
+```bash
+pip install torch transformers peft "optimum[onnxruntime]" onnx onnxruntime librosa soundfile numpy
+python model_training/export_and_quantize_onnx.py
+```
+
+### 4. Dataset and training reproducibility
+
+The original training workflow is retained for reproducibility:
+
 ```bash
 cd model_training
 pip install datasets transformers evaluate soundfile jiwer

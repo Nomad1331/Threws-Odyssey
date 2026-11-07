@@ -21,7 +21,8 @@ export interface TranscriptionResult {
 
 export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionResult> {
   const startTime = performance.now();
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+  // Strip trailing slashes to prevent 404s caused by double slashes (e.g. //api/v1/translate-audio)
+  const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
   const backendUrl = `${backendBase}/api/v1/translate-audio`;
 
   try {
@@ -65,9 +66,12 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
         };
       }
 
+      const isFiniteConfidence =
+        typeof data.confidence_score === "number" && Number.isFinite(data.confidence_score);
+
       return {
         text,
-        confidence: typeof data.confidence_score === "number" ? data.confidence_score : null,
+        confidence: isFiniteConfidence ? data.confidence_score : null,
         latencyMs: data.processing_time_ms ?? elapsed,
         source: "voicebridge-backend",
         statusNotice: "Transcribed with VoiceBridge Whisper INT8 (CPU)",
@@ -81,6 +85,9 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
       const errorJson = await response.json();
       if (typeof errorJson.detail === "string") {
         errorMessage = errorJson.detail;
+      } else if (Array.isArray(errorJson.detail) && errorJson.detail.length > 0) {
+        const firstErr = errorJson.detail[0];
+        errorMessage = typeof firstErr?.msg === "string" ? firstErr.msg : `Validation error (${response.status})`;
       }
     } catch {
       // Non-JSON response
@@ -99,9 +106,16 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
     const isAbort = err instanceof DOMException && err.name === "AbortError";
     let statusNotice = "Backend server offline. Start with: uvicorn app.main:app --port 8000";
 
+    const isNetworkError =
+      err instanceof TypeError &&
+      (err.message.includes("fetch") ||
+        err.message.includes("NetworkError") ||
+        err.message.includes("Load failed") ||
+        err.message.includes("Network request failed"));
+
     if (isAbort) {
       statusNotice = "Request timed out after 30 seconds.";
-    } else if (err instanceof Error && err.message && !err.message.includes("fetch")) {
+    } else if (err instanceof Error && err.message && !isNetworkError) {
       statusNotice = err.message;
     }
 

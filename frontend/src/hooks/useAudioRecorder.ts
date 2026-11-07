@@ -103,6 +103,11 @@ export function useAudioRecorder(): AudioRecorderHook {
   }, []);
 
   const startRecording = useCallback(async () => {
+    // Prevent duplicate recording instances if already active
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      return;
+    }
+
     audioChunksRef.current = [];
 
     try {
@@ -166,7 +171,21 @@ export function useAudioRecorder(): AudioRecorderHook {
       recorder.start(250);
       setState("listening");
     } catch (err) {
-      console.error("Microphone access denied:", err);
+      console.error("Failed to start audio recording:", err);
+      // Guarantee hardware microphone track release if initialization fails midway
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        try {
+          audioContextRef.current.close();
+        } catch {
+          // Context already closed
+        }
+        audioContextRef.current = null;
+      }
+      setState("idle");
       throw err;
     }
   }, []);
@@ -185,7 +204,8 @@ export function useAudioRecorder(): AudioRecorderHook {
           setRecordedAudioUrl(url);
         }
 
-        // Clean up media streams and audio context
+        // Clean up media streams, recorder instance, and audio context
+        mediaRecorderRef.current = null;
         if (mediaStreamRef.current) {
           mediaStreamRef.current.getTracks().forEach((track) => track.stop());
           mediaStreamRef.current = null;

@@ -71,7 +71,8 @@ Threws-Odyssey/
 │   ├── app/
 │   │   ├── main.py              # FastAPI microservice endpoints (/health, /api/v1/translate-audio)
 │   │   └── inference.py         # faster-whisper INT8 CPU transcription engine
-│   └── requirements.txt         # Minimal, production dependencies (FastAPI, faster-whisper)
+│   ├── requirements.txt         # Minimal, production dependencies (FastAPI, faster-whisper)
+│   └── test_server.py           # Automated TestClient verification test suite (7/7 tests)
 │
 ├── frontend/
 │   ├── src/
@@ -90,6 +91,12 @@ Threws-Odyssey/
 │   │       └── transcriptionService.ts    # Frontend-to-backend API client
 │   └── package.json
 │
+├── benchmarks/
+│   ├── generate_figures.py      # 300 DPI publication chart generator
+│   └── extract_torgo_audio.py   # TORGO parquet sample extraction script
+│
+├── assets/benchmarks/           # 300 DPI publication figures (Figures 1, 2, 3)
+│
 ├── docs/
 │   ├── SYSTEM_WALKTHROUGH.md        # Complete end-to-end architecture & code tour
 │   ├── EDGE_AI_BENCHMARK_RESULTS.md # Detailed CPU quantization telemetry and memory benchmarks
@@ -97,8 +104,9 @@ Threws-Odyssey/
 │   └── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
 │
 ├── model_training/
-│   ├── torgo_streaming_test.py      # Hugging Face TORGO streaming evaluation script
-│   └── export_and_quantize_onnx.py  # Standalone ONNX export & INT8 quantization script
+│   ├── VoiceBridge_Colab_Trainer.ipynb # Kaggle/Colab GPU LoRA fine-tuning notebook
+│   ├── torgo_streaming_test.py         # Hugging Face TORGO streaming evaluation script
+│   └── export_and_quantize_onnx.py     # Standalone ONNX export & INT8 quantization script
 │
 ├── facts.json                       # Single source of truth for all verified numbers
 └── README.md

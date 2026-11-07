@@ -1,11 +1,18 @@
 /**
- * VoiceBridge Transcription Service
- * Sends recorded audio blobs to the local VoiceBridge FastAPI Whisper backend.
+ * VoiceBridge Transcription Service Client
+ * ========================================
+ * Sends recorded audio blobs (WebM or WAV) to the local VoiceBridge FastAPI Whisper backend.
+ *
+ * Responsibilities:
+ * 1. Bundles binary Blobs into multipart/form-data payloads.
+ * 2. Implements a 30-second AbortController timeout safeguard to prevent hanging network calls.
+ * 3. Normalizes backend JSON responses (transcription text, confidence score, processing latency).
+ * 4. Provides clear, actionable error diagnostics if the backend service is offline.
  */
 
 export interface TranscriptionResult {
   text: string;
-  confidence: number | null; // null if unmeasured
+  confidence: number | null; // Normalized score between 0.0 and 1.0 (null if unmeasured)
   latencyMs: number;
   source: "voicebridge-backend" | "unavailable";
   statusNotice?: string;

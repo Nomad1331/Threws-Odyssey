@@ -17,6 +17,16 @@ export interface AudioRecorderHook {
 /**
  * Custom React hook for capturing microphone audio and computing real-time volume.
  * Provides a clean interface for UI buttons, waveform visualizers, and backend transcription.
+ *
+ * Architecture & Design Highlights:
+ * 1. 16kHz Mono Capture: Captures 1-channel 16,000 Hz audio directly from the browser hardware
+ *    layer to match Whisper's expected acoustic sample rate and minimize network payload size.
+ * 2. Disabled Noise Suppression: Set to false intentionally because standard browser AGC/noise
+ *    suppression algorithms often erroneously discard atypical dysarthric phonations (such as
+ *    breathy fricatives and low-energy formant transitions) as ambient noise.
+ * 3. Dual-Branch Stream: Feeds into both an AnalyserNode (for 60 FPS live waveform rendering)
+ *    and a MediaRecorder (for binary audio chunking).
+ * 4. Resource Hygiene: Guarantees full microphone track termination and AudioContext closure on stop.
  */
 export function useAudioRecorder(): AudioRecorderHook {
   const [state, setState] = useState<RecordingState>("idle");

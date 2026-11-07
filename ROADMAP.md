@@ -55,7 +55,7 @@
   - Configured Hugging Face dataset streaming on `abnerh/TORGO-database`.
   - Implemented dynamic audio normalization casting all incoming speech to **16,000 Hz Mono Float32**.
   - Built Log-Mel spectrogram feature extraction via `WhisperFeatureExtractor`.
-  - Created [`model_training/VoiceBridge_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py). Fine-tuning notebook: Whisper-small (pending results). Served model: Whisper-tiny.
+  - Created [`model_training/VoiceBridge_Colab_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Colab_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py) configuring LoRA adaptation on `openai/whisper-tiny`.
 * **Lead:** Aaliya Hussain (ML) / Talha (Pipeline Review)
 * **Status:** Verified live with zero-copy tensor extraction.
 

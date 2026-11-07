@@ -1,13 +1,15 @@
 /**
- * VoiceBridge Transcription Service Client
- * ========================================
- * Sends recorded audio blobs (WebM or WAV) to the local VoiceBridge FastAPI Whisper backend.
+ * VoiceBridge Backend Service Client
+ * ==================================
+ * Client for communicating with the local VoiceBridge FastAPI Whisper backend.
  *
  * Responsibilities:
- * 1. Bundles binary Blobs into multipart/form-data payloads.
- * 2. Implements a 30-second AbortController timeout safeguard to prevent hanging network calls.
- * 3. Normalizes backend JSON responses (transcription text, confidence score, processing latency).
- * 4. Provides clear, actionable error diagnostics if the backend service is offline.
+ * 1. Resolves and normalizes backend base URLs across environments and devices.
+ * 2. Checks microservice health and connectivity (/health endpoint).
+ * 3. Bundles binary Blobs into multipart/form-data payloads with container format detection.
+ * 4. Implements AbortController timeout safeguards to prevent hanging network calls.
+ * 5. Normalizes backend JSON responses (transcription text, confidence score, processing latency).
+ * 6. Provides clear, actionable error diagnostics if the backend service is offline.
  */
 
 export interface TranscriptionResult {
@@ -17,6 +19,32 @@ export interface TranscriptionResult {
   source: "voicebridge-backend" | "unavailable";
   statusNotice?: string;
   isError: boolean;
+}
+
+/**
+ * Returns the normalized backend base URL without trailing slashes.
+ */
+export function getBackendBaseUrl(): string {
+  const raw = (process.env.NEXT_PUBLIC_BACKEND_URL || "").trim();
+  const base = raw || "http://127.0.0.1:8000";
+  return base.replace(/\/+$/, "");
+}
+
+/**
+ * Pings the backend /health endpoint to check server availability and model readiness.
+ * Returns true if the service responds with HTTP 200 within timeoutMs.
+ */
+export async function checkBackendHealth(timeoutMs = 2500): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${getBackendBaseUrl()}/health`, { signal: controller.signal });
+    return res.status === 200;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionResult> {
@@ -33,9 +61,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
   }
 
   const startTime = performance.now();
-  // Strip trailing slashes to prevent 404s caused by double slashes (e.g. //api/v1/translate-audio)
-  const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
-  const backendUrl = `${backendBase}/api/v1/translate-audio`;
+  const backendUrl = `${getBackendBaseUrl()}/api/v1/translate-audio`;
 
   try {
     const formData = new FormData();

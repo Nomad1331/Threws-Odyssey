@@ -5,7 +5,7 @@ import { TactileMicButton } from "@/components/TactileMicButton";
 import { TranscriptDisplay } from "@/components/TranscriptDisplay";
 import { QuickAssistGrid } from "@/components/QuickAssistGrid";
 import { ClinicalBenchmarkDrawer } from "@/components/ClinicalBenchmarkDrawer";
-import { transcribeAudio } from "@/lib/transcriptionService";
+import { transcribeAudio, checkBackendHealth } from "@/lib/transcriptionService";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { ChevronDown, ChevronUp, Mic } from "lucide-react";
 
@@ -52,18 +52,12 @@ export default function Home() {
 
   // Check backend server health on mount
   useEffect(() => {
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 2000);
-    const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
-
-    fetch(`${backendBase}/health`, { signal: controller.signal })
-      .then((res) => setBackendConnected(res.status === 200))
-      .catch(() => setBackendConnected(false))
-      .finally(() => window.clearTimeout(timeoutId));
-
+    let active = true;
+    checkBackendHealth(2500).then((healthy) => {
+      if (active) setBackendConnected(healthy);
+    });
     return () => {
-      window.clearTimeout(timeoutId);
-      controller.abort();
+      active = false;
     };
   }, []);
 

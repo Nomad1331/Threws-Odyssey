@@ -56,7 +56,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
     formData.append("file", audioBlob, fileName);
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 30_000);
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
     let response: Response;
     try {
@@ -66,7 +66,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
         signal: controller.signal,
       });
     } finally {
-      window.clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
     }
 
     const elapsed = Math.round(performance.now() - startTime);
@@ -74,12 +74,17 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
     if (response.ok) {
       const data = await response.json();
       const text = typeof data.transcription === "string" ? data.transcription.trim() : "";
+      const rawLatency = data.processing_time_ms;
+      const validLatency =
+        typeof rawLatency === "number" && Number.isFinite(rawLatency)
+          ? Math.round(rawLatency)
+          : elapsed;
 
       if (!text) {
         return {
           text: "",
           confidence: null,
-          latencyMs: data.processing_time_ms ?? elapsed,
+          latencyMs: validLatency,
           source: "voicebridge-backend",
           statusNotice: "No speech recognized. Please try speaking again.",
           isError: false,
@@ -92,7 +97,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
       return {
         text,
         confidence: isFiniteConfidence ? data.confidence_score : null,
-        latencyMs: data.processing_time_ms ?? elapsed,
+        latencyMs: validLatency,
         source: "voicebridge-backend",
         statusNotice: "Transcribed with VoiceBridge Whisper INT8 (CPU)",
         isError: false,
@@ -123,7 +128,8 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
     };
   } catch (err: unknown) {
     const elapsed = Math.round(performance.now() - startTime);
-    const isAbort = err instanceof DOMException && err.name === "AbortError";
+    const isAbort =
+      (err instanceof DOMException || err instanceof Error) && err.name === "AbortError";
     let statusNotice = "Backend server offline. Start with: uvicorn app.main:app --port 8000";
 
     const isNetworkError =

@@ -96,12 +96,17 @@ export function useAudioRecorder(): AudioRecorderHook {
         }
         audioContextRef.current = null;
       }
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch {
-          // Recorder already inactive
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.ondataavailable = null;
+        mediaRecorderRef.current.onstop = null;
+        if (mediaRecorderRef.current.state !== "inactive") {
+          try {
+            mediaRecorderRef.current.stop();
+          } catch {
+            // Recorder already inactive
+          }
         }
+        mediaRecorderRef.current = null;
       }
     };
   }, []);
@@ -233,7 +238,11 @@ export function useAudioRecorder(): AudioRecorderHook {
         }
 
         // Clean up media streams, recorder instance, and audio context
-        mediaRecorderRef.current = null;
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.ondataavailable = null;
+          mediaRecorderRef.current.onstop = null;
+          mediaRecorderRef.current = null;
+        }
         if (mediaStreamRef.current) {
           mediaStreamRef.current.getTracks().forEach((track) => track.stop());
           mediaStreamRef.current = null;

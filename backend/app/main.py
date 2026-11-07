@@ -57,11 +57,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Middleware: Allows the Next.js frontend running on localhost:3000
-# to make cross-origin fetch requests to this API on port 8000.
+# CORS Middleware: Configured for Next.js frontend on localhost:3000
+# as well as local network IP addresses (allowing tablet/mobile evaluation over LAN).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -31,6 +31,7 @@ def load_model() -> None:
     Initializes and caches the quantized INT8 Whisper model on CPU.
     Called during FastAPI lifespan startup to avoid cold-start delays on requests.
     Dynamically scales CPU threads up to 4, preventing oversubscription on dual-core hosts.
+    Uses offline-first cache resolution to eliminate startup delay and guarantee demo resilience in zero-WiFi venues.
     """
     global _model
     if _model is not None:
@@ -38,13 +39,27 @@ def load_model() -> None:
 
     threads = min(4, os.cpu_count() or 4)
     logger.info(f"Loading VoiceBridge quantized INT8 acoustic engine (tiny.en on {threads} CPU threads)...")
-    _model = WhisperModel(
-        "tiny.en",
-        device="cpu",
-        compute_type="int8",
-        cpu_threads=threads,
-    )
-    logger.info("VoiceBridge INT8 acoustic engine successfully loaded.")
+    try:
+        # Attempt instant offline loading from local Hugging Face cache (zero network delay)
+        _model = WhisperModel(
+            "tiny.en",
+            device="cpu",
+            compute_type="int8",
+            cpu_threads=threads,
+            local_files_only=True,
+        )
+        logger.info("VoiceBridge INT8 acoustic engine loaded from local cache (offline mode).")
+    except Exception:
+        # Fall back to online download if starting on a clean machine for the first time
+        logger.info("Cached weights not found locally. Downloading faster-whisper-tiny.en from Hugging Face...")
+        _model = WhisperModel(
+            "tiny.en",
+            device="cpu",
+            compute_type="int8",
+            cpu_threads=threads,
+            local_files_only=False,
+        )
+        logger.info("VoiceBridge INT8 acoustic engine downloaded and cached.")
 
 
 def transcribe_audio(audio_path: str) -> tuple[str, float | None]:

@@ -46,7 +46,10 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
 
   useEffect(() => {
     return () => {
-      if (armTimeoutRef.current) clearTimeout(armTimeoutRef.current);
+      if (armTimeoutRef.current) {
+        clearTimeout(armTimeoutRef.current);
+        armTimeoutRef.current = null;
+      }
     };
   }, []);
 

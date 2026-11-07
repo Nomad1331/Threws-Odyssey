@@ -46,8 +46,8 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
       if (rect.width === 0 || rect.height === 0) {
         return { width: 0, height: 0, centerY: 0 };
       }
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
       return { width: rect.width, height: rect.height, centerY: rect.height / 2 };
@@ -123,6 +123,7 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
       if (resizeObserver) {
         resizeObserver.disconnect();

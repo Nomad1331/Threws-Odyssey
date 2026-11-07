@@ -67,7 +67,7 @@ export function useAudioRecorder(): AudioRecorderHook {
     };
   }, [audioAnalyser, state]);
 
-  // Clean up object URLs on unmount
+  // Clean up object URLs on change and unmount
   useEffect(() => {
     return () => {
       if (recordedAudioUrl && recordedAudioUrl.startsWith("blob:")) {
@@ -76,10 +76,39 @@ export function useAudioRecorder(): AudioRecorderHook {
     };
   }, [recordedAudioUrl]);
 
+  // Clean up active hardware microphone stream and audio context on component unmount
+  useEffect(() => {
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        try {
+          audioContextRef.current.close();
+        } catch {
+          // Context already closed
+        }
+        audioContextRef.current = null;
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {
+          // Recorder already inactive
+        }
+      }
+    };
+  }, []);
+
   const startRecording = useCallback(async () => {
     audioChunksRef.current = [];
 
     try {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Microphone API is not supported on this browser or requires HTTPS.");
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,

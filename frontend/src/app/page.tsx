@@ -53,8 +53,9 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 2000);
+    const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
-    fetch("http://127.0.0.1:8000/health", { signal: controller.signal })
+    fetch(`${backendBase}/health`, { signal: controller.signal })
       .then((res) => setBackendConnected(res.status === 200))
       .catch(() => setBackendConnected(false))
       .finally(() => window.clearTimeout(timeoutId));

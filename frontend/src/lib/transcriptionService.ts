@@ -21,11 +21,17 @@ export interface TranscriptionResult {
 
 export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionResult> {
   const startTime = performance.now();
-  const backendUrl = "http://127.0.0.1:8000/api/v1/translate-audio";
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+  const backendUrl = `${backendBase}/api/v1/translate-audio`;
 
   try {
     const formData = new FormData();
-    const fileName = audioBlob.type.includes("wav") ? "recording.wav" : "recording.webm";
+    let fileName = "recording.webm";
+    if (audioBlob.type.includes("wav")) {
+      fileName = "recording.wav";
+    } else if (audioBlob.type.includes("ogg")) {
+      fileName = "recording.ogg";
+    }
     formData.append("file", audioBlob, fileName);
 
     const controller = new AbortController();

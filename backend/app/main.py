@@ -31,7 +31,7 @@ except ImportError:
     from backend.app.inference import load_model, transcribe_audio
 
 # Whitelist of permissible audio extensions to prevent creating executable suffixes in %TEMP%
-ALLOWED_AUDIO_EXTENSIONS = {".webm", ".wav", ".ogg", ".mp3", ".m4a", ".flac"}
+ALLOWED_AUDIO_EXTENSIONS = {".webm", ".wav", ".ogg", ".mp3", ".m4a", ".mp4", ".aac", ".flac"}
 
 # Configure structured logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

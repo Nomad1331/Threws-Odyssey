@@ -94,12 +94,16 @@ def run_tests():
         print(f" -> Handled corrupt audio gracefully: {corrupt_resp.json()}")
         print(" [PASS] Corrupt audio resilience and path sanitization validated.")
 
-        # 6. Test arbitrary non-audio extension sanitization (e.g. .exe defaulted safely)
-        print("\n[Test 6] Testing non-audio file extension sanitization ...")
+        # 6. Test arbitrary non-audio extension sanitization and Safari audio formats (.mp4/.m4a)
+        print("\n[Test 6] Testing non-audio file extension sanitization and Safari audio formats ...")
         bad_ext_files = {"file": ("malware.exe", wav_bytes, "application/octet-stream")}
         bad_ext_resp = client.post("/api/v1/translate-audio", files=bad_ext_files)
         assert bad_ext_resp.status_code == 200, f"Expected 200, got {bad_ext_resp.status_code}"
-        print(" [PASS] Safe extension fallback validated.")
+
+        safari_files = {"file": ("recording.mp4", wav_bytes, "audio/mp4")}
+        safari_resp = client.post("/api/v1/translate-audio", files=safari_files)
+        assert safari_resp.status_code == 200, f"Expected 200, got {safari_resp.status_code}"
+        print(" [PASS] Safe extension fallback and Safari audio formats validated.")
 
         # 7. Test CORS preflight and origin isolation (localhost & LAN allowed, untrusted denied)
         print("\n[Test 7] Testing CORS preflight and origin boundaries ...")

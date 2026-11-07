@@ -19,9 +19,9 @@
   2. **Transient Burst Loss:** Stop consonants ($p, b, t, d, k, g$) lose acoustic release bursts, sounding like breathy fricatives or indistinct murmurs.
   3. **Involuntary Prosodic Drift:** Unpredictable phoneme prolongation, spastic respiratory pauses, and vocal intensity fluctuations.
 
-### 1.3 Streaming Endpoints & Replication
+### 1.3 Streaming Access & Replication
 The dataset is streamed via Hugging Face Hub, removing the need for manual 50GB archive downloads:
-* **Primary Streaming Endpoint:** `abnerh/TORGO-database`
+* **Primary Streaming Source:** `abnerh/TORGO-database`
 * **Pre-tokenized Mirrors:** `extraordinarylab/torgo`, `saeedzou/torgo-dysarthria`
 * **Python Streaming Integration:**
   ```python
@@ -54,7 +54,7 @@ Evaluation on baseline foundation models indicates three primary failure mechani
 
 * **Base Architecture:** `openai/whisper-tiny` (39 million parameters).
 * **Weight Freezing:** 99.6% of base model weights are frozen to preserve the underlying linguistic, syntactic, and semantic representations of English.
-* **Trainable Projections:** Low-rank decomposition matrices ($r=16, \alpha=32$) are injected exclusively into the Query (`q_proj`) and Value (`v_proj`) attention projection layers of the acoustic encoder.
+* **Trainable Projections:** Low-rank decomposition matrices ($r=16, \alpha=32$) are injected into Query (`q_proj`) and Value (`v_proj`) attention projection layers. LoRA on q_proj and v_proj, matching attention in the encoder and decoder.
 * **Footprint:** Produces a ~1.5MB adapter file that dramatically simplifies distribution, local edge execution, and rapid deployment.
 
 ---

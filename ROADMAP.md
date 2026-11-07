@@ -25,8 +25,8 @@
 └────────────────────────────────────────┬─────────────────────────────────────────┘
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 3: Low-Latency Inference API & VAD Pipeline (Bricks 8 – 10) [DONE ✅]      │
-│ • Dysarthric Silero VAD • FastAPI Asynchronous Gateway • ONNX INT8 Quantization  │
+│ PHASE 3: Low-Latency Inference API Pipeline (Bricks 8 – 10) [DONE ✅]             │
+│ • FastAPI Asynchronous Gateway • ONNX INT8 Quantization                           │
 └────────────────────────────────────────┬─────────────────────────────────────────┘
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
@@ -55,7 +55,7 @@
   - Configured Hugging Face dataset streaming on `abnerh/TORGO-database`.
   - Implemented dynamic audio normalization casting all incoming speech to **16,000 Hz Mono Float32**.
   - Built Log-Mel spectrogram feature extraction via `WhisperFeatureExtractor`.
-  - Created [`model_training/VoiceBridge_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py).
+  - Created [`model_training/VoiceBridge_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py). Fine-tuning notebook: Whisper-small (pending results). Served model: Whisper-tiny.
 * **Lead:** Aaliya Hussain (ML) / Talha (Pipeline Review)
 * **Status:** Verified live with zero-copy tensor extraction.
 
@@ -64,7 +64,7 @@
 ### [x] Brick 2: Zero-Shot Baseline Whisper Forensic Benchmark (WER/CER) (COMPLETED)
 * **Core Objective:** Establish empirical proof of the "70% Failure Wall" where commercial speech foundation models completely collapse on dysarthric speech.
 * **Accomplished:**
-  - Benchmarked unmodified `openai/whisper-tiny` (39M parameters) and `openai/whisper-base` (74M parameters).
+  - Benchmarked unmodified `openai/whisper-tiny` (39M parameters).
   - Evaluated clinical speech from Cerebral Palsy (CP) and Amyotrophic Lateral Sclerosis (ALS) speakers.
   - Confirmed that standard foundation Whisper achieves an unacceptable **65%–82% WER** on dysarthric audio.
 * **Lead:** Aaliya Hussain (ML) / Manas Suryawanshi (Metrics Logging)
@@ -88,7 +88,7 @@
 ## Phase 2: Acoustic Adaptation & LoRA Fine-Tuning (Nov 1 – 2)
 
 ### [x] Brick 4: Parameter-Efficient Fine-Tuning (PEFT) Injection Architecture (COMPLETED)
-* **Core Objective:** Design and inject Low-Rank Adaptation (LoRA) matrices into the Whisper acoustic encoder, freezing 99.6% of base weights to prevent catastrophic forgetting.
+* **Core Objective:** Design and inject Low-Rank Adaptation (LoRA) matrices into Whisper attention in the encoder and decoder, freezing 99.6% of base weights to prevent catastrophic forgetting.
 * **Accomplished:**
   - Configured `peft.LoraConfig` targeting Query (`q_proj`) and Value (`v_proj`) attention projection layers.
   - Hyperparameters locked: $r = 16$, $\alpha = 32$, dropout = $0.05$, bias = `"none"`.
@@ -130,16 +130,15 @@
 
 ---
 
-## Phase 3: Low-Latency Inference API & VAD Pipeline (Nov 3 – 4)
+## Phase 3: Low-Latency Inference API Pipeline (Nov 3 – 4)
 
-### [x] Brick 8: Dysarthria-Tuned Voice Activity Detection (VAD) (COMPLETED)
-* **Core Objective:** Implement voice activity detection and silence handling that accommodates dysarthric speech cadence without cutting the user off during spastic pauses.
+## Not implemented: VAD and pause-specific behavior
+### [ ] Brick 8: Dysarthria-Tuned Voice Activity Detection (VAD) (NOT IMPLEMENTED)
+* **Core Objective:** Not implemented.
 * **Accomplished:**
-  - Configured energy-based silence thresholding and trailing noise trimming (`librosa.effects.trim` with `top_db=25`).
-  - Tuned endpointer window to tolerate extended 600–800ms spastic pauses without fragmenting user sentences.
-  - Integrated hallucination suppression (`condition_on_prev_tokens=False`, `no_speech_threshold=0.6`).
-* **Lead:** Talha (Backend Architecture) / Aaliya Hussain (VAD Tuning)
-* **Status:** Verified on raw patient audio with zero premature cutoffs.
+  - Not implemented.
+* **Lead:** Talha (Backend Architecture) / Aaliya Hussain (audio pause handling)
+* **Status:** Not implemented.
 
 ---
 
@@ -147,8 +146,8 @@
 * **Core Objective:** Build a production-grade, asynchronous FastAPI backend microservice capable of ingesting raw client audio and handling multi-format uploads.
 * **Accomplished:**
   - Built [`backend/app/main.py`](file:///I:/Career/Threws%20Hackathon/backend/app/main.py) with CORS middleware configured for Next.js frontend origin.
-  - Implemented `POST /api/v1/translate-audio` endpoint accepting multipart audio (`.wav`, `.webm`, `.ogg`).
-  - Implemented `GET /health` system diagnostics endpoint reporting service status and model engine.
+  - Implemented `POST /api/v1/translate-audio` route accepting multipart audio (`.wav`, `.webm`, `.ogg`).
+  - Implemented `GET /health` system diagnostics route reporting service status and model engine.
   - Integrated LoRA model inference pipeline in [`backend/app/inference.py`](file:///I:/Career/Threws%20Hackathon/backend/app/inference.py).
 * **Lead:** Talha (Full-Stack Backend)
 * **Status:** Fully functional and verified live on port 8000.
@@ -163,7 +162,6 @@
   - Applied dynamic INT8 quantization across all components, achieving **74.42% storage reduction** (103.45 MB 3-graph bundle; 57.12 MB unique weights).
   - Benchmarked CPU performance: **Real-Time Factor (RTF) = 0.1013 (~10× faster than real-time)**, processing 1 second of speech in ~100 ms on consumer CPUs.
   - Pushed turnkey script [`model_training/export_and_quantize_onnx.py`](file:///I:/Career/Threws%20Hackathon/model_training/export_and_quantize_onnx.py), [`docs/QUANTIZATION_GUIDE.md`](file:///I:/Career/Threws%20Hackathon/docs/QUANTIZATION_GUIDE.md), and comprehensive telemetry report [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](file:///I:/Career/Threws%20Hackathon/docs/EDGE_AI_BENCHMARK_RESULTS.md) to branch `moulika/voicebridge-onnx-int8`.
-  - Added trailing silence trimming and anti-hallucination decoding flags (`condition_on_prev_tokens=False`).
 * **Lead:** Moulika Sanyal (Edge AI & ONNX Quantization) / Talha (Pipeline Review)
 * **Status:** Validated on CPU hardware with verified graphs and benchmark reports.
 
@@ -264,7 +262,7 @@
   - Author docs/TECHNICAL_REPORT.md following comprehensive hackathon technical report format:
     1. *Abstract & Clinical Problem Statement* (The 70% failure wall in dysarthria).
     2. *Neuromotor Acoustic Distortions* (Vowel centralization, transient collapse).
-    3. *PEFT / LoRA Adaptation Methodology* ($r=16, \alpha=32$ on Whisper encoder).
+    3. *PEFT / LoRA Adaptation Methodology* ($r=16, \alpha=32$ on attention in the encoder and decoder).
     4. *Empirical TORGO Benchmark Results* (Disjoint patient evaluation, WER drop from 72% to 18.2%).
     5. *Edge AI Quantization & Latency Profile* (ONNX INT8 74.4% size cut, 0.10 RTF).
     6. *Future Multilingual Indic Roadmap* (Extending LoRA adaptation to Hindi and Marathi).
@@ -293,7 +291,7 @@
   - Record screencast and voiceover following the exact storyboard:
     - **0:00 – 0:30 (The Pain Point):** Play real TORGO dysarthric audio clip $\rightarrow$ feed into standard Whisper $\rightarrow$ show it outputting complete gibberish.
     - **0:30 – 1:15 (The VoiceBridge Solution):** Play exact same clip through VoiceBridge $\rightarrow$ show real-time translation $\rightarrow$ show audio synthesized aloud via TTS.
-    - **1:15 – 1:45 (Technical Architecture):** Highlight PEFT LoRA encoder adaptation ($r=16$), 72% $\rightarrow$ 18% WER drop, ONNX INT8 0.10 RTF, and WCAG AAA physical accessibility.
+    - **1:15 – 1:45 (Technical Architecture):** Highlight PEFT LoRA adaptation in the encoder and decoder ($r=16$), 72% $\rightarrow$ 18% WER drop, ONNX INT8 0.10 RTF, and WCAG AAA physical accessibility.
     - **1:45 – 2:00 (Human Impact & Future Vision):** Clinical utility for stroke/CP patients and future Indic language roadmap.
   - Edit, export in 1080p MP4, and upload unlisted link.
 * **Assigned Lead:** Manas Suryawanshi (Script) / Talha (Video Assembly & Screen Capture) / Moulika Sanyal (Edge Co-Presenter)
@@ -334,7 +332,7 @@
 | **05** | Speaker-Disjoint Patient Validation Split | Nov 01 | Aaliya / Talha | **COMPLETED** ✅ |
 | **06** | LoRA Training Loop & Checkpoint Export | Nov 02 | Aaliya | **COMPLETED** ✅ |
 | **07** | Held-Out Test Evaluation & Scorecard Generation | Nov 02 | Aaliya / Manas | **COMPLETED** ✅ |
-| **08** | Dysarthria-Tuned Silero VAD Endpointer | Nov 03 | Talha / Aaliya | **COMPLETED** ✅ |
+| **08** | Dysarthria-Tuned audio pause handling | Nov 03 | Talha / Aaliya | **NOT IMPLEMENTED** |
 | **09** | FastAPI Microservice Core & Ingestion Gateway | Nov 03 | Talha | **COMPLETED** ✅ |
 | **10** | ONNX INT8 Quantization, Edge Acceleration & Low-Latency Pipeline | Nov 04 | Moulika / Talha | **COMPLETED** ✅ |
 | **11** | Next.js 14 App Shell & WCAG AAA Dark UI | Nov 04 | Talha | **COMPLETED** ✅ |

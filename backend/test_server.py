@@ -51,7 +51,7 @@ def run_tests():
         print(f" -> Response: {data}")
         assert data["status"] == "healthy"
         assert data["service"] == "VoiceBridge ASR Gateway"
-        assert data["engine"] == ENGINE_NAME, f"Expected engine {ENGINE_NAME}, got {data['engine']}"
+        assert data["engine"] == "whisper-tiny-lora"
         print(" [PASS] GET /health endpoint verified.")
 
         # 2. /api/v1/translate-audio with generated audio
@@ -66,8 +66,7 @@ def run_tests():
         assert "transcription" in post_data
         assert "confidence_score" in post_data
         assert "processing_time_ms" in post_data
-        assert post_data["engine"] == ENGINE_NAME, f"Expected engine {ENGINE_NAME}, got {post_data['engine']}"
-        assert isinstance(post_data["transcription"], str)
+        assert post_data["confidence_score"] is None
         print(" [PASS] POST /api/v1/translate-audio endpoint verified.")
 
         # 3. Confidence is not measured, so it must be null, never 0.0

@@ -5,9 +5,11 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Optional
 
+from audioread.exceptions import NoBackendError
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from soundfile import LibsndfileError
 from backend.app.inference import load_model, transcribe_audio
 
 # Configure logging
@@ -32,7 +34,7 @@ app = FastAPI(
 # CORS configuration for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,9 +48,8 @@ class HealthResponse(BaseModel):
 
 class TranscriptionResponse(BaseModel):
     transcription: str
-    confidence_score: Optional[float] = None
+    confidence_score: float | None
     processing_time_ms: int
-    engine: str
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -74,24 +75,22 @@ async def translate_audio(file: UploadFile = File(...)):
     if not ext:
         ext = ".webm"
 
-    # Save audio stream to temporary file for PyAV / faster-whisper decoder
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
     temp_path = temp_file.name
+    temp_file.close()
 
     try:
-        content = await file.read()
+        content = await file.read(10 * 1024 * 1024 + 1)
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Audio file exceeds the 10 MB limit")
         if not content:
             raise HTTPException(status_code=400, detail="Uploaded audio file is empty")
 
-        temp_file.write(content)
-        temp_file.flush()
-        temp_file.close()
+        with open(temp_path, "wb") as audio_file:
+            audio_file.write(content)
 
         # Run VoiceBridge Whisper Tiny + LoRA inference
         full_text = transcribe_audio(temp_path)
-
-        # Confidence score is not currently calculated
-        confidence = None
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
 
@@ -101,16 +100,15 @@ async def translate_audio(file: UploadFile = File(...)):
 
         return TranscriptionResponse(
             transcription=full_text,
-            confidence_score=confidence,
+            confidence_score=None,
             processing_time_ms=elapsed_ms,
-            engine="whisper-tiny-lora",
 )
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, EOFError, LibsndfileError, NoBackendError) as e:
         logger.error(f"Inference error during audio translation: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Audio translation failed: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Audio file is unreadable: {str(e)}")
     finally:
         # Clean up temporary audio file
         if os.path.exists(temp_path):

@@ -141,8 +141,8 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             <button
               type="button"
               onClick={handleSpeakAloud}
-              title="Speak phrase aloud"
-              aria-label="Speak phrase aloud"
+              title={isSpeaking ? "Stop speaking" : "Speak phrase aloud"}
+              aria-label={isSpeaking ? "Stop speaking" : "Speak phrase aloud"}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
             >
               <Volume2 className="h-3.5 w-3.5" />

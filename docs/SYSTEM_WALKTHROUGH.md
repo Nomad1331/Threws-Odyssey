@@ -118,7 +118,7 @@ Here is exactly what happens in memory and across the network from the moment th
 ### Backend Microservice (`/backend`)
 | File | Responsibility |
 | :--- | :--- |
-| **`requirements.txt`** | Minimal, production-tested dependencies (4 packages: `fastapi`, `uvicorn`, `faster-whisper`, `python-multipart`). Zero heavy PyTorch/CUDA bloat or unneeded audio wrappers. |
+| **`requirements.txt`** | Minimal, production-tested dependencies (`fastapi`, `uvicorn`, `faster-whisper`, `python-multipart`, `httpx`). Zero heavy PyTorch/CUDA bloat or unneeded audio wrappers. |
 | **`app/main.py`** | FastAPI application setup, CORS configuration, `@app.get("/health")`, and `@app.post("/api/v1/translate-audio")` route with tempfile cleanup. |
 | **`app/inference.py`** | Singleton `load_model()` and `transcribe_audio()` functions executing faster-whisper INT8 on CPU with greedy decoding. |
 

@@ -119,14 +119,14 @@
 
 ---
 
-### [x] Brick 7: Held-Out Adaptation Evaluation & Scorecard Generation (COMPLETED)
-* **Core Objective:** Empirically demonstrate that VoiceBridge's LoRA adaptation dramatically cuts dysarthric Word Error Rate on unseen patients.
+### [x] Brick 7: Held-Out Adaptation Evaluation & Scientific Telemetry (COMPLETED)
+* **Core Objective:** Evaluate acoustic model behavior across held-out, unseen clinical speakers.
 * **Accomplished:**
-  - Attached `Aaliya05/voicebridge` weights to base `openai/whisper-tiny`.
-  - Confirmed relative error reduction exceeding 70% across held-out clinical audio.
-  - Scorecard metrics integrated into frontend drawer and publication figures.
+  - Evaluated `openai/whisper-tiny` on held-out TORGO clinical clips across Mild, Moderate, and Severe subjects.
+  - Confirmed empirical findings consistent with Google Euphonia: zero-shot foundation models collapse on severe dysarthria (82.2% baseline WER), and speaker-independent generalization across unseen atypical speech requires on-device personalization.
+  - Established the Edge AI baseline: proved that quantized INT8 Whisper runs at 0.10 RTF on consumer CPUs, enabling local edge personalization.
 * **Lead:** Aaliya Hussain (ML) / Manas Suryawanshi (Analysis)
-* **Status:** Empirical metrics locked in and validated.
+* **Status:** Empirical baseline documented in `docs/EDGE_AI_BENCHMARK_RESULTS.md`.
 
 ---
 
@@ -148,14 +148,14 @@
   - Built [`backend/app/main.py`](file:///I:/Career/Threws%20Hackathon/backend/app/main.py) with CORS middleware configured for Next.js frontend origin.
   - Implemented `POST /api/v1/translate-audio` route accepting multipart audio (`.wav`, `.webm`, `.ogg`).
   - Implemented `GET /health` system diagnostics route reporting service status and model engine.
-  - Integrated LoRA model inference pipeline in [`backend/app/inference.py`](file:///I:/Career/Threws%20Hackathon/backend/app/inference.py).
+  - Integrated CPU-optimized INT8 Whisper inference engine in [`backend/app/inference.py`](file:///I:/Career/Threws%20Hackathon/backend/app/inference.py).
 * **Lead:** Talha (Full-Stack Backend)
 * **Status:** Fully functional and verified live on port 8000.
 
 ---
 
 ### [x] Brick 10: ONNX INT8 Quantization, Edge Acceleration & Low-Latency Pipeline (COMPLETED)
-* **Core Objective:** Quantize the LoRA-adapted Whisper model to ONNX INT8 for resource-constrained edge execution and benchmark CPU latency and memory footprint.
+* **Core Objective:** Quantize the Whisper model to ONNX INT8 for resource-constrained edge execution and benchmark CPU latency and memory footprint.
 * **Accomplished:**
   - Merged `Aaliya05/voicebridge` LoRA weights permanently into `openai/whisper-tiny` base graph.
   - Exported computation graphs (`encoder_model`, `decoder_model`, `decoder_with_past_model`) via Optimum ONNX.
@@ -169,12 +169,12 @@
 
 ## Phase 4: Production Accessible Web App & Audio UX (Nov 4)
 
-### [x] Brick 11: Next.js 14 Accessible App Shell & Dark Theme (COMPLETED)
+### [x] Brick 11: Next.js 14 Accessible App Shell & Interface (COMPLETED)
 * **Core Objective:** Scaffold the production Next.js 14 client application adhering strictly to WCAG 2.1 AAA physical motor accessibility standards.
 * **Accomplished:**
   - Built Next.js 14 App Router application in [`frontend/`](file:///I:/Career/Threws%20Hackathon/frontend/) with TypeScript and Tailwind CSS.
-  - Implemented clinical assistive palette: Deep Medical Slate (`#0B1120`), Clinical Navy (`#1E293B`), Therapeutic Teal (`#0D9488` / `#14B8A6`), Crisp Chalk (`#F8FAFC`).
-  - Designed giant **160px $\times$ 160px circular microphone button** ([`frontend/src/components/TactileMicButton.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/TactileMicButton.tsx)) with expanding tactile pulse rings for motor tremor accommodation.
+  - Implemented clean high-contrast assistive styling with custom CSS tokens.
+  - Designed large circular microphone button ([`frontend/src/components/TactileMicButton.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/TactileMicButton.tsx)) meeting WCAG AAA minimum 44px hit-target recommendations (112px diameter).
   - Keyboard navigation: Global Spacebar toggle for recording.
   - Single-viewport layout with zero deep menus ([`frontend/src/app/page.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/app/page.tsx)).
 * **Lead:** Talha (Frontend Lead)
@@ -193,22 +193,22 @@
 
 ---
 
-### [x] Brick 13: Live 64-Band FFT Waveform Canvas Visualizer (COMPLETED)
+### [x] Brick 13: Live Waveform Canvas Visualizer (COMPLETED)
 * **Core Objective:** Provide immediate, kinetic visual confirmation to dysarthric users that their vocalizations are being captured by the microphone.
 * **Accomplished:**
   - Created [`frontend/src/components/AudioWaveformCanvas.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/AudioWaveformCanvas.tsx) utilizing HTML5 `<canvas>`.
-  - Connected Web Audio `AnalyserNode` with `fftSize = 128` (64 frequency bins).
-  - Implemented 60 FPS multi-harmonic animated wave during active listening and gentle resting telemetry baseline when idle.
+  - Connected Web Audio `AnalyserNode` with `fftSize = 256`.
+  - Implemented 60 FPS multi-harmonic animated wave during active listening and resting baseline when idle.
 * **Lead:** Talha (Frontend Lead)
-* **Status:** Silky 60 FPS canvas visualizer with zero main-thread lag.
+* **Status:** 60 FPS canvas visualizer with zero main-thread lag.
 
 ---
 
-### [x] Brick 14: Dual-Channel Output: Visual Transcription & Auto-TTS (COMPLETED)
-* **Core Objective:** Close the communication loop by simultaneously displaying reconstructed text and vocalizing it aloud so the user can hold spoken conversations.
+### [x] Brick 14: Dual-Channel Output: Visual Transcription & On-Demand Speech Synthesis (COMPLETED)
+* **Core Objective:** Close the communication loop by displaying reconstructed text and vocalizing it aloud on demand.
 * **Accomplished:**
-  - Created [`frontend/src/components/TranscriptDisplay.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/TranscriptDisplay.tsx) with bold 32px high-legibility display.
-  - Integrated client-side Text-to-Speech (TTS) via Web Speech API (`window.speechSynthesis`).
+  - Created [`frontend/src/components/TranscriptDisplay.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/TranscriptDisplay.tsx) with high-legibility display.
+  - Integrated client-side Text-to-Speech (TTS) via Web Speech API (`window.speechSynthesis`) invoked on-demand via "Say it".
   - Added latency telemetry badge, confidence indicator, and quick-assist emergency tap cards ([`frontend/src/components/QuickAssistGrid.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/QuickAssistGrid.tsx)).
 * **Lead:** Talha (Frontend Lead)
 * **Status:** End-to-end speech-to-display-to-audio loop verified.
@@ -222,7 +222,7 @@
     1. `torgo_mild_sample.wav`: TORGO-M05 (Cerebral Palsy, Mild) — *"We have an excellent team"*
     2. `torgo_moderate_sample.wav`: TORGO-M04 (Post-Trauma TBI, Moderate) — *"Their house is grey and white"*
     3. `torgo_severe_sample.wav`: TORGO-M02 (ALS, Severe) — *"The job provides many benefits"*
-  - Created interactive evaluation drawer ([`frontend/src/components/ClinicalBenchmarkDrawer.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/ClinicalBenchmarkDrawer.tsx)) allowing judges to listen to raw patient audio and compare Standard Whisper vs VoiceBridge reconstruction with 1-click simulation.
+  - Created interactive evaluation drawer ([`frontend/src/components/ClinicalBenchmarkDrawer.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/ClinicalBenchmarkDrawer.tsx)) allowing judges to listen to authentic raw patient audio alongside ground-truth text.
 * **Lead:** Talha (UI) / Manas Suryawanshi (Clinical Audio Curation)
 * **Status:** Interactive drawer integrated into main landing page.
 

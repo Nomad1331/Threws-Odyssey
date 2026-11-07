@@ -35,6 +35,9 @@ export function useAudioRecorder(): AudioRecorderHook {
   const [audioAnalyser, setAudioAnalyser] = useState<AnalyserNode | null>(null);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
 
+  // Synchronous state ref guarantees deterministic FSM transitions without React closure lag
+  const stateRef = useRef<RecordingState>("idle");
+  const selectedMimeRef = useRef<string>("");
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -80,6 +83,7 @@ export function useAudioRecorder(): AudioRecorderHook {
   // Clean up active hardware microphone stream and audio context on component unmount
   useEffect(() => {
     return () => {
+      stateRef.current = "idle";
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
@@ -103,7 +107,12 @@ export function useAudioRecorder(): AudioRecorderHook {
   }, []);
 
   const startRecording = useCallback(async () => {
-    // Prevent duplicate recording instances if already active
+    // Strictly prevent starting a recording unless state is idle
+    if (stateRef.current !== "idle") {
+      return;
+    }
+
+    // Secondary check: verify no active MediaRecorder instance
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       return;
     }
@@ -166,6 +175,7 @@ export function useAudioRecorder(): AudioRecorderHook {
           break;
         }
       }
+      selectedMimeRef.current = selectedMime;
 
       const recorder = selectedMime
         ? new MediaRecorder(stream, { mimeType: selectedMime })
@@ -179,6 +189,7 @@ export function useAudioRecorder(): AudioRecorderHook {
       };
 
       recorder.start(250);
+      stateRef.current = "listening";
       setState("listening");
     } catch (err) {
       console.error("Failed to start audio recording:", err);
@@ -195,19 +206,26 @@ export function useAudioRecorder(): AudioRecorderHook {
         }
         audioContextRef.current = null;
       }
+      stateRef.current = "idle";
       setState("idle");
       throw err;
     }
   }, []);
 
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
+    // Strictly prevent stopping unless currently in listening state
+    if (stateRef.current !== "listening") {
+      return null;
+    }
+
+    stateRef.current = "processing";
     setState("processing");
 
     return new Promise<Blob | null>((resolve) => {
       const finish = () => {
         let blob: Blob | null = null;
         if (audioChunksRef.current.length > 0) {
-          const mime = mediaRecorderRef.current?.mimeType || "audio/webm";
+          const mime = mediaRecorderRef.current?.mimeType || selectedMimeRef.current || "audio/webm";
           blob = new Blob(audioChunksRef.current, { type: mime });
           audioChunksRef.current = []; // Free slice chunk buffers from memory
           const url = URL.createObjectURL(blob);
@@ -254,6 +272,7 @@ export function useAudioRecorder(): AudioRecorderHook {
   }, [recordedAudioUrl]);
 
   const setIdle = useCallback(() => {
+    stateRef.current = "idle";
     setState("idle");
   }, []);
 

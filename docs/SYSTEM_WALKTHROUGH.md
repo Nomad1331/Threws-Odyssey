@@ -192,3 +192,9 @@ To verify the entire pipeline end-to-end on any machine:
    npm run build
    # Expected output: Compiled successfully. Linting and checking validity of types... Static pages generated (5/5).
    ```
+
+4. **Run Full Backend Verification Suite (7/7 Tests):**
+   ```bash
+   python backend/test_server.py
+   # Expected output: ALL 7 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.
+   ```

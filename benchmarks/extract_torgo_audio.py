@@ -2,8 +2,11 @@ import os
 import pyarrow.parquet as pq
 from faster_whisper import WhisperModel
 
-PARQUET_PATH = r"C:\Users\Ahmed\.cache\huggingface\hub\datasets--abnerh--TORGO-database\snapshots\c4e0b560a515465e61bb555455e34fc620031fe8\data\train-00002-of-00004.parquet"
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "public", "audio")
+PARQUET_PATH = os.path.expanduser(
+    r"~/.cache/huggingface/hub/datasets--abnerh--TORGO-database/snapshots/c4e0b560a515465e61bb555455e34fc620031fe8/data/train-00002-of-00004.parquet"
+)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_DIR = os.path.join(ROOT_DIR, "frontend", "public", "audio")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 table = pq.read_table(PARQUET_PATH)

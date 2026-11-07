@@ -11,7 +11,7 @@
 Automatic Speech Recognition (ASR) systems (OpenAI Whisper, Google Speech API, Apple Siri) are trained on fluent, normative speech. For individuals with **dysarthria**—neuromotor speech impairments resulting from Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), or Traumatic Brain Injury (TBI)—these models collapse, yielding **65% to 80% Word Error Rates (WER)**.
 
 **VoiceBridge** is an open-source assistive speech transcription prototype built on two principles:
-1. **Edge AI Optimization:** Executes a quantized **INT8 Whisper model on standard consumer CPUs** (Intel Core i5) without requiring discrete GPUs or cloud APIs (103MB memory footprint, ~400ms latency).
+1. **Edge AI Optimization:** Executes a quantized **INT8 Whisper model on standard consumer CPUs** (Intel Core i5) without requiring discrete GPUs or cloud APIs (103MB memory footprint, 592ms average latency on TORGO clips, ~400ms on short speech).
 2. **Physical Accessibility:** Designed specifically for motor-impaired individuals with WCAG 2.1 AAA touch targets, physical keyboard shortcuts (<kbd>SPACE</kbd>), tactile haptic feedback, and accidental-trigger protection.
 
 ---
@@ -126,7 +126,7 @@ Here is exactly what happens in memory and across the network from the moment th
 | File | Responsibility |
 | :--- | :--- |
 | **`app/page.tsx`** | Main 2-column page layout. Manages global transcription state, backend health polling, and coordinates child components. |
-| **`app/layout.tsx`** | Root HTML document shell, Geist font variables, high-contrast WCAG dark mode styles. |
+| **`app/layout.tsx`** | Root HTML document shell, Geist font variables, and WCAG AAA high-contrast clinical slate styling. |
 | **`hooks/useAudioRecorder.ts`** | Isolated custom React hook handling microphone permission, `MediaRecorder` lifecycle, Web Audio API `AnalyserNode`, and real-time RMS volume. |
 | **`lib/transcriptionService.ts`** | Fetch client for the FastAPI backend. Builds multipart form data, manages timeouts, and normalizes API errors. |
 | **`components/TactileMicButton.tsx`** | Large circular record button with haptic vibration (`navigator.vibrate`), live volume pulse animation, and global <kbd>SPACE</kbd> hotkey. |

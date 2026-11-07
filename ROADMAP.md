@@ -334,10 +334,10 @@
 | **08** | Dysarthria-Tuned audio pause handling | Nov 03 | Talha / Aaliya | **NOT IMPLEMENTED** |
 | **09** | FastAPI Microservice Core & Ingestion Gateway | Nov 03 | Talha | **COMPLETED** ✅ |
 | **10** | ONNX INT8 Quantization, Edge Acceleration & Low-Latency Pipeline | Nov 04 | Moulika / Talha | **COMPLETED** ✅ |
-| **11** | Next.js 14 App Shell & WCAG AAA Dark UI | Nov 04 | Talha | **COMPLETED** ✅ |
+| **11** | Next.js 14 App Shell & WCAG AAA High-Contrast UI | Nov 04 | Talha | **COMPLETED** ✅ |
 | **12** | Web Audio API 16kHz PCM Downsampler Engine | Nov 04 | Talha | **COMPLETED** ✅ |
-| **13** | Live 64-Band FFT Waveform Canvas Visualizer | Nov 04 | Talha | **COMPLETED** ✅ |
-| **14** | Visual Transcription Display & Auto-TTS Engine | Nov 04 | Talha | **COMPLETED** ✅ |
+| **13** | Live 48-Bar Waveform Canvas Visualizer | Nov 04 | Talha | **COMPLETED** ✅ |
+| **14** | Visual Transcription Display & On-Demand TTS Engine | Nov 04 | Talha | **COMPLETED** ✅ |
 | **15** | Fail-Safe Offline University Audio Chip Matrix | Nov 04 | Talha / Manas | **COMPLETED** ✅ |
 | **16** | 300 DPI Publication Benchmark Figures Export | Nov 04 | Manas / Talha | **COMPLETED** ✅ |
 | **17** | Assistive Speech Competitive Dossier | Nov 05 | Manas / Talha | **COMPLETED** ✅ |

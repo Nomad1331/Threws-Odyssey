@@ -117,31 +117,32 @@ async def translate_audio(file: UploadFile = File(...)):
     3. Writes audio bytes safely to an OS temporary file for CTranslate2 decoding.
     4. Runs CPU-quantized INT8 Whisper inference with dysarthria-tuned decoding.
     5. Returns transcription text, normalized confidence score, and processing latency.
-    6. Deletes the temporary file in a guaranteed finally block to prevent disk leakage.
+    6. Guaranteed cleanup of both OS temporary file and Starlette spool handle in finally block.
     """
     start_time = time.perf_counter()
-
-    # 1. Read and validate payload boundaries in-memory BEFORE touching disk
-    content = await file.read(10 * 1024 * 1024 + 1)
-    if len(content) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Audio file exceeds the 10 MB limit.")
-    if not content:
-        raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
-
-    # 2. Determine file extension, enforcing allowed audio extensions to prevent arbitrary suffixes
-    filename = file.filename or "audio.webm"
-    ext = os.path.splitext(filename)[1].lower()
-    if ext not in ALLOWED_AUDIO_EXTENSIONS:
-        ext = ".webm"
-
-    # 3. Create temporary file on disk for CTranslate2 audio decoding.
-    # Note for Windows: We close the NamedTemporaryFile handle immediately before
-    # opening it with standard file I/O ('wb') to prevent WinError 32 (file in use).
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
-    temp_path = temp_file.name
-    temp_file.close()
+    temp_path: str | None = None
 
     try:
+        # 1. Read and validate payload boundaries in-memory BEFORE touching disk
+        content = await file.read(10 * 1024 * 1024 + 1)
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Audio file exceeds the 10 MB limit.")
+        if not content:
+            raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
+
+        # 2. Determine file extension, enforcing allowed audio extensions to prevent arbitrary suffixes
+        filename = file.filename or "audio.webm"
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in ALLOWED_AUDIO_EXTENSIONS:
+            ext = ".webm"
+
+        # 3. Create temporary file on disk for CTranslate2 audio decoding.
+        # Note for Windows: We close the NamedTemporaryFile handle immediately before
+        # opening it with standard file I/O ('wb') to prevent WinError 32 (file in use).
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+        temp_path = temp_file.name
+        temp_file.close()
+
         with open(temp_path, "wb") as audio_file:
             audio_file.write(content)
 

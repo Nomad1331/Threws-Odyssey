@@ -76,7 +76,7 @@
 * **Core Objective:** Mathematically prove that the speech recognition failure is purely caused by neuromotor acoustic distortion and categorize the specific speech breakdown patterns.
 * **Accomplished:**
   - Benchmarked matched healthy control speakers, verifying healthy speech scores **<5% WER**, confirming the massive ~70% dysarthric gap.
-  - Codified the clinical failure taxonomy in [`docs/PROJECT_CONTEXT.md`](file:///I:/Career/Threws%20Hackathon/docs/PROJECT_CONTEXT.md):
+  - Codified the clinical failure taxonomy in [`docs/DATASETS_AND_PROOF.md`](file:///I:/Career/Threws%20Hackathon/docs/DATASETS_AND_PROOF.md):
     1. *Vowel Formant Centralization:* Resonances ($F_1/F_2$) collapse toward neutral schwa `/ə/`.
     2. *Consonant Transient Attenuation:* Stop consonants ($p, b, t, d, k, g$) lose sharp burst releases and are classified as silence.
     3. *Prosodic Pausing:* Involuntary spastic pauses misinterpreted as sentence termination.
@@ -161,7 +161,7 @@
   - Exported computation graphs (`encoder_model`, `decoder_model`, `decoder_with_past_model`) via Optimum ONNX.
   - Applied dynamic INT8 quantization across all components, achieving **74.42% storage reduction** (103.45 MB 3-graph bundle; 57.12 MB unique weights).
   - Benchmarked CPU performance: **Real-Time Factor (RTF) = 0.1013 (~10× faster than real-time)**, processing 1 second of speech in ~100 ms on consumer CPUs.
-  - Pushed turnkey script [`model_training/export_and_quantize_onnx.py`](file:///I:/Career/Threws%20Hackathon/model_training/export_and_quantize_onnx.py), [`docs/QUANTIZATION_GUIDE.md`](file:///I:/Career/Threws%20Hackathon/docs/QUANTIZATION_GUIDE.md), and comprehensive telemetry report [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](file:///I:/Career/Threws%20Hackathon/docs/EDGE_AI_BENCHMARK_RESULTS.md) to branch `moulika/voicebridge-onnx-int8`.
+  - Pushed turnkey script [`model_training/export_and_quantize_onnx.py`](file:///I:/Career/Threws%20Hackathon/model_training/export_and_quantize_onnx.py) and comprehensive telemetry report [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](file:///I:/Career/Threws%20Hackathon/docs/EDGE_AI_BENCHMARK_RESULTS.md) to branch `moulika/voicebridge-onnx-int8`.
 * **Lead:** Moulika Sanyal (Edge AI & ONNX Quantization) / Talha (Pipeline Review)
 * **Status:** Validated on CPU hardware with verified graphs and benchmark reports.
 
@@ -263,9 +263,8 @@
     2. *File-by-File Blueprint:* Clear inventory and responsibilities of every backend and frontend file.
     3. *Design Trade-offs:* Technical explanations for faster-whisper INT8 CPU inference and motor accessibility features.
     4. *Developer Sanity Checklist:* 60-second commands to verify health, transcription, and production builds.
-    4. *Empirical TORGO Benchmark Results* (Disjoint patient evaluation, WER drop from 72% to 18.2%).
-    5. *Edge AI Quantization & Latency Profile* (ONNX INT8 74.4% size cut, 0.10 RTF).
-    6. *Future Multilingual Indic Roadmap* (Extending LoRA adaptation to Hindi and Marathi).
+    5. *Edge AI Quantization Profile:* INT8 dynamic quantization achieving a 74.42% size reduction and 0.10 RTF.
+    6. *Future Multilingual Roadmap:* Extending edge speech adaptation techniques to regional Indic languages.
 * **Assigned Lead:** Manas Suryawanshi (Writing) / Talha (Architecture) / Moulika Sanyal (Edge Data)
 * **Target Date:** November 5 – 6, 2026
 

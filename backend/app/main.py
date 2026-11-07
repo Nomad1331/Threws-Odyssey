@@ -4,12 +4,14 @@ import tempfile
 import logging
 from contextlib import asynccontextmanager
 
-from audioread.exceptions import NoBackendError
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from soundfile import LibsndfileError
-from backend.app.inference import load_model, transcribe_audio
+try:
+    from app.inference import load_model, transcribe_audio
+except ImportError:
+    from backend.app.inference import load_model, transcribe_audio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -88,8 +90,8 @@ async def translate_audio(file: UploadFile = File(...)):
         with open(temp_path, "wb") as audio_file:
             audio_file.write(content)
 
-        # Run VoiceBridge Whisper Tiny + LoRA inference
-        full_text = transcribe_audio(temp_path)
+        # Run VoiceBridge Whisper Tiny INT8 inference
+        full_text, confidence = transcribe_audio(temp_path)
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
 
@@ -99,13 +101,13 @@ async def translate_audio(file: UploadFile = File(...)):
 
         return TranscriptionResponse(
             transcription=full_text,
-            confidence_score=None,
+            confidence_score=confidence,
             processing_time_ms=elapsed_ms,
-)
+        )
 
     except HTTPException:
         raise
-    except (OSError, ValueError, RuntimeError, EOFError, LibsndfileError, NoBackendError) as e:
+    except (OSError, ValueError, RuntimeError, EOFError, LibsndfileError) as e:
         logger.error(f"Inference error during audio translation: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Audio file is unreadable: {str(e)}")
     finally:

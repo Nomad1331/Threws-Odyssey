@@ -69,7 +69,7 @@ function vibrate(ms: number) {
 }
 
 interface QuickAssistGridProps {
-  onSpeakPhrase: (phrase: string) => void;
+  onSpeakPhrase?: (phrase: string) => void;
   className?: string;
 }
 
@@ -108,7 +108,9 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
     setFlashId(card.id);
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     flashTimerRef.current = setTimeout(() => setFlashId(null), 800);
-    onSpeakPhrase(card.phrase);
+    if (onSpeakPhrase) {
+      onSpeakPhrase(card.phrase);
+    }
   };
 
   // First tap on a confirm-required button: arm it and start the 3-second window.

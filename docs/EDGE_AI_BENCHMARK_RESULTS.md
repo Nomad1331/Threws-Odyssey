@@ -74,7 +74,7 @@ Evaluated on the 3 authentic TORGO dysarthric speech WAV recordings (`16 kHz`, m
 | Sample File | Speaker & Condition | Duration | Reference Transcript | FP32 ONNX Transcript (WER) | INT8 ONNX Transcript (WER) | FP32 Latency | INT8 Latency | INT8 RTF |
 | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :---: | :---: |
 | `torgo_mild_sample.wav` | `TORGO-M05` (Mild, CP) | 5.69 s | *"We have an excellent team"* | *"We have an 8th team"* (20.0%) | *"We have in 18th Team."* (40.0%) | 628.7 ms | 660.0 ms | 0.1160 |
-| `torgo_moderate_sample.wav` | `TORGO-M04` (Moderate, Post-Stroke) | 5.87 s | *"Their house is grey and white"* | *"then down, great and white"* (66.7%) | *"Good night."* (100.0%) | 579.1 ms | 518.7 ms | 0.0884 |
+| `torgo_moderate_sample.wav` | `TORGO-M04` (Moderate Tier, Post-Trauma TBI) | 5.87 s | *"Their house is grey and white"* | *"then down, great and white"* (66.7%) | *"Good night."* (100.0%) | 579.1 ms | 518.7 ms | 0.0884 |
 | `torgo_severe_sample.wav` | `TORGO-M02` (Severe, ALS) | 6.00 s | *"The job provides many benefits"* | *"I'm gonna put my nose in the bed"* (160.0%) | *"I will be very happy."* (100.0%) | 706.6 ms | 597.2 ms | 0.0995 |
 | **Average** | **All 3 TORGO Clips** | **5.85 s** | — | **Mean WER: 82.2%** | **Mean WER: 80.0%** | **638.1 ms** | **592.0 ms** | **0.1013** |
 

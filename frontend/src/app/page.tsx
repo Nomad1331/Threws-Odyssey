@@ -278,6 +278,11 @@ export default function Home() {
     }
   }, [micState]);
 
+  const handleSelectPhrase = (phrase: string) => {
+    setTranscript(phrase);
+    setStatusNotice("Phrase selected • Tap 'Say it' to speak aloud");
+  };
+
   const handleClear = () => {
     setTranscript("");
     setLatencyMs(null);
@@ -336,7 +341,7 @@ export default function Home() {
         </div>
 
         <div className="w-full pt-1">
-          <QuickAssistGrid />
+          <QuickAssistGrid onSpeakPhrase={handleSelectPhrase} />
         </div>
       </section>
 

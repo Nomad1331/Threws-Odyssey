@@ -10,6 +10,7 @@ interface TranscriptDisplayProps {
   isProcessing?: boolean;
   recordedAudioUrl?: string | null;
   statusNotice?: string;
+  secondaryTranscript?: string;
   source?: "fastapi-backend" | "web-speech" | "unavailable";
   onClear?: () => void;
   className?: string;
@@ -27,6 +28,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   isProcessing = false,
   recordedAudioUrl,
   statusNotice,
+  secondaryTranscript,
   source,
   onClear,
   className = "",

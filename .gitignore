@@ -32,6 +32,11 @@ ENV/
 .env.production.local
 *.pem
 
+# Hackathon Tooling & Audit Scratches
+.bullseye/
+audit_section.txt
+google_doc_export.*
+
 # Large Model Checkpoints & Adapters (Store in Cloud / Hugging Face)
 *.bin
 *.pt

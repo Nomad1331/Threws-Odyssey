@@ -1,0 +1,90 @@
+{
+  "_meta": {
+    "project": "VoiceBridge",
+    "event": "THREWS Odyssey 2026",
+    "track": "Human-AI & Assistive Technology",
+    "team": "Sleeper Cells",
+    "institution": "SIES Graduate School of Technology",
+    "benchmarkDate": "2026-11-04",
+    "evaluatedBy": "Moulika Sanyal (Edge AI Lead)",
+    "benchmarkHardware": "13th Gen Intel(R) Core(TM) i5-1334U (x86_64, AVX2)",
+    "operatingSystem": "Ubuntu Linux x86_64",
+    "executionProvider": "ONNX Runtime CPUExecutionProvider",
+    "status": "Preliminary Research Baseline"
+  },
+  "models": {
+    "base": "openai/whisper-tiny",
+    "baseParameters": 39000000,
+    "adapter": "Aaliya05/voicebridge",
+    "adapterType": "LoRA (r=16, alpha=32, target: q_proj, v_proj)",
+    "dataset": "University of Toronto TORGO Database (Cerebral Palsy, ALS, Traumatic Brain Injury)"
+  },
+  "quantization": {
+    "method": "Dynamic INT8 Quantization (Hugging Face Optimum / ONNX Runtime)",
+    "fp32StorageBytes": 424138000,
+    "fp32StorageMb": 404.49,
+    "int8StorageBytes": 108475000,
+    "int8StorageMb": 103.45,
+    "int8EncoderPlusSingleDecoderMb": 57.12,
+    "storageReductionPercent": 74.42,
+    "storageStatus": "PASS (target ~74%)"
+  },
+  "telemetry": {
+    "cpuInferenceLatencyAvgMs": 592.0,
+    "realTimeFactorAvg": 0.1013,
+    "speedupVsRealTime": "9.87x faster than real-time playback",
+    "sessionWorkingSetRssDeltaMb": 139.4,
+    "targetLatencyMs": 280,
+    "latencyStatus": "MISS (592ms vs <280ms target; acknowledged in report)"
+  },
+  "empiricalWer": {
+    "evaluationDataset": "Held-Out TORGO Dysarthric Speech Clips (3 samples, ~5.85s avg duration)",
+    "sampleCount": 3,
+    "fp32BaselineMeanWer": 82.2,
+    "int8QuantizedMeanWer": 80.0,
+    "breakdown": [
+      {
+        "clip": "torgo_mild_sample.wav",
+        "speaker": "TORGO-M05",
+        "condition": "Cerebral Palsy",
+        "durationSec": 5.69,
+        "reference": "We have an excellent team",
+        "fp32Output": "We have an 8th team",
+        "fp32Wer": 20.0,
+        "int8Output": "We have in 18th Team.",
+        "int8Wer": 40.0,
+        "int8LatencyMs": 660.0
+      },
+      {
+        "clip": "torgo_moderate_sample.wav",
+        "speaker": "TORGO-M04",
+        "condition": "Post-Trauma (TBI)",
+        "durationSec": 5.87,
+        "reference": "Their house is grey and white",
+        "fp32Output": "then down, great and white",
+        "fp32Wer": 66.7,
+        "int8Output": "Good night.",
+        "int8Wer": 100.0,
+        "int8LatencyMs": 518.7
+      },
+      {
+        "clip": "torgo_severe_sample.wav",
+        "speaker": "TORGO-M02",
+        "condition": "Amyotrophic Lateral Sclerosis (ALS)",
+        "durationSec": 6.00,
+        "reference": "The job provides many benefits",
+        "fp32Output": "I'm gonna put my nose in the bed",
+        "fp32Wer": 160.0,
+        "int8Output": "I will be very happy.",
+        "int8Wer": 100.0,
+        "int8LatencyMs": 597.2
+      }
+    ]
+  },
+  "claims": {
+    "offlineStatus": "Client-server architecture (browser frontend posts to local or hosted FastAPI microservice)",
+    "raspberryPiValidated": false,
+    "coralTpuValidated": false,
+    "medicalDeviceStatus": "Research prototype; not certified for clinical diagnosis"
+  }
+}

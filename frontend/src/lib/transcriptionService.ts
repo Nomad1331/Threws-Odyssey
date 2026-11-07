@@ -26,7 +26,8 @@ export async function transcribeAudio(
   // The trained VoiceBridge backend is the only primary transcription source.
   try {
     const formData = new FormData();
-    formData.append("file", audioBlob, "user_recording.webm");
+    const fileName = audioBlob.type.includes("wav") ? "user_recording.wav" : "user_recording.webm";
+    formData.append("file", audioBlob, fileName);
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 60_000);

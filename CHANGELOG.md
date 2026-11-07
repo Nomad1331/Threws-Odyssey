@@ -18,7 +18,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
     * Streamlined `ClinicalBenchmarkDrawer.tsx` to an authentic reference player.
     * Purged 221 lines of unused dead code (`frontend/src/lib/wavRecorder.ts`).
   - Minimalist Backend Runtime:
-    * Standardized `backend/requirements.txt` to 6 essential packages (`fastapi`, `uvicorn`, `faster-whisper`, `soundfile`, `python-multipart`, `numpy`).
+    * Standardized `backend/requirements.txt` to 4 essential packages (`fastapi`, `uvicorn`, `faster-whisper`, `python-multipart`).
     * Configured greedy INT8 Whisper CPU inference (409ms verified response on consumer hardware).
   - Comprehensive Documentation:
     * Created `docs/SYSTEM_WALKTHROUGH.md`: Complete end-to-end trace from microphone click to synthesized speech.
@@ -77,7 +77,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Team:** Sleeper Cells (SIES GST)
 * **Files Created & Configured:**
   - `backend/`: Dedicated Python microservice environment with isolated virtual environment (`backend/.venv`).
-  - `backend/requirements.txt`: Specified production dependencies (`fastapi`, `uvicorn[standard]`, `faster-whisper`, `soundfile`, `python-multipart`, `numpy`).
+  - `backend/requirements.txt`: Specified production dependencies (`fastapi`, `uvicorn[standard]`, `faster-whisper`, `python-multipart`).
   - `backend/app/main.py`: Built production asynchronous FastAPI server featuring CORS, lifespan pre-warming, health check, and `/api/v1/translate-audio` endpoint.
   - `backend/app/inference.py`: CPU-optimized Whisper INT8 inference engine with greedy decoding.
 

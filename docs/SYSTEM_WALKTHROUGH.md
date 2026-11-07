@@ -89,7 +89,7 @@ Here is exactly what happens in memory and across the network from the moment th
 
 ### Step 5: Backend Inference
 * In `backend/app/main.py`, FastAPI receives the upload as an `UploadFile`.
-* It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so CTranslate2's underlying C++ audio decoder (`libsndfile`) can stream the audio without memory leaks.
+* It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so faster-whisper's CTranslate2/PyAV engine can stream the audio cleanly without memory leaks.
 * It calls `transcribe_audio(temp_path)` in `backend/app/inference.py`:
   * Runs greedy `beam_size=1` decoding on the INT8 quantized model.
   * `vad_filter=False` is deliberately set so dysarthric speech pauses and low-energy articulation aren't mistakenly clipped.
@@ -118,7 +118,7 @@ Here is exactly what happens in memory and across the network from the moment th
 ### Backend Microservice (`/backend`)
 | File | Responsibility |
 | :--- | :--- |
-| **`requirements.txt`** | Minimal, production-tested dependencies (6 packages: `fastapi`, `uvicorn`, `faster-whisper`, `soundfile`, `python-multipart`, `numpy`). Zero heavy PyTorch/CUDA bloat. |
+| **`requirements.txt`** | Minimal, production-tested dependencies (4 packages: `fastapi`, `uvicorn`, `faster-whisper`, `python-multipart`). Zero heavy PyTorch/CUDA bloat or unneeded audio wrappers. |
 | **`app/main.py`** | FastAPI application setup, CORS configuration, `@app.get("/health")`, and `@app.post("/api/v1/translate-audio")` route with tempfile cleanup. |
 | **`app/inference.py`** | Singleton `load_model()` and `transcribe_audio()` functions executing faster-whisper INT8 on CPU with greedy decoding. |
 

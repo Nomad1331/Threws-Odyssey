@@ -36,6 +36,7 @@ ENV/
 .bullseye/
 audit_section.txt
 google_doc_export.*
+commands.md
 
 # Large Model Checkpoints & Adapters (Store in Cloud / Hugging Face)
 *.bin

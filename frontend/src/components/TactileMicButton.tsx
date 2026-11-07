@@ -102,7 +102,7 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
             isListening ? "animate-pulse" : ""
           }`}
           style={
-            isListening && audioLevel > 0
+            isListening && typeof audioLevel === "number" && Number.isFinite(audioLevel) && audioLevel > 0
               ? { transform: `scale(${1 + Math.min(audioLevel * 1.8, 1.5)})` }
               : undefined
           }

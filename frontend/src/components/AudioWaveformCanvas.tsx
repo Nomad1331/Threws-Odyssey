@@ -110,13 +110,25 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
       }
     };
 
-    window.addEventListener("resize", handleResize);
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(canvas);
+    } else {
+      window.addEventListener("resize", handleResize);
+    }
 
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      window.removeEventListener("resize", handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      } else {
+        window.removeEventListener("resize", handleResize);
+      }
     };
   }, [isRecording, audioAnalyser]);
 

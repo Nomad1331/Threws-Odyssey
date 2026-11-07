@@ -51,16 +51,22 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   // Keep a reference so the browser does not garbage-collect the utterance mid-speech
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Guarantee cancellation of active speech synthesis on component unmount
+  // Cancel speech on unmount or when transcript updates
   useEffect(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+    utteranceRef.current = null;
+
     return () => {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
     };
-  }, []);
+  }, [transcript]);
 
-  // Speak text aloud using browser SpeechSynthesis
+  // Speak text aloud using browser SpeechSynthesis with toggle support
   const handleSpeakAloud = () => {
     if (!transcript || typeof window === "undefined") return;
 
@@ -68,6 +74,13 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
     if (!("speechSynthesis" in window)) {
       setSpeechError("Speech synthesis is not supported on this browser.");
+      return;
+    }
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      utteranceRef.current = null;
       return;
     }
 
@@ -93,6 +106,15 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     };
 
     window.speechSynthesis.speak(utterance);
+  };
+
+  const handleClear = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+    utteranceRef.current = null;
+    if (onClear) onClear();
   };
 
   return (
@@ -129,7 +151,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             {onClear && (
               <button
                 type="button"
-                onClick={onClear}
+                onClick={handleClear}
                 title="Clear transcript"
                 aria-label="Clear transcript"
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"

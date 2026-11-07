@@ -103,14 +103,19 @@ export default function Home() {
   }, [micState, startRecording, stopRecording, setIdle]);
 
   // Reset transcript and audio buffer
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setTranscript("");
     setLatencyMs(null);
     setConfidenceScore(null);
     setStatusNotice(undefined);
     setSource(undefined);
     clearRecordedAudio();
-  };
+  }, [clearRecordedAudio]);
+
+  // Set transcript from QuickAssist presets
+  const handleSpeakPhrase = useCallback((phrase: string) => {
+    setTranscript(phrase);
+  }, []);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col bg-canvas px-4 py-6 text-text-primary sm:px-6 lg:px-8">
@@ -129,7 +134,10 @@ export default function Home() {
         </div>
 
         {/* Live Backend Connection Indicator */}
-        <div className="flex items-center gap-2 self-start rounded-[6px] border border-border bg-surface px-3 py-2 font-mono text-[10px] text-text-secondary sm:self-auto">
+        <div
+          role="status"
+          className="flex items-center gap-2 self-start rounded-[6px] border border-border bg-surface px-3 py-2 font-mono text-[10px] text-text-secondary sm:self-auto"
+        >
           <span className={`h-2 w-2 rounded-full ${backendConnected ? "bg-accent" : "bg-text-secondary"}`} />
           <span>
             {backendConnected
@@ -164,7 +172,7 @@ export default function Home() {
             onToggle={handleToggleMic}
             audioLevel={audioLevel}
           />
-          <QuickAssistGrid onSpeakPhrase={(phrase) => setTranscript(phrase)} />
+          <QuickAssistGrid onSpeakPhrase={handleSpeakPhrase} />
         </section>
       </div>
 

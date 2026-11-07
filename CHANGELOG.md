@@ -41,7 +41,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Assets Created & Integrated:**
   - `frontend/public/audio/`: Extracted 3 authentic dysarthric `.wav` recordings directly from University of Toronto TORGO dataset parquet tables:
     1. `torgo_mild_sample.wav`: Patient TORGO-M05 (Cerebral Palsy, Mild) — *"We have an excellent team"* (Standard Whisper failure: *"We have an 8000 team."*, 60.0% WER).
-    2. `torgo_moderate_sample.wav`: Patient TORGO-M04 (Post-Stroke, Moderate) — *"Their house is grey and white"* (Standard Whisper failure: *"then the ground is green and white."*, 66.7% WER).
+    2. `torgo_moderate_sample.wav`: Patient TORGO-M04 (Post-Trauma TBI, Moderate) — *"Their house is grey and white"* (Standard Whisper failure: *"then the ground is green and white."*, 66.7% WER).
     3. `torgo_severe_sample.wav`: Patient TORGO-M02 (ALS, Severe) — *"The job provides many benefits"* (Standard Whisper failure: *"Let the earth provide mercy, mercy, mercy."*, 100.0% WER).
   - `frontend/src/components/ClinicalBenchmarkDrawer.tsx`: Embedded dual-control interactive audio suite allowing hackathon judges to listen to raw patient acoustic distortions via in-browser audio player (`Hear Patient Audio`) alongside 1-click VoiceBridge reconstruction simulation.
   - `assets/benchmarks/`: Generated 3 publication-ready 300 DPI figures for slide decks and project documentation:
@@ -107,7 +107,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
   - `frontend/src/lib/transcriptionService.ts`: Created multi-tier acoustic transcription service supporting:
     1. Direct integration with VoiceBridge FastAPI microservice (`http://127.0.0.1:8000/api/v1/translate-audio`).
     2. Local browser speech recognition accumulator.
-    3. Standalone offline acoustic fallback engine matching TORGO dysarthria clinical models (Cerebral Palsy, Stroke, ALS).
+    3. Standalone offline acoustic fallback engine matching TORGO dysarthria clinical models (Cerebral Palsy, TBI, ALS).
   - `frontend/src/app/page.tsx`: Implemented native `MediaRecorder` audio chunk capture (100ms slices) to package real microphone sound into binary audio Blobs (`audio/webm;codecs=opus`). Added real-time error logging and duration-aware processing.
   - `frontend/src/components/TranscriptDisplay.tsx`: Integrated an in-browser audio playback preview bar (`<audio controls />`), allowing users to immediately play back their own recorded audio to verify physical microphone hardware capture. Added dynamic engine source badge and status notice readout.
 * **Build Verification:**

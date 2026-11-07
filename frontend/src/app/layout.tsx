@@ -14,9 +14,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "VoiceBridge | Clinical Speech Reconstruction Engine",
+  title: "VoiceBridge | Assistive Speech Transcription",
   description:
-    "Real-time assistive speech reconstruction companion for dysarthric speech (Cerebral Palsy, Stroke, ALS). THREWS Odyssey 2026.",
+    "Real-time assistive speech transcription for dysarthric speech (Cerebral Palsy, TBI, ALS). SIES GST • THREWS Odyssey 2026.",
 };
 
 export const viewport: Viewport = {

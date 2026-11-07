@@ -1,126 +1,176 @@
 # 🎙️ VoiceBridge
-### Real-Time Dysarthric Speech Reconstruction Engine
+### Real-Time Assistive Speech Transcription for Dysarthric Speech
 > **THREWS Odyssey 2026** — *Track: Human-AI & Assistive Technology*  
-> **Team:** Sleeper Cells (SIES Graduate School of Technology, Navi Mumbai)
+> **Institution:** SIES Graduate School of Technology, Navi Mumbai  
+> **Branch:** `voicebridge-clean`
 
 ---
 
-## 📌 Executive Summary
+## 📌 Problem & Motivation
 
-Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Siri) achieve exceptional accuracy (<4% Word Error Rate) on fluent, normative speech. However, when presented with **dysarthric speech** (neuromotor speech impairments resulting from Cerebral Palsy, Stroke, Parkinson's Disease, or ALS), foundation acoustic encoders collapse—resulting in an unacceptable **65% to 80% Word Error Rate (WER)**.
+Commercial automatic speech recognition (ASR) foundation models achieve high accuracy on normative speech. However, for individuals with **dysarthria**—neuromotor speech impairments caused by Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), or Traumatic Brain Injury (TBI)—standard speech recognition collapses, frequently producing **65% to 80% Word Error Rates (WER)**.
 
-**VoiceBridge** is an accessible, privacy-first, real-time speech reconstruction companion. By fine-tuning **Whisper-tiny** with parameter-efficient **LoRA adapters** on the University of Toronto’s **TORGO clinical database** and quantizing the model to **ONNX INT8**, VoiceBridge slashes error rates below **20%** while executing in **<300ms** on standard consumer CPUs without requiring cloud GPUs.
+Current commercial solutions also face accessibility hurdles:
+- **Cloud Dependency:** Many assistive tools require cloud streaming, posing privacy concerns and failing in offline environments.
+- **Hardware Barrier:** Running large speech models locally typically demands expensive, power-hungry discrete GPUs.
+- **Physical Usability:** Standard voice apps lack physical accommodations for users with accompanying motor spasticity or tremors.
+
+**VoiceBridge** addresses these challenges through a lightweight, CPU-optimized transcription pipeline coupled with an accessible assistive interface.
 
 ---
 
 ## 🏛️ System Architecture
 
 ```
-[User Speaks into Browser / Assistive Switch]
-                      │
-                      ▼
-  [Web Audio API: 16kHz 1-Channel Mono Resampler]
-                      │
-                      ▼
-      [FastAPI Asynchronous Backend Gateway]
-                      │
-                      ▼
-    [Acoustic Adaptation: Whisper-tiny + LoRA]
-       (Trained on University of Toronto TORGO)
-                      │
-                      ▼
-      [ONNX Runtime INT8 Quantization Layer]
-           (Compressed to ~40MB RAM Footprint)
-                      │
-                      ▼
-    [Encoder-decoder, autoregressive decoding]
-                      │
-                      ▼
-   [Live Text Display + Web Speech API Re-Synthesis]
+[ Microphone Input / Assistive Switch ]
+                  │
+                  ▼
+   [ Web Audio API (16kHz Capture) ]
+                  │
+                  ▼  (HTTP POST Multipart)
+   [ FastAPI Backend Gateway (:8000) ]
+                  │
+                  ▼
+   [ faster-whisper INT8 CPU Engine ]
+     • Model: Whisper tiny.en (INT8)
+     • Device: Local CPU (no GPU needed)
+     • VAD & pause compensation
+                  │
+                  ▼  (JSON Response)
+   [ Next.js Accessible Frontend (:3000) ]
+     • Instant Transcription Display
+     • Text-to-Speech playback ("Say it")
+     • AAC Quick-Assist confirmation cards
 ```
 
 ---
 
-## 👥 Engineering Squad ("Sleeper Cells")
+## 📊 Verified Edge AI Benchmarks
 
-| Member | Branch / Year | Engineering Domain & Responsibilities |
-| :--- | :--- | :--- |
-| **Talha** | 1st Year EXTC | **Lead System Architect & Frontend Lead:** Next.js 14 App Router, Web Audio API 16kHz PCM downsampler, 60 FPS Canvas FFT visualizer, WCAG 2.1 AAA physical accessibility, and overall system integration. |
-| **Aaliya Hussain** | 3rd Year CE | **Machine Learning & Model Adaptation Lead:** Hugging Face TORGO streaming pipeline on Kaggle GPU, parameter-efficient LoRA fine-tuning ($r=16, \alpha=32$), and adapter checkpoint export. |
-| **Moulika Sanyal** | 2nd Year CE | **Edge AI Optimization & Model Quantization Lead:** PyTorch-to-ONNX computational graph conversion, dynamic INT8 quantization, CPU memory footprint optimization (~40MB), and inference latency profiling (<300ms RTF). |
-| **Manas Suryawanshi** | 3rd Year ECS | **Clinical Research & Regulatory Documentation Lead:** Project documentation, Word Error Rate (WER) statistical comparison charts, clinical use-case validation, slide deck assembly, and pitch lead. |
+All metrics benchmarked on consumer laptop hardware (Intel Core i5 CPU, no GPU acceleration):
+
+| Metric | Baseline (FP32) | VoiceBridge (INT8 CPU) | Improvement |
+| :--- | :---: | :---: | :---: |
+| **Model Size** | 151.7 MB | **38.9 MB** | **74.42% reduction** |
+| **Active Memory Footprint** | ~380 MB | **103 MB** | **72.9% reduction** |
+| **CPU Processing Latency** | 1,480 ms | **592 ms** | **2.50x faster** |
+| **Real-Time Factor (RTF)** | 0.25 | **0.10** | **Real-time capable** |
+| **Hardware Requirement** | GPU / Heavy CPU | **Standard Multi-Core CPU** | **Zero GPU required** |
+
+*Reference: University of Toronto TORGO Database (Rudzicz et al., 2012).*
 
 ---
 
-## 📂 Repository Layout
+## 📂 Repository Structure
 
 ```
-VoiceBridge/
+Threws-Odyssey/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI microservice endpoints (/health, /api/v1/translate-audio)
+│   │   └── inference.py         # faster-whisper INT8 CPU transcription engine
+│   └── requirements.txt         # Minimal, production dependencies (FastAPI, faster-whisper)
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx         # Main 2-column accessible interface
+│   │   │   └── layout.tsx       # Root layout & WCAG typography
+│   │   ├── components/
+│   │   │   ├── TactileMicButton.tsx       # Large touch-target button with spacebar trigger
+│   │   │   ├── TranscriptDisplay.tsx      # Real-time text display & Web Speech TTS playback
+│   │   │   ├── QuickAssistGrid.tsx        # High-contrast AAC cards with 2-step confirmation
+│   │   │   ├── AudioWaveformCanvas.tsx    # Live 60FPS audio level visualizer
+│   │   │   └── ClinicalBenchmarkDrawer.tsx# TORGO reference sample evaluation player
+│   │   ├── hooks/
+│   │   │   └── useAudioRecorder.ts        # Clean MediaRecorder & Web Audio RMS hook
+│   │   └── lib/
+│   │       └── transcriptionService.ts    # Frontend-to-backend API client
+│   └── package.json
+│
 ├── docs/
-│   ├── PROJECT_CONTEXT.md          # Complete clinical problem formulation & architecture dossier
-│   └── DATASETS_AND_PROOF.md       # University of Toronto TORGO dataset proof & citations
+│   ├── EDGE_AI_BENCHMARK_RESULTS.md # Detailed CPU quantization telemetry and memory benchmarks
+│   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
+│   └── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
+│
 ├── model_training/
-│   ├── VoiceBridge_Trainer.ipynb # Fine-tuning notebook: Whisper-small (pending results). Served model: Whisper-tiny.
-│   └── torgo_streaming_test.py     # Python standalone dataset streaming test script
-├── frontend/                       # Next.js 14 Accessible Web Application (In Progress)
-├── backend/                        # FastAPI Asynchronous Microservice (In Progress)
-├── ROADMAP.md                      # Granular 21-Brick master engineering execution tracker
-├── CHANGELOG.md                    # Project ledger following Keep-a-Changelog standard
-├── .gitignore                      # Enforced production git hygiene
-└── README.md                       # Master repository documentation
+│   ├── torgo_streaming_test.py      # Hugging Face TORGO streaming evaluation script
+│   └── export_and_quantize_onnx.py  # Standalone ONNX export & INT8 quantization script
+│
+├── facts.json                       # Single source of truth for all verified numbers
+└── README.md
 ```
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Getting Started
 
-### 1. Start the trained-model inference backend
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and npm
 
-The model is already trained and available as
-[`Aaliya05/voicebridge`](https://huggingface.co/Aaliya05/voicebridge). Training
-is not required to run the application.
+### 1. Start the Backend API
 
 ```bash
-pip install -r backend/requirements.txt
-uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+cd backend
+
+# Create virtual environment (if not already created)
+python -m venv .venv
+
+# Activate virtual environment
+# Windows:
+.\.venv\Scripts\activate
+# Linux/macOS:
+# source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the FastAPI server
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+Backend will be available at: `http://127.0.0.1:8000` (Health check: `/health`).
 
-The backend downloads the base `openai/whisper-tiny` model and the trained LoRA
-adapter on first startup. It uses CUDA when available and otherwise runs on CPU.
+### 2. Start the Frontend App
 
-### 2. Start the frontend
-
-In a second terminal:
+In a separate terminal:
 
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
+
+# Start Next.js development server
 npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-### 3. Optional dataset streaming verification
-```bash
-cd model_training
-pip install datasets transformers evaluate soundfile jiwer
-python torgo_streaming_test.py
-```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📊 Empirical Scientific Validation
+## ♿ Motor & Physical Accessibility Features
 
-| Acoustic Model Configuration | Parameters | Target Platform | Word Error Rate (WER) | Latency (3s Audio) |
-| :--- | :---: | :---: | :---: | :---: |
-| Baseline OpenAI Whisper-tiny (Zero-Shot) | 39.0 M | Cloud GPU / CPU | **72.4% (Fails)** | ~450 ms |
-| Baseline Google Speech API | Commercial | Cloud API | **68.2% (Fails)** | ~800 ms |
-| **VoiceBridge (Whisper-tiny + LoRA Adapters)** | **+0.4% LoRA** | Multi-Core CPU | **<20.0% (Passes)** | **<280 ms (INT8)** |
+VoiceBridge was built specifically with physical accessibility considerations:
+1. **Large Motor Targets:** The primary record button and AAC cards meet WCAG 2.1 AAA touch target recommendations (minimum 44x44px, up to 112px).
+2. **Keyboard Assistive Hotkey:** Tap <kbd>SPACE</kbd> anywhere on the page to start or stop recording.
+3. **Accidental Press Protection:** Critical phrases (such as "Pain Alert") require either a 1.5-second hold or a two-stage confirmation within a 3-second window.
+4. **Haptic & Visual Feedback:** Device vibration on mobile touch and a live 60 FPS waveform canvas confirm microphone responsiveness.
+5. **Speech Synthesis:** Tap "Say it" to read out the reconstructed transcription through the browser's native text-to-speech engine.
 
 ---
 
-## 📜 Scientific Reference & Dataset Attribution
-* **Dataset:** University of Toronto TORGO database for dysarthric articulation (*Frank Rudzicz, A. Roeck, E. Wang, 2012*).
-* **Dataset source:** `abnerh/TORGO-database` on Hugging Face Hub.
-* **Target Event:** THREWS Odyssey 2026 (*The Research World*).
-* **License:** Open-source under the MIT License.
+## 👥 Engineering Team
+
+**SIES Graduate School of Technology, Navi Mumbai**
+- **Talha** — Lead System Architect & Frontend Engineering
+- **Aaliya Hussain** — Machine Learning & Model Adaptation
+- **Moulika Sanyal** — Edge AI Optimization & Quantization
+- **Manas Suryawanshi** — Clinical Research & Documentation
+
+---
+
+## 📜 Dataset Attribution & License
+
+- **Dataset:** University of Toronto TORGO Database for Dysarthric Articulation (*Frank Rudzicz, A. Roeck, E. Wang, 2012*).
+- **Target Event:** THREWS Odyssey 2026.
+- **License:** Open source under the MIT License.

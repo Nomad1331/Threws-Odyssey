@@ -50,7 +50,7 @@ TORGO_SAMPLES = [
         "filename": "torgo_moderate_sample.wav",
         "severity": "Moderate",
         "speaker": "TORGO-M04",
-        "condition": "Post-Stroke Dysarthria",
+        "condition": "Post-Trauma (TBI)",
         "reference": "Their house is grey and white",
     },
     {

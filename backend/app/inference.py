@@ -1,8 +1,8 @@
 """
-VoiceBridge Edge AI Inference Engine
-------------------------------------
-Executes dynamic INT8 quantized Whisper on consumer CPU using CTranslate2.
-Ultra-lightweight edge pipeline: no 2GB PyTorch dependency, sub-300ms latency.
+VoiceBridge CPU Inference Engine
+--------------------------------
+Executes INT8 quantized Whisper on CPU using faster-whisper (CTranslate2).
+Lightweight runtime: runs locally without GPU or heavy dependencies.
 """
 
 import os

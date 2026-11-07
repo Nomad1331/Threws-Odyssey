@@ -78,9 +78,14 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
             }`}
           >
             <span
-              className={`mb-2 h-2 w-2 rounded-full bg-accent ${
+              className={`mb-2 h-2 w-2 rounded-full bg-accent transition-transform duration-75 ${
                 isListening ? "animate-pulse" : ""
               }`}
+              style={
+                isListening && audioLevel > 0
+                  ? { transform: `scale(${1 + Math.min(audioLevel * 1.8, 1.5)})` }
+                  : undefined
+              }
               aria-hidden="true"
             />
             {isListening ? (

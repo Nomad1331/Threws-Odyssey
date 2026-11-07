@@ -220,7 +220,7 @@
 * **Accomplished:**
   - Embedded 3 authentic TORGO clinical audio recordings in [`frontend/public/audio/`](file:///I:/Career/Threws%20Hackathon/frontend/public/audio/):
     1. `torgo_mild_sample.wav`: TORGO-M05 (Cerebral Palsy, Mild) — *"We have an excellent team"*
-    2. `torgo_moderate_sample.wav`: TORGO-M04 (Post-Stroke, Moderate) — *"Their house is grey and white"*
+    2. `torgo_moderate_sample.wav`: TORGO-M04 (Post-Trauma TBI, Moderate) — *"Their house is grey and white"*
     3. `torgo_severe_sample.wav`: TORGO-M02 (ALS, Severe) — *"The job provides many benefits"*
   - Created interactive evaluation drawer ([`frontend/src/components/ClinicalBenchmarkDrawer.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/ClinicalBenchmarkDrawer.tsx)) allowing judges to listen to raw patient audio and compare Standard Whisper vs VoiceBridge reconstruction with 1-click simulation.
 * **Lead:** Talha (UI) / Manas Suryawanshi (Clinical Audio Curation)
@@ -292,7 +292,7 @@
     - **0:00 – 0:30 (The Pain Point):** Play real TORGO dysarthric audio clip $\rightarrow$ feed into standard Whisper $\rightarrow$ show it outputting complete gibberish.
     - **0:30 – 1:15 (The VoiceBridge Solution):** Play exact same clip through VoiceBridge $\rightarrow$ show real-time translation $\rightarrow$ show audio synthesized aloud via TTS.
     - **1:15 – 1:45 (Technical Architecture):** Highlight PEFT LoRA adaptation in the encoder and decoder ($r=16$), 72% $\rightarrow$ 18% WER drop, ONNX INT8 0.10 RTF, and WCAG AAA physical accessibility.
-    - **1:45 – 2:00 (Human Impact & Future Vision):** Clinical utility for stroke/CP patients and future Indic language roadmap.
+    - **1:45 – 2:00 (Human Impact & Future Vision):** Clinical utility for TBI/CP/ALS individuals and future Indic language roadmap.
   - Edit, export in 1080p MP4, and upload unlisted link.
 * **Assigned Lead:** Manas Suryawanshi (Script) / Talha (Video Assembly & Screen Capture) / Moulika Sanyal (Edge Co-Presenter)
 * **Target Date:** November 7, 2026

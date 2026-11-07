@@ -11,18 +11,12 @@ interface TranscriptDisplayProps {
   isProcessing?: boolean;
   recordedAudioUrl?: string | null;
   statusNotice?: string;
-  secondaryTranscript?: string;
-  source?: "fastapi-backend" | "web-speech" | "unavailable";
+  source?: "voicebridge-backend" | "unavailable";
   onClear?: () => void;
   audioAnalyser?: AnalyserNode | null;
   isRecording?: boolean;
   className?: string;
 }
-
-const SOURCE_LABELS: Record<string, string> = {
-  "fastapi-backend": "Whisper-tiny LoRA",
-  "web-speech": "Browser speech",
-};
 
 export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   transcript,
@@ -31,7 +25,6 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   isProcessing = false,
   recordedAudioUrl,
   statusNotice,
-  secondaryTranscript,
   source,
   onClear,
   audioAnalyser,
@@ -44,14 +37,14 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   // Keep a reference so the browser does not garbage-collect the utterance mid-speech
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Speak only when the user taps "Say it"
+  // Speak text aloud using browser SpeechSynthesis
   const handleSpeakAloud = () => {
     if (!transcript || typeof window === "undefined") return;
 
     setSpeechError(null);
 
     if (!("speechSynthesis" in window)) {
-      setSpeechError("This browser cannot read text aloud.");
+      setSpeechError("Speech synthesis is not supported on this browser.");
       return;
     }
 
@@ -72,7 +65,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       setIsSpeaking(false);
       utteranceRef.current = null;
       if (event.error !== "canceled" && event.error !== "interrupted") {
-        setSpeechError(`Speech output failed (${event.error}). Check your system voice settings.`);
+        setSpeechError(`Speech synthesis error: ${event.error}`);
       }
     };
 
@@ -93,18 +86,26 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         />
       )}
 
+      {/* Card Header */}
       <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-mono">
-        <span className="text-[11px] font-semibold tracking-widest text-text-secondary">
-          TRANSCRIPT
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold tracking-widest text-text-secondary">
+            TRANSCRIPTION
+          </span>
+          {source && (
+            <span className="rounded-[4px] border border-border px-1.5 py-0.5 text-[9px] text-text-secondary">
+              {source === "voicebridge-backend" ? "Whisper INT8" : "Offline"}
+            </span>
+          )}
+        </div>
 
         {transcript && !isProcessing && (
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleSpeakAloud}
-              title="Read this text aloud"
-              aria-label="Say it"
+              title="Speak phrase aloud"
+              aria-label="Speak phrase aloud"
               className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Volume2 className="h-3.5 w-3.5" />
@@ -114,8 +115,8 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               <button
                 type="button"
                 onClick={onClear}
-                title="Clear"
-                aria-label="Clear"
+                title="Clear transcript"
+                aria-label="Clear transcript"
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <X className="h-3.5 w-3.5" />
@@ -126,29 +127,24 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         )}
       </div>
 
-      <div aria-live="polite" className="flex min-h-[150px] items-center py-8">
+      {/* Main Transcription Output */}
+      <div aria-live="polite" className="flex min-h-[140px] items-center py-6">
         {isProcessing ? (
           <p className="text-2xl font-normal tracking-tight text-text-secondary sm:text-3xl">
-            Processing...
+            Transcribing audio...
           </p>
         ) : transcript ? (
-          <div>
-            <blockquote className="text-[28px] font-normal leading-snug tracking-tight text-text-primary sm:text-4xl">
-              &ldquo;{transcript}&rdquo;
-            </blockquote>
-            {secondaryTranscript && (
-              <p className="mt-4 font-mono text-[10px] uppercase tracking-wider text-text-secondary">
-                Pre-written phrase (not recognized speech)
-              </p>
-            )}
-          </div>
+          <blockquote className="text-[26px] font-normal leading-snug tracking-tight text-text-primary sm:text-3xl">
+            &ldquo;{transcript}&rdquo;
+          </blockquote>
         ) : (
-          <p className="text-[28px] font-normal leading-snug tracking-tight text-text-secondary sm:text-4xl">
+          <p className="text-[26px] font-normal leading-snug tracking-tight text-text-secondary sm:text-3xl">
             Press Speak to begin.
           </p>
         )}
       </div>
 
+      {/* Live Audio Waveform Canvas */}
       <div className="rounded-[6px] border border-border p-3">
         <AudioWaveformCanvas
           isRecording={isRecording}
@@ -156,13 +152,14 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         />
       </div>
 
+      {/* Telemetry Bar (Confidence & Latency) */}
       <div className="mt-5 grid grid-cols-2 divide-x divide-border border-t border-border pt-4">
         <div className="pr-4">
           <p className="font-mono text-[10px] font-semibold tracking-widest text-text-secondary">
             CONFIDENCE
           </p>
           <p className="mt-1 text-sm text-text-primary">
-            {confidenceScore != null ? `${(confidenceScore * 100).toFixed(0)}%` : "not measured"}
+            {confidenceScore != null ? `${(confidenceScore * 100).toFixed(0)}%` : "N/A"}
           </p>
         </div>
         <div className="pl-4">
@@ -170,7 +167,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             LATENCY
           </p>
           <p className="mt-1 text-sm text-text-primary">
-            {latencyMs != null ? `${latencyMs} ms` : "not measured"}
+            {latencyMs != null ? `${latencyMs} ms` : "N/A"}
           </p>
         </div>
       </div>

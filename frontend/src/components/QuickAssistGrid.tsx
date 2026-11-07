@@ -171,9 +171,12 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
   const armedCard = AAC_PRESETS.find((c) => c.id === armedId);
 
   return (
-    <div className={`w-full max-w-lg mx-auto flex flex-col items-center gap-3 ${className}`}>
+    <div className={`w-full max-w-lg mx-auto ${className}`}>
+      <p className="mb-3 font-mono text-[11px] font-semibold tracking-widest text-text-secondary">
+        ASSISTIVE PRESETS
+      </p>
       <div
-        className="flex flex-wrap items-center justify-center gap-2.5"
+        className="grid grid-cols-2 gap-2.5 sm:grid-cols-3"
         role="group"
         aria-label="Quick phrase buttons"
       >
@@ -195,23 +198,17 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
               onContextMenu={(e) => {
                 if (isUrgent) e.preventDefault();
               }}
-              className={`
-                inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[44px] rounded-full border text-xs sm:text-sm font-sans font-medium transition-all duration-100 select-none active:scale-95 shadow-sm
-                ${
-                  isFlashing
-                    ? "bg-zinc-800 border-amber-500 text-white ring-2 ring-amber-500/30"
-                    : isArmed
-                    ? "bg-red-900/70 border-red-500 text-white ring-2 ring-red-500/40"
-                    : isUrgent
-                    ? "bg-red-950/40 border-red-800/60 text-red-300 hover:border-red-600 hover:bg-red-950/60"
-                    : "bg-zinc-900/90 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-zinc-100"
-                }
+              className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[6px] border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-3 active:scale-[0.98] ${
+                isUrgent
+                  ? "col-span-2 border-pain-border bg-pain-background text-pain-text hover:bg-pain-hover sm:col-span-3"
+                  : "border-border bg-surface text-text-primary hover:border-accent"
+              }
+                ${isFlashing ? "ring-2 ring-accent" : ""}
+                ${isArmed ? "ring-2 ring-pain-border" : ""}
               `}
             >
               <Icon
-                className={`h-4 w-4 ${
-                  isArmed ? "text-white" : isUrgent ? "text-red-400" : "text-zinc-400"
-                }`}
+                className={`h-4 w-4 ${isUrgent ? "text-pain-text" : "text-text-secondary"}`}
               />
               <span>{isArmed ? "Tap again to send" : card.label}</span>
             </button>
@@ -219,13 +216,13 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
         })}
       </div>
 
-      <p aria-live="polite" className="min-h-[16px] text-[11px] font-sans text-red-300 text-center">
+      <p aria-live="polite" className="min-h-[16px] pt-3 text-center text-[11px] text-pain-text">
         {armedCard
           ? `Tap ${armedCard.label} again within 3 seconds, or hold it for 1.5 seconds, to send.`
           : ""}
       </p>
 
-      <p className="text-[10px] font-mono text-zinc-500 text-center">
+      <p className="pt-3 text-center font-mono text-[10px] text-text-secondary">
         Pain Alert is not a medical alert. In an emergency, call your local emergency number.
       </p>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { Volume2, Copy, Check, Play, Square, X } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Volume2, X } from "lucide-react";
+import { AudioWaveformCanvas } from "@/components/AudioWaveformCanvas";
 
 interface TranscriptDisplayProps {
   transcript: string;
@@ -12,6 +13,9 @@ interface TranscriptDisplayProps {
   statusNotice?: string;
   source?: "fastapi-backend" | "web-speech" | "unavailable";
   onClear?: () => void;
+  secondaryTranscript?: string;
+  audioAnalyser?: AnalyserNode | null;
+  isRecording?: boolean;
   className?: string;
 }
 
@@ -29,11 +33,12 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   statusNotice,
   source,
   onClear,
+  secondaryTranscript,
+  audioAnalyser,
+  isRecording = false,
   className = "",
 }) => {
-  const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
 
   // Keep a reference so the browser does not garbage-collect the utterance mid-speech
@@ -74,39 +79,9 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleCopy = async () => {
-    if (!transcript) return;
-    try {
-      await navigator.clipboard.writeText(transcript);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      // Clipboard not available
-    }
-  };
-
-  // Replay the recorded audio
-  const handleToggleAudioPlayback = () => {
-    if (!recordedAudioUrl || typeof window === "undefined") return;
-
-    const audioEl = document.getElementById("patient-audio-playback") as HTMLAudioElement | null;
-    if (!audioEl) return;
-
-    if (isPlayingAudio) {
-      audioEl.pause();
-      setIsPlayingAudio(false);
-    } else {
-      audioEl.currentTime = 0;
-      audioEl.play().catch(() => setIsPlayingAudio(false));
-      setIsPlayingAudio(true);
-    }
-  };
-
-  const sourceLabel = source ? SOURCE_LABELS[source] : undefined;
-
   return (
     <div
-      className={`relative flex flex-col justify-between rounded-2xl bg-zinc-900/80 border border-zinc-800/80 p-5 sm:p-6 shadow-sm transition-all duration-200 ${className}`}
+      className={`w-full rounded-[6px] border border-border bg-surface p-5 sm:p-6 ${className}`}
       role="region"
       aria-label="Speech transcription"
     >
@@ -114,117 +89,98 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         <audio
           id="patient-audio-playback"
           src={recordedAudioUrl}
-          onEnded={() => setIsPlayingAudio(false)}
-          onPause={() => setIsPlayingAudio(false)}
           className="hidden"
         />
       )}
 
-      {/* Top row: status and tools */}
-      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 mb-3 text-xs font-mono">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] uppercase tracking-wider font-semibold text-zinc-400">
-            {isProcessing ? "Processing" : "Output"}
-          </span>
-          {!isProcessing && latencyMs != null && (
-            <span className="text-[10px] text-zinc-500 hidden sm:inline">
-              ({latencyMs}ms
-              {confidenceScore != null ? ` • ${(confidenceScore * 100).toFixed(0)}% conf` : ""}
-              {sourceLabel ? ` • ${sourceLabel}` : ""})
-            </span>
-          )}
-        </div>
+      <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-mono">
+        <span className="text-[11px] font-semibold tracking-widest text-text-secondary">
+          TRANSCRIPT
+        </span>
 
         {transcript && !isProcessing && (
-          <div className="flex items-center gap-1">
-            {/* Labeled "Say it" button */}
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleSpeakAloud}
               title="Read this text aloud"
               aria-label="Say it"
-              className={`inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md border transition-all active:scale-90 ${
-                isSpeaking
-                  ? "bg-emerald-950/80 border-emerald-500/60 text-emerald-300"
-                  : "bg-zinc-850/80 border-zinc-600 text-zinc-200 hover:text-white hover:bg-zinc-800"
-              }`}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent"
             >
-              <Volume2 className={`h-3.5 w-3.5 ${isSpeaking ? "animate-pulse text-emerald-400" : ""}`} />
-              <span className="text-[11px] font-sans">{isSpeaking ? "Speaking..." : "Say it"}</span>
+              <Volume2 className="h-3.5 w-3.5" />
+              <span>{isSpeaking ? "Speaking..." : "Say it"}</span>
             </button>
-
-            {recordedAudioUrl && (
-              <button
-                type="button"
-                onClick={handleToggleAudioPlayback}
-                title={isPlayingAudio ? "Stop audio" : "Play recording"}
-                aria-label="Play recording"
-                className={`p-1.5 rounded-md border transition-all active:scale-90 ${
-                  isPlayingAudio
-                    ? "bg-amber-950/80 border-amber-500/60 text-amber-300"
-                    : "bg-zinc-850/80 border-zinc-750 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-                }`}
-              >
-                {isPlayingAudio ? (
-                  <Square className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                ) : (
-                  <Play className="h-3.5 w-3.5" />
-                )}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleCopy}
-              title="Copy text"
-              aria-label="Copy text"
-              className="p-1.5 rounded-md border border-zinc-750 bg-zinc-850/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all active:scale-90"
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
-
             {onClear && (
               <button
                 type="button"
                 onClick={onClear}
                 title="Clear"
                 aria-label="Clear"
-                className="p-1.5 rounded-md border border-zinc-750 bg-zinc-850/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all active:scale-90"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <X className="h-3.5 w-3.5" />
+                <span>Clear</span>
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Main text */}
-      <div className="min-h-[100px] sm:min-h-[120px] flex items-center justify-start py-2">
+      <div aria-live="polite" className="flex min-h-[150px] items-center py-8">
         {isProcessing ? (
-          <div className="flex items-center gap-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-ping" />
-            <span className="text-xl sm:text-2xl md:text-3xl font-light tracking-tight text-zinc-400 animate-pulse">
-              Processing...
-            </span>
-          </div>
+          <p className="text-2xl font-normal tracking-tight text-text-secondary sm:text-3xl">
+            Processing...
+          </p>
         ) : transcript ? (
-          <blockquote className="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-zinc-100 leading-snug">
-            &ldquo;{transcript}&rdquo;
-          </blockquote>
+          <div>
+            <blockquote className="text-[28px] font-normal leading-snug tracking-tight text-text-primary sm:text-4xl">
+              &ldquo;{transcript}&rdquo;
+            </blockquote>
+            {secondaryTranscript && (
+              <p className="mt-4 font-mono text-[10px] uppercase tracking-wider text-text-secondary">
+                Pre-written phrase (not recognized speech)
+              </p>
+            )}
+          </div>
         ) : (
-          <p className="text-lg sm:text-xl font-light text-zinc-600 italic">
+          <p className="text-[28px] font-normal leading-snug tracking-tight text-text-secondary sm:text-4xl">
             Press Speak to begin.
           </p>
         )}
       </div>
 
+      <div className="rounded-[6px] border border-border p-3">
+        <AudioWaveformCanvas
+          isRecording={isRecording}
+          audioAnalyser={audioAnalyser}
+        />
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 divide-x divide-border border-t border-border pt-4">
+        <div className="pr-4">
+          <p className="font-mono text-[10px] font-semibold tracking-widest text-text-secondary">
+            CONFIDENCE
+          </p>
+          <p className="mt-1 text-sm text-text-primary">
+            {confidenceScore != null ? `${(confidenceScore * 100).toFixed(0)}%` : "not measured"}
+          </p>
+        </div>
+        <div className="pl-4">
+          <p className="font-mono text-[10px] font-semibold tracking-widest text-text-secondary">
+            LATENCY
+          </p>
+          <p className="mt-1 text-sm text-text-primary">
+            {latencyMs != null ? `${latencyMs} ms` : "not measured"}
+          </p>
+        </div>
+      </div>
+
       {speechError && (
-        <p className="pt-2 text-[11px] font-sans text-red-400">{speechError}</p>
+        <p className="pt-3 text-xs text-pain-text">{speechError}</p>
       )}
 
       {statusNotice && (
-        <div className="pt-2 text-[10px] sm:text-[11px] font-mono text-zinc-500 border-t border-zinc-850/60 mt-2 truncate">
+        <div className="mt-3 border-t border-border pt-3 font-mono text-[10px] text-text-secondary">
           {statusNotice}
         </div>
       )}

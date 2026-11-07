@@ -84,6 +84,8 @@ export default function Home() {
         setSource(result.source);
         if (result.source === "voicebridge-backend") {
           setBackendConnected(true);
+        } else {
+          setBackendConnected(false);
         }
       } catch (err) {
         console.error("Transcription error:", err);

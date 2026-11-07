@@ -9,6 +9,24 @@ import { transcribeAudio } from "@/lib/transcriptionService";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { ChevronDown, ChevronUp, Mic } from "lucide-react";
 
+/**
+ * VoiceBridge Application Root Stage (Next.js 14 App Router)
+ * ==========================================================
+ * Orchestrates the primary 2-column accessible interface:
+ *
+ * Left Column:
+ * - TranscriptDisplay: Shows reconstructed speech, confidence score, wall-clock latency,
+ *   live 60FPS waveform visualizer, and "Say it" browser Text-to-Speech playback.
+ *
+ * Right Column:
+ * - TactileMicButton: Large 112px motor-accessible button with live RMS volume pulsing,
+ *   haptic vibration feedback, and global spacebar hotkey listener.
+ * - QuickAssistGrid: 5 AAC emergency care phrases with 2-step confirmation window on Pain Alert.
+ *
+ * Footer:
+ * - Collapsible Clinical Verification Archive with authentic University of Toronto TORGO clips.
+ */
+
 export default function Home() {
   const {
     state: micState,

@@ -1,3 +1,11 @@
+/**
+ * VoiceBridge Root Layout Shell
+ * =============================
+ * Configures global typography, viewport metadata, and high-contrast WCAG styling.
+ * Uses local Geist Variable fonts to eliminate external Google Fonts network dependencies,
+ * ensuring zero-latency rendering and offline demo capability.
+ */
+
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";

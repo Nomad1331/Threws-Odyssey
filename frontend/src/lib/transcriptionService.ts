@@ -97,9 +97,13 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
   } catch (err: unknown) {
     const elapsed = Math.round(performance.now() - startTime);
     const isAbort = err instanceof DOMException && err.name === "AbortError";
-    const statusNotice = isAbort
-      ? "Request timed out after 30 seconds."
-      : "Backend server offline. Start with: uvicorn app.main:app --port 8000";
+    let statusNotice = "Backend server offline. Start with: uvicorn app.main:app --port 8000";
+
+    if (isAbort) {
+      statusNotice = "Request timed out after 30 seconds.";
+    } else if (err instanceof Error && err.message && !err.message.includes("fetch")) {
+      statusNotice = err.message;
+    }
 
     return {
       text: "",

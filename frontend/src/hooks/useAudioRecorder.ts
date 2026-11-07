@@ -124,7 +124,14 @@ export function useAudioRecorder(): AudioRecorderHook {
       const AudioContextClass =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioContextClass({ sampleRate: 16000 });
+      
+      let ctx: AudioContext;
+      try {
+        ctx = new AudioContextClass({ sampleRate: 16000 });
+      } catch {
+        // Fallback for older WebKit / Safari engines that reject constructor options
+        ctx = new AudioContextClass();
+      }
       audioContextRef.current = ctx;
 
       const sourceNode = ctx.createMediaStreamSource(stream);
@@ -172,6 +179,7 @@ export function useAudioRecorder(): AudioRecorderHook {
         if (audioChunksRef.current.length > 0) {
           const mime = mediaRecorderRef.current?.mimeType || "audio/webm";
           blob = new Blob(audioChunksRef.current, { type: mime });
+          audioChunksRef.current = []; // Free slice chunk buffers from memory
           const url = URL.createObjectURL(blob);
           setRecordedAudioUrl(url);
         }

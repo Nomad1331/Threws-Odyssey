@@ -124,7 +124,11 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
             mean_logprob = sum(valid_logprobs) / len(valid_logprobs)
             try:
                 # Convert log-probability (typically -0.0 to -2.0) into a [0.0 - 1.0] confidence score
-                confidence = round(min(max(math.exp(mean_logprob), 0.0), 1.0), 3)
+                val = math.exp(mean_logprob)
+                if math.isfinite(val):
+                    confidence = round(min(max(val, 0.0), 1.0), 3)
+                else:
+                    confidence = None
             except (OverflowError, ValueError):
                 confidence = None
 

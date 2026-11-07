@@ -101,8 +101,25 @@ def run_tests():
         assert bad_ext_resp.status_code == 200, f"Expected 200, got {bad_ext_resp.status_code}"
         print(" [PASS] Safe extension fallback validated.")
 
+        # 7. Test CORS preflight and origin isolation (localhost & LAN allowed, untrusted denied)
+        print("\n[Test 7] Testing CORS preflight and origin boundaries ...")
+        cors_headers = {
+            "Origin": "http://192.168.1.100:3000",
+            "Access-Control-Request-Method": "POST",
+        }
+        cors_resp = client.options("/api/v1/translate-audio", headers=cors_headers)
+        assert cors_resp.status_code == 200, f"Expected 200, got {cors_resp.status_code}"
+        assert cors_resp.headers.get("access-control-allow-origin") == "http://192.168.1.100:3000"
+
+        evil_cors = client.options("/api/v1/translate-audio", headers={
+            "Origin": "http://untrusted-domain.com",
+            "Access-Control-Request-Method": "POST",
+        })
+        assert evil_cors.headers.get("access-control-allow-origin") is None
+        print(" [PASS] CORS local & LAN boundary validation verified.")
+
     print("\n" + "=" * 60)
-    print("ALL 6 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
+    print("ALL 7 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
 
 if __name__ == "__main__":

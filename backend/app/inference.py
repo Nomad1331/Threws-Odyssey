@@ -81,17 +81,25 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
         compression_ratio_threshold=2.4,
     )
 
+    # Consume the generator into a list so we can access segments multiple times
+    # and compute aggregate metrics without generator exhaustion.
+    seg_list = list(segments)
+
     # Combine text from all recognized audio segments
-    text_parts = [segment.text.strip() for segment in segments if segment.text.strip()]
+    text_parts = [segment.text.strip() for segment in seg_list if segment.text.strip()]
     transcription = " ".join(text_parts).strip()
 
-    # Calculate average log-probability confidence if provided by decoder
+    # Calculate average log-probability confidence across decoded segments.
+    # In faster-whisper, avg_logprob is a property of each Segment object (not TranscriptionInfo).
     confidence: float | None = None
-    if info and hasattr(info, "avg_logprob") and info.avg_logprob is not None:
-        try:
-            # Convert log-probability to a [0.0 - 1.0] confidence score
-            confidence = round(min(max(math.exp(info.avg_logprob), 0.0), 1.0), 3)
-        except (OverflowError, ValueError):
-            confidence = None
+    if seg_list:
+        valid_logprobs = [s.avg_logprob for s in seg_list if getattr(s, "avg_logprob", None) is not None]
+        if valid_logprobs:
+            mean_logprob = sum(valid_logprobs) / len(valid_logprobs)
+            try:
+                # Convert log-probability (typically -0.0 to -2.0) into a [0.0 - 1.0] confidence score
+                confidence = round(min(max(math.exp(mean_logprob), 0.0), 1.0), 3)
+            except (OverflowError, ValueError):
+                confidence = None
 
     return transcription, confidence

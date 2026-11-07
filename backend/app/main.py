@@ -94,11 +94,18 @@ async def health_check():
 @app.post("/api/v1/translate-audio", response_model=TranscriptionResponse)
 async def translate_audio(file: UploadFile = File(...)):
     """
-    Primary Transcription Endpoint:
-    - Ingests multipart/form-data audio file (.webm or .wav).
-    - Enforces a 10MB payload size limit.
-    - Runs greedy INT8 Whisper CPU inference.
-    - Returns transcribed string and processing duration in milliseconds.
+    Primary Assistive Transcription Endpoint:
+    -----------------------------------------
+    Endpoint path '/api/v1/translate-audio' is preserved for backward compatibility
+    with the Next.js frontend client contract.
+
+    Execution Flow:
+    1. Ingests multipart/form-data audio file (.webm from browser or .wav).
+    2. Validates payload boundaries (maximum 10MB, non-empty) to prevent memory DOS.
+    3. Writes audio bytes safely to an OS temporary file for CTranslate2 decoding.
+    4. Runs CPU-quantized INT8 Whisper inference with dysarthria-tuned decoding.
+    5. Returns transcription text, normalized confidence score, and processing latency.
+    6. Deletes the temporary file in a guaranteed finally block to prevent disk leakage.
     """
     start_time = time.perf_counter()
 
@@ -108,13 +115,15 @@ async def translate_audio(file: UploadFile = File(...)):
     if not ext:
         ext = ".webm"
 
-    # Create a temporary file on disk for libsndfile / CTranslate2 audio decoding
+    # Create temporary file on disk.
+    # Note for Windows: We close the NamedTemporaryFile handle immediately before
+    # opening it with standard file I/O ('wb') to prevent WinError 32 (file in use).
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
     temp_path = temp_file.name
     temp_file.close()
 
     try:
-        # Read uploaded bytes with 10MB safety boundary check
+        # Read uploaded bytes with a 10MB safety boundary check (+1 byte to detect overflow)
         content = await file.read(10 * 1024 * 1024 + 1)
         if len(content) > 10 * 1024 * 1024:
             raise HTTPException(status_code=413, detail="Audio file exceeds the 10 MB limit.")
@@ -128,7 +137,7 @@ async def translate_audio(file: UploadFile = File(...)):
         full_text, confidence = transcribe_audio(temp_path)
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
-        logger.info(f"Transcribed '{filename}' in {elapsed_ms}ms -> '{full_text}'")
+        logger.info(f"Transcribed '{filename}' in {elapsed_ms}ms -> '{full_text}' (confidence={confidence})")
 
         return TranscriptionResponse(
             transcription=full_text,
@@ -139,10 +148,10 @@ async def translate_audio(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except (OSError, ValueError, RuntimeError, EOFError, LibsndfileError) as e:
-        logger.error(f"Inference error during audio translation: {e}", exc_info=True)
+        logger.error(f"Inference error during audio transcription: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Audio processing error: {str(e)}")
     finally:
-        # Always remove temporary audio file to prevent disk exhaustion
+        # Always remove temporary audio file to prevent storage exhaustion
         if os.path.exists(temp_path):
             try:
                 os.unlink(temp_path)

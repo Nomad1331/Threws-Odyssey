@@ -156,7 +156,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 VoiceBridge was built specifically with physical accessibility considerations:
 1. **Large Motor Targets:** The primary record button and AAC cards meet WCAG 2.1 AAA touch target recommendations (minimum 44x44px, up to 112px).
 2. **Keyboard Assistive Hotkey:** Tap <kbd>SPACE</kbd> anywhere on the page to start or stop recording.
-3. **Accidental Press Protection:** Critical phrases (such as "Pain Alert") require either a 1.5-second hold or a two-stage confirmation within a 3-second window.
+3. **Accidental Press Protection:** Critical phrases (such as "Pain Alert") require a two-stage confirmation within a 3-second window to prevent unintended triggers caused by motor spasticity or tremors.
 4. **Haptic & Visual Feedback:** Device vibration on mobile touch and a live 60 FPS waveform canvas confirm microphone responsiveness.
 5. **Speech Synthesis:** Tap "Say it" to read out the reconstructed transcription through the browser's native text-to-speech engine.
 

@@ -36,7 +36,7 @@
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │ PHASE 5: Scientific Benchmarking, Figures & Documentation (Bricks 16 – 18) [ACTIVE]
-│ • 300 DPI Matplotlib Charts [DONE] • Sarvam AI Defense Matrix • System Report│
+│ • 300 DPI Matplotlib Charts [DONE] • Assistive Competitive Dossier • System Tour│
 └────────────────────────────────────────┬─────────────────────────────────────────┘
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
@@ -235,34 +235,34 @@
 * **Accomplished:**
   - Created [`benchmarks/generate_figures.py`](file:///I:/Career/Threws%20Hackathon/benchmarks/generate_figures.py) with clinical slate styling.
   - Exported 3 publication-ready 300 DPI figures to [`assets/benchmarks/`](file:///I:/Career/Threws%20Hackathon/assets/benchmarks/):
-    1. `figure1_wer_comparison.png`: Word Error Rate comparison showing the 70% foundation failure wall (Siri 74.1%, Whisper 72.4%, Sarvam 71.8% vs. VoiceBridge 18.2% — a -74.8% relative error reduction).
+    1. `figure1_wer_comparison.png`: Word Error Rate comparison across clinical severity tiers showing foundation failure on moderate and severe dysarthria.
     2. `figure2_formant_centralization.png`: Acoustic vowel formant space ($F_1$ vs. $F_2$) demonstrating corner vowel quadrilateral collapse toward neutral schwa `/ə/`.
-    3. `figure3_latency_vs_footprint.png`: CPU inference latency vs. memory working set comparing cloud foundation models against VoiceBridge INT8 (sub-280ms, ~57MB).
+    3. `figure3_latency_vs_footprint.png`: CPU inference latency vs. memory working set comparing FP32 baseline against VoiceBridge INT8 on CPU (592ms, 103MB footprint, 74.4% size cut).
 * **Lead:** Manas Suryawanshi (Lead) / Talha (Export Pipeline)
 * **Status:** 300 DPI publication plots generated and stored.
 
 ---
 
-### [ ] Brick 17: Competitive Differentiation Dossier & Defense Matrix (UP NEXT ⏳)
-* **Core Objective:** Formalize comprehensive competitive differentiation analysis evaluating VoiceBridge against foundation speech solutions (Google Speech, Apple Siri, Sarvam AI).
-* **Concrete Implementation Tasks:**
-  - Author `docs/COMPETITIVE_ANALYSIS.md` covering:
-    - *Big Tech (Google / Apple / OpenAI):* Foundation models trained exclusively on massive commercial fluent datasets (podcasts, audiobooks). Retraining global models on disordered speech degrades normative WER.
-    - *Sarvam AI (Sarvam-1 / Bulbul / IndicWhisper):* Enterprise Indic commercial speech focus (banking, customer service). Zero clinical dysarthric adaptation.
-    - *VoiceBridge Advantage:* Open, lightweight, parameter-efficient accessibility layer executing locally or on edge devices with near-zero latency and zero subscription barrier.
-  - Compile structured technical comparison matrix and deployment tradeoff tables for Manas's pitch deck.
-* **Assigned Lead:** Manas Suryawanshi (Lead) / Talha (Technical Input)
-* **Target Date:** November 5, 2026
+### [x] Brick 17: Competitive Differentiation Dossier & Defense Matrix (COMPLETED)
+* **Core Objective:** Formalize comprehensive competitive differentiation analysis evaluating VoiceBridge within the assistive speech research ecosystem (Google Project Euphonia, Project Relate, UIUC SAP, Voiceitt).
+* **Accomplished:**
+  - Authored [`docs/COMPETITIVE_ANALYSIS.md`](file:///I:/Career/Threws%20Hackathon/docs/COMPETITIVE_ANALYSIS.md) covering:
+    - *Big Tech & Research Labs:* Google Euphonia, Google Project Relate, UIUC Speech Accessibility Project, and Voiceitt.
+    - *Atypical Speech Realities:* Ground-truth analysis of speaker-independent dysarthric speech challenges and why personalization is required for severe cases.
+    - *VoiceBridge Contribution:* Open-source, parameter-efficient edge baseline executing on consumer CPUs with a 74.4% storage cut, 103MB RAM, and WCAG AAA physical motor accessibility.
+* **Lead:** Manas Suryawanshi (Lead) / Talha (Technical Input)
+* **Status:** Completed and verified in documentation suite.
 
 ---
 
-### [ ] Brick 18: System Architecture & Clinical Differentiation Report (UP NEXT ⏳)
-* **Core Objective:** Compile a formal academic project paper that elevates VoiceBridge from a hackathon project to a peer-reviewed research standard.
-* **Concrete Implementation Tasks:**
-  - Author docs/TECHNICAL_REPORT.md following comprehensive hackathon technical report format:
-    1. *Abstract & Clinical Problem Statement* (The 70% failure wall in dysarthria).
-    2. *Neuromotor Acoustic Distortions* (Vowel centralization, transient collapse).
-    3. *PEFT / LoRA Adaptation Methodology* ($r=16, \alpha=32$ on attention in the encoder and decoder).
+### [x] Brick 18: System Architecture & End-to-End Walkthrough (COMPLETED)
+* **Core Objective:** Compile a formal, transparent architectural walkthrough that demystifies every component and data flow across the system.
+* **Accomplished:**
+  - Authored [`docs/SYSTEM_WALKTHROUGH.md`](file:///I:/Career/Threws%20Hackathon/docs/SYSTEM_WALKTHROUGH.md) providing:
+    1. *End-to-End Execution Trace:* 6-step lifecycle from microphone press to browser text-to-speech.
+    2. *File-by-File Blueprint:* Clear inventory and responsibilities of every backend and frontend file.
+    3. *Design Trade-offs:* Technical explanations for faster-whisper INT8 CPU inference and motor accessibility features.
+    4. *Developer Sanity Checklist:* 60-second commands to verify health, transcription, and production builds.
     4. *Empirical TORGO Benchmark Results* (Disjoint patient evaluation, WER drop from 72% to 18.2%).
     5. *Edge AI Quantization & Latency Profile* (ONNX INT8 74.4% size cut, 0.10 RTF).
     6. *Future Multilingual Indic Roadmap* (Extending LoRA adaptation to Hindi and Marathi).
@@ -291,7 +291,7 @@
   - Record screencast and voiceover following the exact storyboard:
     - **0:00 – 0:30 (The Pain Point):** Play real TORGO dysarthric audio clip $\rightarrow$ feed into standard Whisper $\rightarrow$ show it outputting complete gibberish.
     - **0:30 – 1:15 (The VoiceBridge Solution):** Play exact same clip through VoiceBridge $\rightarrow$ show real-time translation $\rightarrow$ show audio synthesized aloud via TTS.
-    - **1:15 – 1:45 (Technical Architecture):** Highlight PEFT LoRA adaptation in the encoder and decoder ($r=16$), 72% $\rightarrow$ 18% WER drop, ONNX INT8 0.10 RTF, and WCAG AAA physical accessibility.
+    - **1:15 – 1:45 (Technical Architecture):** Highlight Edge AI INT8 CPU optimization (74.4% size cut, 103MB footprint, 592ms latency at 0.10 RTF), foundation model failure analysis on TORGO, and WCAG AAA physical accessibility.
     - **1:45 – 2:00 (Human Impact & Future Vision):** Clinical utility for TBI/CP/ALS individuals and future Indic language roadmap.
   - Edit, export in 1080p MP4, and upload unlisted link.
 * **Assigned Lead:** Manas Suryawanshi (Script) / Talha (Video Assembly & Screen Capture) / Moulika Sanyal (Edge Co-Presenter)
@@ -311,10 +311,10 @@
     - [ ] 2-Minute Demonstration Video Walkthrough Link
     - [ ] Research Paper & Architecture Documentation PDF
   - **4-Person Specialist Panel Rehearsal (~2.5m Total Pitch):**
-    1. *Manas Suryawanshi (45s):* Clinical Problem & 70% Foundation Model Failure Wall.
-    2. *Aaliya Hussain (45s):* Machine Learning, TORGO Streaming & PEFT LoRA Acoustic Adaptation.
-    3. *Moulika Sanyal (45s):* Edge AI Optimization, ONNX INT8 Quantization & CPU Low-Resource Benchmarking (<300ms, ~57MB).
-    4. *Talha (35s):* System Overview & Live UI Demonstration Anchor.
+    1. *Manas Suryawanshi (45s):* Clinical Problem & Dysarthric Foundation Model Failure Wall.
+    2. *Aaliya Hussain (45s):* Machine Learning, TORGO Streaming & Parameter-Efficient Exploration.
+    3. *Moulika Sanyal (45s):* Edge AI Optimization, INT8 Quantization & CPU Hardware Benchmarking (592ms, 103MB RAM, 74.4% size cut).
+    4. *Talha (35s):* System Architecture & Live Accessible Web Demonstration Anchor.
   - Log final completion entry into `CHANGELOG.md`.
 * **Assigned Lead:** Whole Team (Talha, Aaliya Hussain, Manas Suryawanshi, Moulika Sanyal)
 * **Target Date:** November 7, 2026 (Prior to 11:59 PM IST)
@@ -341,8 +341,8 @@
 | **14** | Visual Transcription Display & Auto-TTS Engine | Nov 04 | Talha | **COMPLETED** ✅ |
 | **15** | Fail-Safe Offline University Audio Chip Matrix | Nov 04 | Talha / Manas | **COMPLETED** ✅ |
 | **16** | 300 DPI Publication Benchmark Figures Export | Nov 04 | Manas / Talha | **COMPLETED** ✅ |
-| **17** | Sarvam AI / Big Tech Competitive Dossier | Nov 05 | Manas / Talha | **COMPLETED** ✅ |
-| **18** | System Architecture & Clinical Report | Nov 05 | Manas / Talha / Moulika | **COMPLETED** ✅ |
+| **17** | Assistive Speech Competitive Dossier | Nov 05 | Manas / Talha | **COMPLETED** ✅ |
+| **18** | End-to-End System Walkthrough & Code Tour | Nov 05 | Talha / Manas | **COMPLETED** ✅ |
 | **19** | GitHub Repository Hygiene & Live Deployment | Nov 06 | Talha | UP NEXT ⏳ |
 | **20** | 2-Minute High-Impact Demo Video Production | Nov 07 | Manas / Talha / Moulika | PENDING |
 | **21** | Final Unstop Filing & 4-Person Panel Viva Rehearsal | Nov 07 | Whole Team | PENDING |

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface AudioWaveformCanvasProps {
   isRecording: boolean;
@@ -15,7 +15,6 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const phaseRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,49 +44,22 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      let effectiveRms = 0.05;
       if (isRecording && audioAnalyser && dataArray) {
         audioAnalyser.getByteTimeDomainData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          const norm = (dataArray[i] - 128) / 128;
-          sum += norm * norm;
-        }
-        effectiveRms = Math.min(Math.sqrt(sum / dataArray.length) * 5.0, 1.0);
       }
-
-      phaseRef.current += isRecording ? 0.08 : 0.03;
 
       for (let i = 0; i < barCount; i++) {
         const x = i * barSpacing + (barSpacing - barWidth) / 2;
-        const progress = i / (barCount - 1);
-        
-        // Bell-curve envelope to taper bars towards edges
-        const envelope = Math.sin(progress * Math.PI);
-
-        let barHeight = 4;
-        if (isRecording) {
-          // Dynamic soundwave reaction
-          const wave =
-            Math.sin(progress * 12 + phaseRef.current) * 0.6 +
-            Math.cos(progress * 20 - phaseRef.current * 1.5) * 0.4;
-          barHeight = Math.max(
-            4,
-            height * 0.8 * effectiveRms * envelope * (0.4 + 0.6 * Math.abs(wave))
-          );
-          ctx.fillStyle = progress > 0.4 && progress < 0.6 ? "#f59e0b" : "#e4e4e7";
-        } else {
-          // Calm resting breath wave
-          const wave = Math.sin(progress * 6 + phaseRef.current);
-          barHeight = Math.max(3, (height * 0.2) * envelope * (0.5 + 0.5 * Math.abs(wave)));
-          ctx.fillStyle = "#3f3f46";
-        }
+        const sampleIndex = Math.floor((i / barCount) * (dataArray?.length ?? 1));
+        const sample = dataArray?.[sampleIndex] ?? 128;
+        const amplitude = isRecording ? Math.abs(sample - 128) / 128 : 0;
+        const barHeight = Math.max(4, height * 0.85 * amplitude);
+        ctx.fillStyle = "#c4c4bf";
 
         const y = centerY - barHeight / 2;
-        
-        // Draw rounded vertical bar
+
         ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, barHeight, barWidth / 2);
+        ctx.rect(x, y, barWidth, barHeight);
         ctx.fill();
       }
 
@@ -105,7 +77,7 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
 
   return (
     <div
-      className={`relative h-14 sm:h-16 w-full max-w-md mx-auto flex items-center justify-center ${className}`}
+      className={`relative h-12 w-full mx-auto flex items-center justify-center ${className}`}
       aria-hidden="true"
     >
       <canvas ref={canvasRef} className="h-full w-full block" />

@@ -87,24 +87,24 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
 
   return (
     <div
-      className={`rounded-2xl bg-zinc-900/80 border border-zinc-800/80 p-4 sm:p-5 ${className}`}
+      className={`rounded-[6px] border border-border bg-surface p-4 sm:p-5 ${className}`}
       role="region"
       aria-label="Clinical benchmark archive"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 pb-3 border-b border-zinc-800">
-        <div className="flex items-center gap-2 font-mono text-xs text-zinc-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          <span className="font-semibold uppercase tracking-wider text-[11px]">
+      <div className="flex flex-col justify-between gap-1 border-b border-border pb-3 sm:flex-row sm:items-center sm:gap-2">
+        <div className="flex items-center gap-2 font-mono text-xs text-text-primary">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+          <span className="text-[11px] font-semibold tracking-wider">
             Clinical Benchmark Archive
           </span>
         </div>
-        <span className="text-[10px] sm:text-[11px] font-mono text-zinc-500">
+        <span className="font-mono text-[10px] text-text-secondary sm:text-[11px]">
           TORGO reference clips. Model results pending evaluation run.
         </span>
       </div>
 
       {/* Sample selector */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 my-3">
+      <div className="my-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
         {TORGO_TRIALS.map((trial) => {
           const isSelected = trial.id === selectedTrialId;
           return (
@@ -112,16 +112,16 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
               key={trial.id}
               type="button"
               onClick={() => setSelectedTrialId(trial.id)}
-              className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-150 font-mono text-xs active:scale-[0.98] ${
+              className={`flex min-h-[44px] items-center justify-between rounded-[6px] border p-3 text-left font-mono text-xs transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-3 active:scale-[0.98] ${
                 isSelected
-                  ? "bg-zinc-800 border-zinc-600 text-zinc-100 shadow-sm"
-                  : "bg-zinc-950/60 border-zinc-850 text-zinc-400 hover:border-zinc-750 hover:text-zinc-200"
+                  ? "border-accent bg-surface text-text-primary"
+                  : "border-border bg-surface text-text-secondary hover:border-accent"
               }`}
             >
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
+              <span className="text-[10px] uppercase tracking-wider text-text-secondary">
                 {trial.sampleLabel}
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
+              <span className="rounded-[6px] border border-border px-2 py-0.5 font-mono text-[10px] text-text-secondary">
                 {trial.speakerId}
               </span>
             </button>
@@ -130,13 +130,13 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
       </div>
 
       {/* Selected sample */}
-      <div className="rounded-xl bg-zinc-950/80 border border-zinc-850 p-4 font-mono">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-850 text-xs">
+      <div className="rounded-[6px] border border-border bg-surface p-4 font-mono">
+        <div className="flex flex-col justify-between gap-3 border-b border-border pb-3 text-xs sm:flex-row sm:items-center">
           <div>
-            <span className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-0.5">
+            <span className="mb-0.5 block text-[10px] uppercase tracking-widest text-text-secondary">
               Intended speech (reference)
             </span>
-            <span className="text-sm font-sans font-medium text-zinc-100">
+            <span className="font-sans text-sm font-medium text-text-primary">
               &ldquo;{currentTrial.targetText}&rdquo;
             </span>
           </div>
@@ -144,14 +144,14 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
           <button
             type="button"
             onClick={(e) => handleTogglePlayAudio(currentTrial, e)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono border transition-all active:scale-95 ${
+            className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-[6px] border px-3 py-1.5 font-mono text-xs transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-3 active:scale-95 ${
               playingAudioId === currentTrial.id
-                ? "bg-amber-950/70 border-amber-500/50 text-amber-300"
-                : "bg-zinc-900 border-zinc-750 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                ? "border-accent bg-surface text-accent"
+                : "border-border bg-surface text-text-primary hover:border-accent"
             }`}
           >
             {playingAudioId === currentTrial.id ? (
-              <Square className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <Square className="h-3 w-3 fill-accent text-accent" />
             ) : (
               <Play className="h-3 w-3" />
             )}
@@ -160,14 +160,14 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
         </div>
 
         {/* Model results placeholder: filled from the results file, not typed here */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 text-xs">
-          <div className="rounded-lg bg-zinc-900/60 border border-zinc-800 p-3">
-            <div className="text-[11px] text-zinc-400 font-semibold mb-1">Baseline Whisper-tiny</div>
-            <p className="text-[11px] text-zinc-500 italic">Prediction and WER: pending run</p>
+        <div className="grid grid-cols-1 gap-3 pt-3 text-xs md:grid-cols-2">
+          <div className="rounded-[6px] border border-border p-3">
+            <div className="mb-1 text-[11px] font-semibold text-text-secondary">Baseline Whisper-tiny</div>
+            <p className="text-[11px] text-text-secondary">Prediction and WER: pending run</p>
           </div>
-          <div className="rounded-lg bg-zinc-900/60 border border-zinc-800 p-3">
-            <div className="text-[11px] text-zinc-400 font-semibold mb-1">VoiceBridge (LoRA)</div>
-            <p className="text-[11px] text-zinc-500 italic">Prediction and WER: pending run</p>
+          <div className="rounded-[6px] border border-border p-3">
+            <div className="mb-1 text-[11px] font-semibold text-text-secondary">VoiceBridge (LoRA)</div>
+            <p className="text-[11px] text-text-secondary">Prediction and WER: pending run</p>
           </div>
         </div>
       </div>

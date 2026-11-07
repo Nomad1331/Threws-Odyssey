@@ -2,12 +2,11 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { TactileMicButton, MicState } from "@/components/TactileMicButton";
-import { AudioWaveformCanvas } from "@/components/AudioWaveformCanvas";
 import { TranscriptDisplay } from "@/components/TranscriptDisplay";
 import { QuickAssistGrid } from "@/components/QuickAssistGrid";
 import { ClinicalBenchmarkDrawer } from "@/components/ClinicalBenchmarkDrawer";
 import { transcribeAudio } from "@/lib/transcriptionService";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Mic } from "lucide-react";
 
 interface IWindowSpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -59,6 +58,7 @@ export default function Home() {
   const [secondaryTranscript, setSecondaryTranscript] = useState<string | undefined>(undefined);
   const [source, setSource] = useState<SourceType | undefined>(undefined);
   const [showJudgeConsole, setShowJudgeConsole] = useState<boolean>(false);
+  const [backendConnected, setBackendConnected] = useState<boolean>(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -105,6 +105,21 @@ export default function Home() {
     };
   }, [recordedAudioUrl]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 2000);
+
+    fetch("http://127.0.0.1:8000/health", { signal: controller.signal })
+      .then((response) => setBackendConnected(response.status === 200))
+      .catch(() => setBackendConnected(false))
+      .finally(() => window.clearTimeout(timeoutId));
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, []);
+
   // Toggle live microphone recording with MediaRecorder.
   const handleToggleMic = useCallback(async () => {
     if (micState === "listening") {
@@ -128,25 +143,18 @@ export default function Home() {
           audioBlob = new Blob([], { type: "audio/webm" });
         }
 
+        if (recordedAudioUrl && recordedAudioUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(recordedAudioUrl);
+        }
+
         if (audioBlob.size > 0) {
-          const newUrl = URL.createObjectURL(audioBlob);
-          setRecordedAudioUrl((prev) => {
-            if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
-            return newUrl;
-          });
+          const url = URL.createObjectURL(audioBlob);
+          setRecordedAudioUrl(url);
+        } else {
+          setRecordedAudioUrl(null);
         }
 
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-          mediaStreamRef.current = null;
-        }
-        if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-          await audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
-        setAudioAnalyser(null);
-        setAudioLevel(0);
-
+        // Send to FastAPI VoiceBridge Whisper-LoRA endpoint
         const result = await transcribeAudio(
           audioBlob,
           capturedTextRef.current,
@@ -176,75 +184,81 @@ export default function Home() {
       } else {
         finalizeProcessing();
       }
-    } else if (micState === "idle") {
+
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        try {
+          audioContextRef.current.close();
+        } catch {
+          // Context already closed
+        }
+        audioContextRef.current = null;
+      }
+      setAudioAnalyser(null);
+    } else {
+      audioChunksRef.current = [];
       capturedTextRef.current = "";
       recognitionErrorRef.current = null;
-      audioChunksRef.current = [];
-      setStatusNotice("Capturing microphone stream...");
 
-      let stream: MediaStream | null = null;
       try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-          });
-          mediaStreamRef.current = stream;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            sampleRate: 16000,
+            echoCancellation: true,
+            noiseSuppression: false,
+            autoGainControl: true,
+          },
+        });
+        mediaStreamRef.current = stream;
 
-          const AudioContextClass =
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-          const ctx = new AudioContextClass();
-          audioContextRef.current = ctx;
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const ctx = new AudioContextClass({ sampleRate: 16000 });
+        audioContextRef.current = ctx;
 
-          const sourceNode = ctx.createMediaStreamSource(stream);
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 128;
-          sourceNode.connect(analyser);
+        const sourceNode = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.4;
+        sourceNode.connect(analyser);
+        setAudioAnalyser(analyser);
 
-          setAudioAnalyser(analyser);
-        }
-      } catch (err) {
-        console.warn("Microphone hardware error:", err);
-      }
-
-      if (stream) {
-        try {
-          let selectedMime = "audio/webm;codecs=opus";
-          if (typeof MediaRecorder !== "undefined") {
-            if (!MediaRecorder.isTypeSupported(selectedMime)) {
-              selectedMime = "audio/webm";
-              if (!MediaRecorder.isTypeSupported(selectedMime)) {
-                selectedMime = "";
-              }
-            }
-
-            const recorder = selectedMime
-              ? new MediaRecorder(stream, { mimeType: selectedMime })
-              : new MediaRecorder(stream);
-
-            audioChunksRef.current = [];
-            recorder.ondataavailable = (event: BlobEvent) => {
-              if (event.data && event.data.size > 0) {
-                audioChunksRef.current.push(event.data);
-              }
-            };
-
-            recorder.start(100);
-            mediaRecorderRef.current = recorder;
+        const mimeTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", ""];
+        let selectedMime = "";
+        for (const mime of mimeTypes) {
+          if (mime === "" || MediaRecorder.isTypeSupported(mime)) {
+            selectedMime = mime;
+            break;
           }
-        } catch (recErr) {
-          console.warn("MediaRecorder setup error:", recErr);
         }
+
+        const recorder = selectedMime
+          ? new MediaRecorder(stream, { mimeType: selectedMime })
+          : new MediaRecorder(stream);
+        mediaRecorderRef.current = recorder;
+
+        recorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            audioChunksRef.current.push(e.data);
+          }
+        };
+
+        recorder.start(250);
+      } catch (err) {
+        console.error("Microphone access denied:", err);
+        setStatusNotice("Microphone permission denied. Enable microphone in browser.");
+        return;
       }
 
-      const win = typeof window !== "undefined" ? (window as unknown as Record<string, unknown>) : {};
-      const SpeechRecognitionClass = (win.SpeechRecognition || win.webkitSpeechRecognition) as
-        | { new (): IWindowSpeechRecognition }
-        | undefined;
+      const SpeechRecognitionClass =
+        (window as unknown as { SpeechRecognition?: new () => IWindowSpeechRecognition }).SpeechRecognition ||
+        (window as unknown as { webkitSpeechRecognition?: new () => IWindowSpeechRecognition }).webkitSpeechRecognition;
 
       if (SpeechRecognitionClass) {
         try {
@@ -276,12 +290,7 @@ export default function Home() {
 
       setMicState("listening");
     }
-  }, [micState]);
-
-  const handleSelectPhrase = (phrase: string) => {
-    setTranscript(phrase);
-    setStatusNotice("Phrase selected • Tap 'Say it' to speak aloud");
-  };
+  }, [micState, recordedAudioUrl]);
 
   const handleClear = () => {
     setTranscript("");
@@ -297,21 +306,31 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col justify-between p-4 sm:p-6 lg:p-8 max-w-xl mx-auto selection:bg-amber-500/30 selection:text-amber-200">
-      {/* 1. Header */}
-      <header className="flex flex-col items-center justify-center pt-2 pb-4 text-center">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-sans">
-          VoiceBridge
-        </h1>
-        <div className="mt-1.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-400 shadow-sm">
-          <span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-          <span>Research prototype</span>
+    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col bg-canvas px-4 py-6 text-text-primary sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-border bg-surface">
+            <Mic className="h-4 w-4 text-accent" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-text-primary">VoiceBridge</h1>
+            <p className="text-sm text-text-secondary">
+              Dysarthria speech recognition research prototype
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 self-start rounded-[6px] border border-border bg-surface px-3 py-2 font-mono text-[10px] text-text-secondary sm:self-auto">
+          <span className={`h-2 w-2 rounded-full ${backendConnected ? "bg-accent" : "bg-text-secondary"}`} />
+          <span>
+            {backendConnected
+              ? "Backend connected"
+              : "Backend not running. Start with: uvicorn app.main:app --port 8000"}
+          </span>
         </div>
       </header>
 
-      {/* 2. Hero stage */}
-      <section className="my-auto flex flex-col items-center gap-5 w-full">
-        <div className="w-full">
+      <section className="grid flex-1 grid-cols-1 items-start gap-8 py-8 lg:grid-cols-2 lg:gap-12">
+        <section className="flex flex-col items-center gap-5 w-full">
           <TranscriptDisplay
             transcript={transcript}
             latencyMs={latencyMs}
@@ -321,36 +340,27 @@ export default function Home() {
             statusNotice={statusNotice}
             secondaryTranscript={secondaryTranscript}
             source={source}
+            audioAnalyser={audioAnalyser}
+            isRecording={micState === "listening"}
             onClear={handleClear}
           />
-        </div>
+        </section>
 
-        <div className="w-full py-1">
-          <AudioWaveformCanvas
-            isRecording={micState === "listening"}
-            audioAnalyser={audioAnalyser}
-          />
-        </div>
-
-        <div className="py-1">
+        <section className="flex w-full flex-col items-center gap-8 rounded-[6px] border border-border bg-surface p-5 sm:p-8">
           <TactileMicButton
             state={micState}
             onToggle={handleToggleMic}
             audioLevel={audioLevel}
           />
-        </div>
-
-        <div className="w-full pt-1">
-          <QuickAssistGrid onSpeakPhrase={handleSelectPhrase} />
-        </div>
+          <QuickAssistGrid onSpeakPhrase={(phrase) => setTranscript(phrase)} />
+        </section>
       </section>
 
-      {/* 3. Clinical benchmark archive */}
-      <footer className="pt-6 pb-2 border-t border-zinc-850/80 flex flex-col items-center gap-3 w-full">
+      <footer className="w-full border-t border-border pt-6">
         <button
           type="button"
           onClick={() => setShowJudgeConsole((prev) => !prev)}
-          className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-zinc-200 transition-colors py-1 px-3 rounded-lg bg-zinc-900 border border-zinc-800"
+          className="flex min-h-[44px] w-full items-center justify-between rounded-[6px] border border-border bg-surface px-4 text-left font-mono text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-3"
         >
           <span>Clinical Verification Archive (TORGO Dataset)</span>
           {showJudgeConsole ? (
@@ -361,12 +371,16 @@ export default function Home() {
         </button>
 
         {showJudgeConsole && (
-          <div className="w-full mt-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="mt-3 w-full max-w-3xl rounded-[6px] border border-border bg-surface p-4">
+            <div className="mb-4 space-y-2 text-sm text-text-secondary">
+              <p>TORGO dataset (Rudzicz, Namasivayam, Wolff, 2012). Used for research evaluation. Licence terms: see README.</p>
+              <p>Model results: pending evaluation run.</p>
+            </div>
             <ClinicalBenchmarkDrawer />
           </div>
         )}
 
-        <div className="text-[10px] sm:text-[11px] font-mono text-zinc-600 text-center">
+        <div className="pt-5 text-center font-mono text-[10px] text-text-secondary">
           Research prototype • Not a medical device • SIES GST
         </div>
       </footer>

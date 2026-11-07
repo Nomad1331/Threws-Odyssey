@@ -112,10 +112,14 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
     transcription = " ".join(text_parts).strip()
 
     # Calculate average log-probability confidence across decoded segments.
-    # Confidence is only evaluated if words were actually recognized (null on silence).
+    # Confidence is only evaluated on segments that contributed transcribed words (null on silence).
     confidence: float | None = None
     if transcription and seg_list:
-        valid_logprobs = [s.avg_logprob for s in seg_list if getattr(s, "avg_logprob", None) is not None]
+        valid_logprobs = [
+            s.avg_logprob
+            for s in seg_list
+            if s.text.strip() and getattr(s, "avg_logprob", None) is not None
+        ]
         if valid_logprobs:
             mean_logprob = sum(valid_logprobs) / len(valid_logprobs)
             try:

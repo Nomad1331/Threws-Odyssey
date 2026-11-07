@@ -130,9 +130,11 @@ async def translate_audio(file: UploadFile = File(...)):
         if not content:
             raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
 
-        # 2. Determine file extension, enforcing allowed audio extensions to prevent arbitrary suffixes
-        filename = file.filename or "audio.webm"
-        ext = os.path.splitext(filename)[1].lower()
+        # 2. Determine file extension, enforcing allowed audio extensions to prevent arbitrary suffixes.
+        # Sanitize filename against path/log injection
+        raw_filename = file.filename or "audio.webm"
+        clean_filename = os.path.basename(raw_filename).replace("\r", "").replace("\n", "")
+        ext = os.path.splitext(clean_filename)[1].lower()
         if ext not in ALLOWED_AUDIO_EXTENSIONS:
             ext = ".webm"
 
@@ -151,7 +153,7 @@ async def translate_audio(file: UploadFile = File(...)):
         full_text, confidence = await asyncio.to_thread(transcribe_audio, temp_path)
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
-        logger.info(f"Transcribed '{filename}' in {elapsed_ms}ms -> '{full_text}' (confidence={confidence})")
+        logger.info(f"Transcribed '{clean_filename}' in {elapsed_ms}ms -> '{full_text}' (confidence={confidence})")
 
         return TranscriptionResponse(
             transcription=full_text,
@@ -161,9 +163,17 @@ async def translate_audio(file: UploadFile = File(...)):
 
     except HTTPException:
         raise
-    except (OSError, ValueError, RuntimeError, EOFError, Exception) as e:
+    except Exception as e:
         logger.error(f"Inference error during audio transcription: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=f"Audio processing error: {str(e)}")
+        # Avoid leaking internal server filesystem paths in API error responses
+        err_msg = str(e)
+        if temp_path:
+            # Handle Cython/C++ repr escaped backslashes (e.g. PyAV on Windows)
+            err_msg = err_msg.replace(temp_path.replace("\\", "\\\\"), clean_filename)
+            err_msg = err_msg.replace(temp_path, clean_filename)
+            err_msg = err_msg.replace(temp_path.replace("\\", "/"), clean_filename)
+            err_msg = err_msg.replace(temp_path.replace("/", "\\"), clean_filename)
+        raise HTTPException(status_code=400, detail=f"Audio processing error: {err_msg}")
     finally:
         # Release Starlette upload spool file descriptor
         await file.close()

@@ -61,6 +61,7 @@ def run_tests():
         print(f" -> Response: {post_data}")
         assert "transcription" in post_data
         assert "confidence_score" in post_data
+        assert post_data["confidence_score"] is None or (0.0 <= post_data["confidence_score"] <= 1.0)
         assert "processing_time_ms" in post_data
         assert isinstance(post_data["processing_time_ms"], int)
         print(" [PASS] POST /api/v1/translate-audio standard inference verified.")
@@ -87,8 +88,11 @@ def run_tests():
         corrupt_files = {"file": ("corrupt.webm", b"NOT AN AUDIO FILE GARBAGE DATA", "audio/webm")}
         corrupt_resp = client.post("/api/v1/translate-audio", files=corrupt_files)
         assert corrupt_resp.status_code == 400, f"Expected 400, got {corrupt_resp.status_code}"
+        corrupt_detail = corrupt_resp.json().get("detail", "")
+        # Verify internal temporary directory path is not leaked in error message
+        assert "AppData" not in corrupt_detail and "/tmp" not in corrupt_detail
         print(f" -> Handled corrupt audio gracefully: {corrupt_resp.json()}")
-        print(" [PASS] Corrupt audio resilience validated.")
+        print(" [PASS] Corrupt audio resilience and path sanitization validated.")
 
         # 6. Test arbitrary non-audio extension sanitization (e.g. .exe defaulted safely)
         print("\n[Test 6] Testing non-audio file extension sanitization ...")

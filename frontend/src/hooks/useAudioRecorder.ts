@@ -12,6 +12,7 @@ export interface AudioRecorderHook {
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<Blob | null>;
   clearRecordedAudio: () => void;
+  setIdle: () => void;
 }
 
 /**
@@ -198,7 +199,7 @@ export function useAudioRecorder(): AudioRecorderHook {
           audioContextRef.current = null;
         }
         setAudioAnalyser(null);
-        setState("idle");
+        // Note: Retain "processing" state until caller completes transcription and invokes setIdle()
         resolve(blob);
       };
 
@@ -222,6 +223,10 @@ export function useAudioRecorder(): AudioRecorderHook {
     setRecordedAudioUrl(null);
   }, [recordedAudioUrl]);
 
+  const setIdle = useCallback(() => {
+    setState("idle");
+  }, []);
+
   return {
     state,
     audioLevel,
@@ -230,5 +235,6 @@ export function useAudioRecorder(): AudioRecorderHook {
     startRecording,
     stopRecording,
     clearRecordedAudio,
+    setIdle,
   };
 }

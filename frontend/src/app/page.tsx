@@ -36,6 +36,7 @@ export default function Home() {
     startRecording,
     stopRecording,
     clearRecordedAudio,
+    setIdle,
   } = useAudioRecorder();
 
   // Transcription state
@@ -68,22 +69,31 @@ export default function Home() {
 
   // Handle microphone start / stop toggle
   const handleToggleMic = useCallback(async () => {
+    if (micState === "processing") return;
+
     if (micState === "listening") {
       setStatusNotice("Processing audio...");
-      const audioBlob = await stopRecording();
+      try {
+        const audioBlob = await stopRecording();
 
-      if (!audioBlob || audioBlob.size === 0) {
-        setStatusNotice("No audio captured. Please try speaking again.");
-        return;
+        if (!audioBlob || audioBlob.size === 0) {
+          setStatusNotice("No audio captured. Please try speaking again.");
+          return;
+        }
+
+        // Send audio to FastAPI backend
+        const result = await transcribeAudio(audioBlob);
+        setTranscript(result.text);
+        setLatencyMs(result.latencyMs);
+        setConfidenceScore(result.confidence);
+        setStatusNotice(result.statusNotice);
+        setSource(result.source);
+      } catch (err) {
+        console.error("Transcription error:", err);
+        setStatusNotice("Failed to transcribe audio. Please try again.");
+      } finally {
+        setIdle();
       }
-
-      // Send audio to FastAPI backend
-      const result = await transcribeAudio(audioBlob);
-      setTranscript(result.text);
-      setLatencyMs(result.latencyMs);
-      setConfidenceScore(result.confidence);
-      setStatusNotice(result.statusNotice);
-      setSource(result.source);
     } else {
       try {
         await startRecording();
@@ -92,7 +102,7 @@ export default function Home() {
         setStatusNotice("Microphone permission denied. Enable microphone access in browser.");
       }
     }
-  }, [micState, startRecording, stopRecording]);
+  }, [micState, startRecording, stopRecording, setIdle]);
 
   // Reset transcript and audio buffer
   const handleClear = () => {

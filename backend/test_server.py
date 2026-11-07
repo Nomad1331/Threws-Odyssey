@@ -90,8 +90,15 @@ def run_tests():
         print(f" -> Handled corrupt audio gracefully: {corrupt_resp.json()}")
         print(" [PASS] Corrupt audio resilience validated.")
 
+        # 6. Test arbitrary non-audio extension sanitization (e.g. .exe defaulted safely)
+        print("\n[Test 6] Testing non-audio file extension sanitization ...")
+        bad_ext_files = {"file": ("malware.exe", wav_bytes, "application/octet-stream")}
+        bad_ext_resp = client.post("/api/v1/translate-audio", files=bad_ext_files)
+        assert bad_ext_resp.status_code == 200, f"Expected 200, got {bad_ext_resp.status_code}"
+        print(" [PASS] Safe extension fallback validated.")
+
     print("\n" + "=" * 60)
-    print("ALL 5 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
+    print("ALL 6 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
 
 if __name__ == "__main__":

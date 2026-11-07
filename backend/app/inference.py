@@ -12,6 +12,8 @@ Why CTranslate2 / faster-whisper?
    phrases (Intel Core i5 CPU) with only ~103MB of active memory usage. Zero GPU required.
 """
 
+from __future__ import annotations
+
 import os
 import math
 import logging
@@ -28,17 +30,19 @@ def load_model() -> None:
     """
     Initializes and caches the quantized INT8 Whisper model on CPU.
     Called during FastAPI lifespan startup to avoid cold-start delays on requests.
+    Dynamically scales CPU threads up to 4, preventing oversubscription on dual-core hosts.
     """
     global _model
     if _model is not None:
         return
 
-    logger.info("Loading VoiceBridge quantized INT8 acoustic engine (tiny.en on CPU)...")
+    threads = min(4, os.cpu_count() or 4)
+    logger.info(f"Loading VoiceBridge quantized INT8 acoustic engine (tiny.en on {threads} CPU threads)...")
     _model = WhisperModel(
         "tiny.en",
         device="cpu",
         compute_type="int8",
-        cpu_threads=4  # Uses 4 CPU threads for optimal consumer multi-core throughput
+        cpu_threads=threads,
     )
     logger.info("VoiceBridge INT8 acoustic engine successfully loaded.")
 

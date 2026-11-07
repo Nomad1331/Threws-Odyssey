@@ -5,14 +5,18 @@ FastAPI microservice providing assistive speech-to-text endpoints.
 
 Flow:
 1. Receives audio recordings (.webm / .wav) from the Next.js frontend.
-2. Temporarily writes the audio bytes to disk for faster-whisper's CTranslate2 engine.
-3. Invokes CPU-optimized INT8 Whisper inference (`app.inference.transcribe_audio`).
-4. Returns the transcribed text along with telemetry (confidence and latency in ms).
-5. Cleans up the temporary audio file in a guaranteed `finally` block.
+2. Validates in-memory boundaries (<=10MB, non-empty, safe audio extension) with zero disk I/O on invalid requests.
+3. Temporarily writes valid audio bytes to disk for faster-whisper's CTranslate2 engine.
+4. Offloads CPU-optimized INT8 Whisper inference to a worker thread (`asyncio.to_thread`) to keep the main event loop non-blocking.
+5. Returns the transcribed text along with telemetry (confidence score and latency in ms).
+6. Cleans up the temporary audio file in a guaranteed `finally` block.
 """
+
+from __future__ import annotations
 
 import os
 import time
+import asyncio
 import tempfile
 import logging
 from contextlib import asynccontextmanager
@@ -25,6 +29,9 @@ try:
     from app.inference import load_model, transcribe_audio
 except ImportError:
     from backend.app.inference import load_model, transcribe_audio
+
+# Whitelist of permissible audio extensions to prevent creating executable suffixes in %TEMP%
+ALLOWED_AUDIO_EXTENSIONS = {".webm", ".wav", ".ogg", ".mp3", ".m4a", ".flac"}
 
 # Configure structured logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -115,10 +122,10 @@ async def translate_audio(file: UploadFile = File(...)):
     if not content:
         raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
 
-    # 2. Determine file extension (defaulting to .webm from browser MediaRecorder)
+    # 2. Determine file extension, enforcing allowed audio extensions to prevent arbitrary suffixes
     filename = file.filename or "audio.webm"
     ext = os.path.splitext(filename)[1].lower()
-    if not ext:
+    if ext not in ALLOWED_AUDIO_EXTENSIONS:
         ext = ".webm"
 
     # 3. Create temporary file on disk for CTranslate2 audio decoding.
@@ -132,8 +139,9 @@ async def translate_audio(file: UploadFile = File(...)):
         with open(temp_path, "wb") as audio_file:
             audio_file.write(content)
 
-        # Run CPU INT8 Whisper inference
-        full_text, confidence = transcribe_audio(temp_path)
+        # Offload synchronous CTranslate2 CPU inference to a worker thread so the
+        # asyncio event loop remains non-blocking for /health checks and concurrent traffic.
+        full_text, confidence = await asyncio.to_thread(transcribe_audio, temp_path)
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
         logger.info(f"Transcribed '{filename}' in {elapsed_ms}ms -> '{full_text}' (confidence={confidence})")

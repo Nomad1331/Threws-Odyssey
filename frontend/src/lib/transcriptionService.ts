@@ -20,6 +20,18 @@ export interface TranscriptionResult {
 }
 
 export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionResult> {
+  // Pre-validate payload boundaries client-side to prevent redundant network I/O
+  if (!audioBlob || audioBlob.size === 0) {
+    return {
+      text: "",
+      confidence: null,
+      latencyMs: 0,
+      source: "unavailable",
+      statusNotice: "No audio captured. Please try speaking again.",
+      isError: false,
+    };
+  }
+
   const startTime = performance.now();
   // Strip trailing slashes to prevent 404s caused by double slashes (e.g. //api/v1/translate-audio)
   const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
@@ -32,6 +44,14 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
       fileName = "recording.wav";
     } else if (audioBlob.type.includes("ogg")) {
       fileName = "recording.ogg";
+    } else if (
+      audioBlob.type.includes("mp4") ||
+      audioBlob.type.includes("m4a") ||
+      audioBlob.type.includes("aac")
+    ) {
+      fileName = "recording.m4a";
+    } else if (audioBlob.type.includes("mp3") || audioBlob.type.includes("mpeg")) {
+      fileName = "recording.mp3";
     }
     formData.append("file", audioBlob, fileName);
 

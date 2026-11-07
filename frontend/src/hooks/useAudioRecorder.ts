@@ -138,6 +138,10 @@ export function useAudioRecorder(): AudioRecorderHook {
         // Fallback for older WebKit / Safari engines that reject constructor options
         ctx = new AudioContextClass();
       }
+      // Ensure AudioContext is active (browsers can start it suspended until resumed)
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
       audioContextRef.current = ctx;
 
       const sourceNode = ctx.createMediaStreamSource(stream);
@@ -147,8 +151,14 @@ export function useAudioRecorder(): AudioRecorderHook {
       sourceNode.connect(analyser);
       setAudioAnalyser(analyser);
 
-      // Select supported audio MIME type
-      const mimeTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", ""];
+      // Select supported audio MIME type across Chrome/Firefox (webm/ogg) and Safari/iOS (mp4)
+      const mimeTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+        "",
+      ];
       let selectedMime = "";
       for (const mime of mimeTypes) {
         if (mime === "" || MediaRecorder.isTypeSupported(mime)) {

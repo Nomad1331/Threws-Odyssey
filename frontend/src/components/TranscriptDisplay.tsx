@@ -17,7 +17,7 @@ interface TranscriptDisplayProps {
 
 export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   transcript,
-  latencyMs = 257,
+  latencyMs = null,
   confidenceScore = 0.984,
   isProcessing = false,
   recordedAudioUrl,

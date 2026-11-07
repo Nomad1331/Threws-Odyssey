@@ -3,6 +3,7 @@ import time
 import tempfile
 import logging
 from contextlib import asynccontextmanager
+from typing import Optional
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,7 +46,7 @@ class HealthResponse(BaseModel):
 
 class TranscriptionResponse(BaseModel):
     transcription: str
-    confidence_score: float
+    confidence_score: Optional[float] = None
     processing_time_ms: int
     engine: str
 
@@ -90,7 +91,7 @@ async def translate_audio(file: UploadFile = File(...)):
         full_text = transcribe_audio(temp_path)
 
         # Confidence score is not currently calculated
-        confidence = 0.0
+        confidence = None
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
 

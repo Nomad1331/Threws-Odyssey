@@ -21,6 +21,8 @@ Current commercial solutions also face accessibility hurdles:
 
 ## 🏛️ System Architecture
 
+> 📖 **Looking for a deep-dive walkthrough?** See the complete [System Walkthrough & Code Tour](docs/SYSTEM_WALKTHROUGH.md) tracing every step from microphone click to synthesized speech.
+
 ```
 [ Microphone Input / Assistive Switch ]
                   │
@@ -89,6 +91,7 @@ Threws-Odyssey/
 │   └── package.json
 │
 ├── docs/
+│   ├── SYSTEM_WALKTHROUGH.md        # Complete end-to-end architecture & code tour
 │   ├── EDGE_AI_BENCHMARK_RESULTS.md # Detailed CPU quantization telemetry and memory benchmarks
 │   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
 │   └── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation

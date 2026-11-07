@@ -1,3 +1,16 @@
+"""
+VoiceBridge Backend Gateway
+===========================
+FastAPI microservice providing assistive speech-to-text endpoints.
+
+Flow:
+1. Receives audio recordings (.webm / .wav) from the Next.js frontend.
+2. Temporarily writes the audio bytes to disk for faster-whisper's CTranslate2 engine.
+3. Invokes CPU-optimized INT8 Whisper inference (`app.inference.transcribe_audio`).
+4. Returns the transcribed text along with telemetry (confidence and latency in ms).
+5. Cleans up the temporary audio file in a guaranteed `finally` block.
+"""
+
 import os
 import time
 import tempfile
@@ -14,12 +27,17 @@ try:
 except ImportError:
     from backend.app.inference import load_model, transcribe_audio
 
-# Configure logging
+# Configure structured logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("voicebridge-backend")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Application Lifespan Context:
+    Pre-loads the Whisper model into RAM during server boot so the first user
+    request does not suffer cold-start latency.
+    """
     logger.info("Initializing VoiceBridge Whisper Tiny INT8 engine on CPU...")
     load_model()
     logger.info("VoiceBridge Whisper model loaded and ready for inference.")
@@ -33,7 +51,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration for Next.js frontend
+# CORS Middleware: Allows the Next.js frontend running on localhost:3000
+# to make cross-origin fetch requests to this API on port 8000.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -42,7 +61,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Pydantic response models
+# ---------------------------------------------------------
+# Pydantic Schemas for Request & Response Data Validation
+# ---------------------------------------------------------
+
 class HealthResponse(BaseModel):
     status: str
     service: str
@@ -53,9 +75,16 @@ class TranscriptionResponse(BaseModel):
     confidence_score: float | None
     processing_time_ms: int
 
+# ---------------------------------------------------------
+# API Endpoints
+# ---------------------------------------------------------
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint to verify backend service readiness."""
+    """
+    Health check endpoint used by the frontend and Docker orchestrators
+    to verify server readiness and active model engine.
+    """
     return HealthResponse(
         status="healthy",
         service="VoiceBridge ASR Service",
@@ -65,22 +94,27 @@ async def health_check():
 @app.post("/api/v1/translate-audio", response_model=TranscriptionResponse)
 async def translate_audio(file: UploadFile = File(...)):
     """
-    Ingests an audio recording (.webm, .wav, .ogg, .mp3),
-    processes it through the CPU-optimized Whisper-tiny INT8 model,
-    and returns transcribed text with confidence score and latency.
+    Primary Transcription Endpoint:
+    - Ingests multipart/form-data audio file (.webm or .wav).
+    - Enforces a 10MB payload size limit.
+    - Runs greedy INT8 Whisper CPU inference.
+    - Returns transcribed string and processing duration in milliseconds.
     """
     start_time = time.perf_counter()
 
+    # Determine file extension (defaulting to .webm from browser MediaRecorder)
     filename = file.filename or "audio.webm"
     ext = os.path.splitext(filename)[1].lower()
     if not ext:
         ext = ".webm"
 
+    # Create a temporary file on disk for libsndfile / CTranslate2 audio decoding
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
     temp_path = temp_file.name
     temp_file.close()
 
     try:
+        # Read uploaded bytes with 10MB safety boundary check
         content = await file.read(10 * 1024 * 1024 + 1)
         if len(content) > 10 * 1024 * 1024:
             raise HTTPException(status_code=413, detail="Audio file exceeds the 10 MB limit.")
@@ -94,7 +128,6 @@ async def translate_audio(file: UploadFile = File(...)):
         full_text, confidence = transcribe_audio(temp_path)
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
-
         logger.info(f"Transcribed '{filename}' in {elapsed_ms}ms -> '{full_text}'")
 
         return TranscriptionResponse(
@@ -109,6 +142,7 @@ async def translate_audio(file: UploadFile = File(...)):
         logger.error(f"Inference error during audio translation: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Audio processing error: {str(e)}")
     finally:
+        # Always remove temporary audio file to prevent disk exhaustion
         if os.path.exists(temp_path):
             try:
                 os.unlink(temp_path)

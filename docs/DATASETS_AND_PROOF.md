@@ -40,7 +40,7 @@ Foundation speech recognition models (OpenAI Whisper, Google Speech API, Apple S
 | :--- | :--- | :--- | :---: |
 | **OpenAI Whisper-tiny (Zero-Shot)** | 680,000 Hours Normative Speech | TORGO Moderate-Severe Dysarthria | **72.4%** |
 | **Google Speech-to-Text API** | Commercial Foundation Corpus | TORGO Moderate-Severe Dysarthria | **68.2%** |
-| **VoiceBridge (Whisper-tiny + LoRA)** | TORGO Disjoint Clinical Adaptation | TORGO Moderate-Severe Dysarthria | **<20.0%** |
+| **VoiceBridge (Whisper-small + LoRA)** | TORGO Disjoint Clinical Adaptation | TORGO Moderate-Severe Dysarthria | **Not re-measured in this audit** |
 
 ### 2.2 Empirical Error Distribution Analysis
 Evaluation on baseline foundation models indicates three primary failure mechanisms on dysarthric speech:
@@ -52,7 +52,7 @@ Evaluation on baseline foundation models indicates three primary failure mechani
 
 ## 3. Parameter-Efficient Adaptation Methodology (PEFT / LoRA)
 
-* **Base Architecture:** `openai/whisper-tiny` (39 million parameters).
+* **Base Architecture:** `openai/whisper-small` (243.5 million parameters).
 * **Weight Freezing:** 99.6% of base model weights are frozen to preserve the underlying linguistic, syntactic, and semantic representations of English.
 * **Trainable Projections:** Low-rank decomposition matrices ($r=16, \alpha=32$) are injected into Query (`q_proj`) and Value (`v_proj`) attention projection layers. LoRA on q_proj and v_proj, matching attention in the encoder and decoder.
 * **Footprint:** Produces a ~1.5MB adapter file that dramatically simplifies distribution, local edge execution, and rapid deployment.

@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.main import app
 
-ENGINE_NAME = "whisper-tiny-lora"
+ENGINE_NAME = "whisper-small-lora"
 
 
 def generate_test_wav() -> bytes:
@@ -51,7 +51,7 @@ def run_tests():
         print(f" -> Response: {data}")
         assert data["status"] == "healthy"
         assert data["service"] == "VoiceBridge ASR Gateway"
-        assert data["engine"] == "whisper-tiny-lora"
+        assert data["engine"] == ENGINE_NAME
         print(" [PASS] GET /health endpoint verified.")
 
         # 2. /api/v1/translate-audio with generated audio

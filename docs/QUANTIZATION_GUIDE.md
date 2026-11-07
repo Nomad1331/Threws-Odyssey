@@ -41,8 +41,8 @@ python model_training/export_and_quantize_onnx.py
 ```
 
 #### What the script does automatically:
-1. **Verifies** `Aaliya05/voicebridge` PEFT configuration (`PeftConfig.from_pretrained`) to confirm compatibility with `openai/whisper-tiny`.
-2. **Downloads** `openai/whisper-tiny`, attaches `Aaliya05/voicebridge`, and **merges** the LoRA weights permanently into the base model (`merge_and_unload`) in `model_training/voicebridge_merged/`.
+1. **Verifies** `Aaliya05/voicebridge` PEFT configuration (`PeftConfig.from_pretrained`) to confirm compatibility with `openai/whisper-small`.
+2. **Downloads** `openai/whisper-small`, attaches `Aaliya05/voicebridge`, and **merges** the LoRA weights permanently into the base model (`merge_and_unload`) in `model_training/voicebridge_merged/`.
 3. **Exports** the full computational graph (`encoder_model.onnx`, `decoder_model.onnx`, `decoder_with_past_model.onnx`) plus processor/tokenizer files to `model_training/voicebridge_onnx/`.
 4. **Applies Dynamic INT8 Quantization per component** (`ORTQuantizer.from_pretrained(onnx_dir, file_name=...)`) using architecture-appropriate quantization settings (`AVX2` on x86_64, `ARM64` on ARM) and validates each graph with `onnx.checker.check_model`, saving the complete package to `model_training/voicebridge_onnx_int8/`.
 5. **Runs verification & benchmarks**:

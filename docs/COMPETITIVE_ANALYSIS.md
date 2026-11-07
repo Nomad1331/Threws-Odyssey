@@ -17,7 +17,7 @@ Commercial Automated Speech Recognition (ASR) engines developed by Big Tech (Goo
 * **The Regional Enterprise Blindspot (Sarvam AI / Indic ASR):** While emerging Indian AI labs (such as Sarvam AI) have built high-throughput models for normative Indic speech in commercial banking and customer support, there is **zero clinical dysarthria adaptation** in existing Indic enterprise speech offerings.
 
 **VoiceBridge** solves this trilemma through an open, specialized, edge-first architecture:
-1. **Targeted Acoustic Adaptation:** Rather than retraining multi-billion-parameter foundation models from scratch, VoiceBridge injects parameter-efficient Low-Rank Adapters (LoRA, $r=16, \alpha=32$) into the attention projections of a 39M parameter Whisper-tiny model, trained on clinical dysarthria data from the University of Toronto (TORGO). LoRA on q_proj and v_proj, matching attention in the encoder and decoder.
+1. **Targeted Acoustic Adaptation:** Rather than retraining multi-billion-parameter foundation models from scratch, VoiceBridge injects parameter-efficient Low-Rank Adapters (LoRA, $r=16, \alpha=32$) into the attention projections of the 243.5M-parameter Whisper-small model, trained on clinical dysarthria data from the University of Toronto (TORGO). LoRA targets q_proj and v_proj in the encoder and decoder.
 2. **On-Device Edge Acceleration:** By dynamically quantizing the computation graphs to **ONNX INT8**, VoiceBridge executes entirely on consumer multi-core CPUs in **257.0 ms** at a **Real-Time Factor (RTF) of 0.0439 (22.7× faster than real-time)**, shrinking the model footprint by **74.4%** down to **103.45 MB**.
 3. **Physical & Motor Accessibility:** Built with WCAG 2.1 AAA accessibility guidelines, including 160px tactile touch targets for spastic tremors, real-time 60 FPS waveform feedback, and dual-channel re-synthesis via client-side Text-to-Speech (TTS).
 
@@ -107,7 +107,7 @@ While OpenAI’s open-weights Whisper is a technological marvel, deploying the r
 
 ```
 ┌──────────────────────────────────────┐       ┌──────────────────────────────────────┐
-│       RAW PYTORCH WHISPER-TINY       │       │         VOICEBRIDGE ONNX INT8        │
+│      RAW PYTORCH WHISPER-SMALL       │       │       VOICEBRIDGE ONNX INT8        │
 │                                      │       │                                      │
 │ • Model Size: 404.49 MB (3 graphs)   │  ───► │ • Model Size: 103.45 MB (-74.42%)    │
 │ • RAM Footprint: ~500 MB – 1.2 GB    │       │ • RAM Footprint: ~146 MB             │

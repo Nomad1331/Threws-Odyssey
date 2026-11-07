@@ -18,7 +18,7 @@ logger = logging.getLogger("voicebridge-backend")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Initializing VoiceBridge Whisper Tiny + LoRA...")
+    logger.info("Initializing VoiceBridge Whisper Small + LoRA...")
     load_model()
     logger.info("VoiceBridge model initialized and ready.")
     yield
@@ -57,14 +57,14 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         service="VoiceBridge ASR Gateway",
-        engine="whisper-tiny-lora",
+        engine="whisper-small-lora",
     )
 
 @app.post("/api/v1/translate-audio", response_model=TranscriptionResponse)
 async def translate_audio(file: UploadFile = File(...)):
     """
     Ingests an audio stream (.webm, .wav, .ogg, .mp3),
-    processes it through the CPU-optimized Whisper-tiny model,
+    processes it through the CPU-optimized Whisper-small model,
     and returns reconstructed text with telemetry metrics.
     """
     start_time = time.perf_counter()
@@ -89,9 +89,8 @@ async def translate_audio(file: UploadFile = File(...)):
         with open(temp_path, "wb") as audio_file:
             audio_file.write(content)
 
-        # Run VoiceBridge Whisper Tiny + LoRA inference
-        full_text = transcribe_audio(temp_path)
-
+        # Run VoiceBridge Whisper Small + LoRA inference
+        full_text, confidence = transcribe_audio(temp_path)
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
 
         logger.info(
@@ -100,7 +99,7 @@ async def translate_audio(file: UploadFile = File(...)):
 
         return TranscriptionResponse(
             transcription=full_text,
-            confidence_score=None,
+            confidence_score=confidence,
             processing_time_ms=elapsed_ms,
 )
 

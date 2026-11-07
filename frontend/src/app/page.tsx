@@ -21,7 +21,7 @@ interface IWindowSpeechRecognition extends EventTarget {
 
 interface SpeechRecognitionResultItem {
   transcript: string;
-  confidence: number;
+confidence: number | null;
 }
 
 interface SpeechRecognitionResult {

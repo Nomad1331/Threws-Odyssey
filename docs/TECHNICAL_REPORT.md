@@ -17,7 +17,7 @@
 
 Automated Speech Recognition (ASR) foundation models achieve remarkable accuracy on normative speech but exhibit catastrophic failure on dysarthric speech, routinely exceeding **70% Word Error Rate (WER)** on speakers with neuromotor disorders such as Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), and Stroke. This failure stems from acoustic distortions—primarily vowel formant centralization toward a neutral schwa (`/ə/`) and the attenuation of high-frequency stop consonant bursts—which normative acoustic encoders classify as background noise or silence. Retraining multi-billion-parameter foundation models is computationally prohibitive, causes catastrophic forgetting on general vocabulary, and relies on cloud APIs that introduce critical patient privacy risks and latency bottlenecks (>800ms).
 
-In this work, we present **VoiceBridge**, an open, edge-accelerated speech reconstruction system designed specifically for clinical dysarthria. VoiceBridge decouples acoustic adaptation from computational throughput using a two-stage pipeline: (1) Parameter-Efficient Fine-Tuning (PEFT) via Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on the University of Toronto TORGO clinical archive, freezing 99.6% of base `openai/whisper-tiny` weights while adapting Query and Value attention projections in the encoder and decoder using only ~1.5 MB of trainable parameters; and (2) Computational graph decomposition and dynamic **ONNX INT8 quantization** optimized for multi-core consumer CPUs.
+In this work, we present **VoiceBridge**, an open, edge-accelerated speech reconstruction system designed specifically for clinical dysarthria. VoiceBridge decouples acoustic adaptation from computational throughput using a two-stage pipeline: (1) Parameter-Efficient Fine-Tuning (PEFT) via Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on the University of Toronto TORGO clinical archive, freezing the `openai/whisper-small` base while adapting Query and Value attention projections using 1,769,472 adapter parameters; and (2) Computational graph decomposition and dynamic **ONNX INT8 quantization** optimized for multi-core consumer CPUs.
 
 Empirical benchmarks demonstrate that VoiceBridge shrinks model storage by **74.42%** (from 404.49 MB down to **103.45 MB** across three ONNX graphs) and achieves an average inference latency of **257.0 ms** with a **Real-Time Factor (RTF) of 0.0439** (**22.7× faster than real-time**). Integrated with a WCAG 2.1 AAA accessible Next.js web interface featuring a 160px tactile touch target, real-time 60 FPS waveform feedback, and dual-channel Text-to-Speech (TTS) resynthesis, VoiceBridge establishes a viable, zero-cloud, privacy-preserving communication companion for motor-impaired individuals.
 
@@ -72,13 +72,13 @@ To eliminate speaker memorization and evaluate true clinical generalization, Voi
 
 ## 3. Acoustic Adaptation via Low-Rank Adaptation (PEFT / LoRA)
 
-Rather than undertaking full parameter fine-tuning—which demands high-end GPU clusters and triggers catastrophic forgetting of foundation language knowledge—we implement **Low-Rank Adaptation (LoRA)** in the attention projections of `openai/whisper-tiny` (39M base parameters). LoRA on q_proj and v_proj, matching attention in the encoder and decoder.
+Rather than undertaking full parameter fine-tuning—which demands high-end GPU clusters and triggers catastrophic forgetting of foundation language knowledge—we implement **Low-Rank Adaptation (LoRA)** in the attention projections of `openai/whisper-small` (243.5M base parameters). LoRA targets q_proj and v_proj in the encoder and decoder.
 
 ```
                       LoRA ATTENTION PROJECTION ADAPTATION
                      ┌──────────────────────────────────┐
                      │   Base Frozen Weight W_0 ∈ R^(d×k)│
-                     │         (Whisper-tiny Encoder)   │
+                     │        (Whisper-small Encoder)   │
                      └────────────────┬─────────────────┘
                                       │
               x ───┬──────────────────┴────────────────── (+) ──► Output h

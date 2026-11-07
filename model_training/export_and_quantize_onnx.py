@@ -5,7 +5,7 @@ Target: THREWS Odyssey 2026 • Brick 10: Edge AI & Quantization
 Author: Moulika Sanyal (Edge AI Lead) & Sleeper Cells Squad
 
 Description:
-1. Verifies Aaliya's fine-tuned LoRA adapter (Aaliya05/voicebridge) compatibility with openai/whisper-tiny.
+1. Verifies Aaliya's fine-tuned LoRA adapter (Aaliya05/voicebridge) compatibility with openai/whisper-small.
 2. Merges LoRA weights permanently into the base model (zero runtime PEFT overhead).
 3. Exports the full computation graph (Encoder + Decoder + Decoder with Past KV) to ONNX.
 4. Applies Dynamic INT8 Quantization individually to each exported ONNX component.
@@ -28,7 +28,7 @@ from typing import Dict, List, Tuple, Any
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("voicebridge-quantization")
 
-BASE_MODEL_ID = "openai/whisper-tiny"
+BASE_MODEL_ID = "openai/whisper-small"
 LORA_ADAPTER_ID = "Aaliya05/voicebridge"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -206,9 +206,9 @@ def get_encoder_decoder_size_mb(directory: str, quantized: bool = False) -> floa
 
 
 def step_1_merge_lora() -> str:
-    """Verify and merge LoRA adapter into base Whisper-tiny model."""
+    """Verify and merge LoRA adapter into base Whisper-small model."""
     logger.info("=" * 65)
-    logger.info("STEP 1: VERIFYING & MERGING LORA WEIGHTS INTO BASE WHISPER-TINY")
+    logger.info("STEP 1: VERIFYING & MERGING LORA WEIGHTS INTO BASE WHISPER-SMALL")
     logger.info("=" * 65)
 
     from peft import PeftConfig, PeftModel

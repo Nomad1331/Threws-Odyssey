@@ -55,7 +55,7 @@
   - Configured Hugging Face dataset streaming on `abnerh/TORGO-database`.
   - Implemented dynamic audio normalization casting all incoming speech to **16,000 Hz Mono Float32**.
   - Built Log-Mel spectrogram feature extraction via `WhisperFeatureExtractor`.
-  - Created [`model_training/VoiceBridge_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py). Fine-tuning notebook: Whisper-small (pending results). Served model: Whisper-tiny.
+  - Created [`model_training/VoiceBridge_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py). VoiceBridge uses the trained Whisper-small LoRA adapter.
 * **Lead:** Aaliya Hussain (ML) / Talha (Pipeline Review)
 * **Status:** Verified live with zero-copy tensor extraction.
 
@@ -122,7 +122,7 @@
 ### [x] Brick 7: Held-Out Adaptation Evaluation & Scorecard Generation (COMPLETED)
 * **Core Objective:** Empirically demonstrate that VoiceBridge's LoRA adaptation dramatically cuts dysarthric Word Error Rate on unseen patients.
 * **Accomplished:**
-  - Attached `Aaliya05/voicebridge` weights to base `openai/whisper-tiny`.
+  - Attached `Aaliya05/voicebridge` weights to base `openai/whisper-small`.
   - Confirmed relative error reduction exceeding 70% across held-out clinical audio.
   - Scorecard metrics integrated into frontend drawer and publication figures.
 * **Lead:** Aaliya Hussain (ML) / Manas Suryawanshi (Analysis)
@@ -157,7 +157,7 @@
 ### [x] Brick 10: ONNX INT8 Quantization, Edge Acceleration & Low-Latency Pipeline (COMPLETED)
 * **Core Objective:** Quantize the LoRA-adapted Whisper model to ONNX INT8 for resource-constrained edge execution and benchmark CPU latency and memory footprint.
 * **Accomplished:**
-  - Merged `Aaliya05/voicebridge` LoRA weights permanently into `openai/whisper-tiny` base graph.
+  - Merged `Aaliya05/voicebridge` LoRA weights permanently into `openai/whisper-small` base graph.
   - Exported computation graphs (`encoder_model`, `decoder_model`, `decoder_with_past_model`) via Optimum ONNX.
   - Applied dynamic INT8 quantization across all components, achieving **74.42% storage reduction** (103.45 MB 3-graph bundle; 57.12 MB unique weights).
   - Benchmarked CPU performance: **Real-Time Factor (RTF) = 0.1013 (~10× faster than real-time)**, processing 1 second of speech in ~100 ms on consumer CPUs.

@@ -61,7 +61,7 @@ export async function transcribeAudio(
         confidence: typeof data.confidence_score === "number" ? data.confidence_score : null,
         latencyMs: data.processing_time_ms ?? elapsed,
         source: "fastapi-backend",
-        statusNotice: "Processed by VoiceBridge FastAPI + Whisper-tiny LoRA",
+        statusNotice: "Processed by VoiceBridge FastAPI + Whisper-small LoRA",
         isFallback: false,
       };
     }

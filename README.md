@@ -9,7 +9,7 @@
 
 Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Siri) achieve exceptional accuracy (<4% Word Error Rate) on fluent, normative speech. However, when presented with **dysarthric speech** (neuromotor speech impairments resulting from Cerebral Palsy, Stroke, Parkinson's Disease, or ALS), foundation acoustic encoders collapse—resulting in an unacceptable **65% to 80% Word Error Rate (WER)**.
 
-**VoiceBridge** is an accessible, privacy-first, real-time speech reconstruction companion. By fine-tuning **Whisper-tiny** with parameter-efficient **LoRA adapters** on the University of Toronto’s **TORGO clinical database** and quantizing the model to **ONNX INT8**, VoiceBridge slashes error rates below **20%** while executing in **<300ms** on standard consumer CPUs without requiring cloud GPUs.
+**VoiceBridge** is an accessible, privacy-first, real-time speech reconstruction companion. By fine-tuning **Whisper-small** with parameter-efficient **LoRA adapters** on the University of Toronto’s **TORGO clinical database**, VoiceBridge targets dysarthric speech reconstruction without requiring cloud GPUs.
 
 ---
 
@@ -25,7 +25,7 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
       [FastAPI Asynchronous Backend Gateway]
                       │
                       ▼
-    [Acoustic Adaptation: Whisper-tiny + LoRA]
+    [Acoustic Adaptation: Whisper-small + LoRA]
        (Trained on University of Toronto TORGO)
                       │
                       ▼
@@ -60,7 +60,7 @@ VoiceBridge/
 │   ├── PROJECT_CONTEXT.md          # Complete clinical problem formulation & architecture dossier
 │   └── DATASETS_AND_PROOF.md       # University of Toronto TORGO dataset proof & citations
 ├── model_training/
-│   ├── VoiceBridge_Trainer.ipynb # Fine-tuning notebook: Whisper-small (pending results). Served model: Whisper-tiny.
+│   ├── VoiceBridge_Trainer.ipynb # Fine-tuning notebook and Whisper-small LoRA adapter.
 │   └── torgo_streaming_test.py     # Python standalone dataset streaming test script
 ├── frontend/                       # Next.js 14 Accessible Web Application (In Progress)
 ├── backend/                        # FastAPI Asynchronous Microservice (In Progress)
@@ -85,7 +85,7 @@ pip install -r backend/requirements.txt
 uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The backend downloads the base `openai/whisper-tiny` model and the trained LoRA
+The backend downloads the base `openai/whisper-small` model and the trained LoRA
 adapter on first startup. It uses CUDA when available and otherwise runs on CPU.
 
 ### 2. Start the frontend
@@ -115,7 +115,7 @@ python torgo_streaming_test.py
 | :--- | :---: | :---: | :---: | :---: |
 | Baseline OpenAI Whisper-tiny (Zero-Shot) | 39.0 M | Cloud GPU / CPU | **72.4% (Fails)** | ~450 ms |
 | Baseline Google Speech API | Commercial | Cloud API | **68.2% (Fails)** | ~800 ms |
-| **VoiceBridge (Whisper-tiny + LoRA Adapters)** | **+0.4% LoRA** | Multi-Core CPU | **<20.0% (Passes)** | **<280 ms (INT8)** |
+| **VoiceBridge (Whisper-small + LoRA Adapter)** | **243.5 M total; 1.77 M adapter** | CPU/GPU | **Not re-measured in this audit** | **Not re-measured in this audit** |
 
 ---
 

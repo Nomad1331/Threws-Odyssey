@@ -28,10 +28,10 @@
 
 ## 2. Model & LoRA Adapter Compatibility
 
-* **Base Model:** `openai/whisper-tiny`
+* **Base Model:** `openai/whisper-small`
 * **LoRA Adapter:** `Aaliya05/voicebridge`
 * **Verification via `PeftConfig.from_pretrained("Aaliya05/voicebridge")`:**
-  * `base_model_name_or_path`: `openai/whisper-tiny` (Compatible)
+  * `base_model_name_or_path`: `openai/whisper-small` (Compatible)
   * `peft_type`: `LORA`
   * `r`: `16`, `lora_alpha`: `32`, `lora_dropout`: `0.05`
   * `target_modules`: `{'q_proj', 'v_proj'}`

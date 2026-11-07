@@ -33,7 +33,7 @@
   * **Role:** Edge AI Optimization, ONNX Quantization & Low-Resource Inference Lead (Co-Pitcher).
   * **Background:** Computer Engineering, embedded systems, C++/Python, real-time control, model optimization for resource-constrained hardware, public speaking.
   * **LinkedIn:** `https://www.linkedin.com/in/moulika-sanyal-6a746841a/`
-  * **Primary Responsibility:** Quantizing fine-tuned Whisper-tiny to ONNX INT8/FP16 for low-resource edge deployment (Raspberry Pi/low-spec mobile CPUs), inference latency profiling (<300ms RTF benchmarking), and co-delivering the live jury pitch.
+  * **Primary Responsibility:** Quantizing fine-tuned Whisper-small to ONNX INT8/FP16 for low-resource edge deployment (Raspberry Pi/low-spec mobile CPUs), inference latency profiling, and co-delivering the live jury pitch.
 
 ---
 
@@ -86,7 +86,7 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
       [FastAPI Asynchronous Python Microservice]
                         │
                         ▼
-  [Acoustic Adaptation: Whisper-tiny + LoRA Adapters]
+  [Acoustic Adaptation: Whisper-small + LoRA Adapter]
       (Trained on University of Toronto TORGO Data)
                         │
                         ▼
@@ -100,7 +100,7 @@ Commercial foundation speech models (OpenAI Whisper, Google Speech API, Apple Si
 ```
 
 ### 4.2 Machine Learning Innovation (Parameter-Efficient Adaptation)
-* **Backbone:** [openai/whisper-tiny](https://huggingface.co/openai/whisper-tiny) (39M parameters). Served model: Whisper-tiny.
+* **Backbone:** [openai/whisper-small](https://huggingface.co/openai/whisper-small) (243.5M parameters). Served model: Whisper-small with the `Aaliya05/voicebridge` LoRA adapter.
 * **The PEFT/LoRA Breakthrough:** Freeze 99.6% of Whisper's weights and inject low-rank trainable decomposition matrices ($r=16, \alpha=32$) into Query (`q_proj`) and Value (`v_proj`) attention projection layers. LoRA on q_proj and v_proj, matching attention in the encoder and decoder.
 * **Moulika's Edge Optimization:** Quantize the adapted model to INT8/ONNX to run locally on low-cost hardware with sub-100ms latency and ~42MB RAM working set.
 
@@ -136,7 +136,7 @@ The live defense and 2-minute video pitch are structured as a synchronized, 4-wa
 | :--- | :---: | :--- | :--- |
 | **Manas Suryawanshi**<br>*(Clinical Research & Pitch Lead)* | **45 Seconds** | **The Clinical Problem & Foundation Model Failure Wall:** Neuromotor speech breakdown in CP/ALS/Stroke (vowel centralization, consonant burst loss); why Google Speech & Whisper fail with 70%+ Word Error Rate on disordered speech. | Clinical problem, patient demographics, TORGO dataset acoustics, ethical compliance, and healthcare market applicability. |
 | **Aaliya Hussain**<br>*(Machine Learning Lead)* | **45 Seconds** | **Parameter-Efficient Adaptation (LoRA):** TORGO streaming pipeline on Kaggle GPU; freezing 99.6% base Whisper weights and training low-rank matrices ($r=16, \alpha=32$) on Query/Value projections in the encoder and decoder with a patient-disjoint split. | Model architecture, PEFT math, loss curves, catastrophic forgetting prevention, training hyperparameters, and generalization metrics. |
-| **Moulika Sanyal**<br>*(Edge AI & ONNX Quantization Lead)* | **45 Seconds** | **Edge AI Optimization & Low-Resource Acceleration:** Converting Whisper-tiny + LoRA into an ONNX INT8 dynamic quantized graph; reducing RAM from 150MB to ~40MB and slashing inference latency to <260ms on low-spec CPUs. | ONNX Runtime graph execution, INT8 weight quantization, Real-Time Factor (RTF), memory footprints, and CPU/edge hardware benchmarking. |
+| **Moulika Sanyal**<br>*(Edge AI & ONNX Quantization Lead)* | **45 Seconds** | **Edge AI Optimization & Low-Resource Acceleration:** Converting Whisper-small + LoRA into an ONNX INT8 dynamic quantized graph and profiling low-spec CPU inference. | ONNX Runtime graph execution, INT8 weight quantization, Real-Time Factor (RTF), memory footprints, and CPU/edge hardware benchmarking. |
 | **Talha**<br>*(Lead System Architect & Demo Anchor)* | **35 Seconds** | **System Overview & Live UI Demonstration:** Accessible Next.js web application, tactile tremor-safe controls, real-time waveform reactivity, and 1-click end-to-end speech reconstruction walkthrough. | Frontend UI/UX, product workflow, tactile controls, and live user demonstration. |
 
 **Total Pitch Time:** ~2.5 minutes (170s) followed by active 4-way defense during the jury viva.

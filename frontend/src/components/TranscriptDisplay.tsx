@@ -20,7 +20,7 @@ interface TranscriptDisplayProps {
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  "fastapi-backend": "Whisper-tiny LoRA",
+  "fastapi-backend": "Whisper-small LoRA",
   "web-speech": "Browser speech",
 };
 

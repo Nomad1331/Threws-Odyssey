@@ -289,7 +289,7 @@
 * **Concrete Implementation Tasks:**
   - Record screencast and voiceover following the exact storyboard:
     - **0:00 – 0:30 (The Pain Point):** Play real TORGO dysarthric audio clip $\rightarrow$ feed into standard Whisper $\rightarrow$ show it outputting complete gibberish.
-    - **0:30 – 1:15 (The VoiceBridge Solution):** Play exact same clip through VoiceBridge $\rightarrow$ show real-time translation $\rightarrow$ show audio synthesized aloud via TTS.
+    - **0:30 – 1:15 (The VoiceBridge Solution):** Play exact same clip through VoiceBridge $\rightarrow$ show real-time transcription $\rightarrow$ show audio synthesized aloud via TTS.
     - **1:15 – 1:45 (Technical Architecture):** Highlight Edge AI INT8 CPU optimization (74.4% size cut, 103MB footprint, 592ms latency at 0.10 RTF), foundation model failure analysis on TORGO, and WCAG AAA physical accessibility.
     - **1:45 – 2:00 (Human Impact & Future Vision):** Clinical utility for TBI/CP/ALS individuals and future Indic language roadmap.
   - Edit, export in 1080p MP4, and upload unlisted link.

@@ -29,7 +29,7 @@ trials = [
         "index": 4087,
         "severity": "Moderate",
         "speaker": "TORGO-M04",
-        "condition": "Post-Stroke Dysarthria",
+        "condition": "Post-Trauma (TBI)",
     },
     {
         "filename": "torgo_severe_sample.wav",

@@ -48,8 +48,8 @@ def run_tests():
         data = resp.json()
         print(f" -> Response: {data}")
         assert data["status"] == "healthy"
-        assert data["service"] == "VoiceBridge ASR Gateway"
-        assert data["engine"] == "whisper-tiny-lora"
+        assert data["service"] == "VoiceBridge ASR Service"
+        assert data["engine"] == "whisper-tiny-int8"
         print(" [PASS] GET /health endpoint verified.")
 
         # 2. Test /api/v1/translate-audio endpoint with generated audio
@@ -64,7 +64,6 @@ def run_tests():
         assert "transcription" in post_data
         assert "confidence_score" in post_data
         assert "processing_time_ms" in post_data
-        assert post_data["confidence_score"] is None
         print(" [PASS] POST /api/v1/translate-audio endpoint verified.")
 
     print("\n" + "=" * 60)

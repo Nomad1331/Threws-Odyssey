@@ -51,9 +51,13 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
   }, []);
 
   const handleClick = (preset: AACPreset) => {
-    // Optional haptic vibration for mobile users
+    // Optional tactile haptic vibration for mobile users
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      navigator.vibrate(preset.isUrgent ? 50 : 25);
+      try {
+        navigator.vibrate(preset.isUrgent ? 50 : 25);
+      } catch {
+        // Disregard haptic errors on unsupported hardware or webviews
+      }
     }
 
     // Two-step confirmation for urgent alerts (e.g. Pain Alert)
@@ -63,6 +67,10 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
         if (armTimeoutRef.current) clearTimeout(armTimeoutRef.current);
         armTimeoutRef.current = setTimeout(() => setArmedId(null), 3000);
         return;
+      }
+      if (armTimeoutRef.current) {
+        clearTimeout(armTimeoutRef.current);
+        armTimeoutRef.current = null;
       }
       setArmedId(null);
     }
@@ -88,7 +96,8 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
               key={preset.id}
               type="button"
               onClick={() => handleClick(preset)}
-              className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[6px] border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-3 active:scale-[0.98] ${
+              aria-pressed={preset.isUrgent ? isArmed : undefined}
+              className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[6px] border px-3 py-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-[0.98] ${
                 preset.isUrgent
                   ? "col-span-2 border-pain-border bg-pain-background text-pain-text hover:bg-pain-hover sm:col-span-3"
                   : "border-border bg-surface text-text-primary hover:border-accent"

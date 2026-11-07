@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Volume2, X } from "lucide-react";
 import { AudioWaveformCanvas } from "@/components/AudioWaveformCanvas";
 
@@ -38,7 +38,6 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   latencyMs = null,
   confidenceScore = null,
   isProcessing = false,
-  recordedAudioUrl,
   statusNotice,
   source,
   onClear,
@@ -51,6 +50,15 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   // Keep a reference so the browser does not garbage-collect the utterance mid-speech
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Guarantee cancellation of active speech synthesis on component unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // Speak text aloud using browser SpeechSynthesis
   const handleSpeakAloud = () => {
@@ -93,14 +101,6 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       role="region"
       aria-label="Speech transcription"
     >
-      {recordedAudioUrl && (
-        <audio
-          id="patient-audio-playback"
-          src={recordedAudioUrl}
-          className="hidden"
-        />
-      )}
-
       {/* Card Header */}
       <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-mono">
         <div className="flex items-center gap-2">
@@ -174,7 +174,9 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             CONFIDENCE
           </p>
           <p className="mt-1 text-sm text-text-primary">
-            {confidenceScore != null ? `${(confidenceScore * 100).toFixed(0)}%` : "N/A"}
+            {typeof confidenceScore === "number" && Number.isFinite(confidenceScore)
+              ? `${(confidenceScore * 100).toFixed(0)}%`
+              : "N/A"}
           </p>
         </div>
         <div className="pl-4">
@@ -182,7 +184,9 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             LATENCY
           </p>
           <p className="mt-1 text-sm text-text-primary">
-            {latencyMs != null ? `${latencyMs} ms` : "N/A"}
+            {typeof latencyMs === "number" && Number.isFinite(latencyMs)
+              ? `${Math.round(latencyMs)} ms`
+              : "N/A"}
           </p>
         </div>
       </div>

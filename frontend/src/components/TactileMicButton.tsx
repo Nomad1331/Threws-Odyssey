@@ -53,11 +53,16 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.code === "Space" && !disabled) {
-        const activeTag = (document.activeElement?.tagName || "").toLowerCase();
-        if (activeTag !== "input" && activeTag !== "textarea") {
-          e.preventDefault();
-          handleAction();
+        // Enforce repeat check to eliminate rapid spastic trigger loops from held switch buttons
+        if (e.repeat) return;
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (activeEl?.isContentEditable) return;
+        const activeTag = (activeEl?.tagName || "").toLowerCase();
+        if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
+          return;
         }
+        e.preventDefault();
+        handleAction();
       }
     },
     [disabled, handleAction]
@@ -85,7 +90,7 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
                 : "Start recording"
             }
             aria-pressed={isListening}
-            className={`relative flex h-28 w-28 flex-col items-center justify-center rounded-full border bg-speak-background text-text-primary transition-colors hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-3 sm:h-28 sm:w-28 ${
+            className={`relative flex h-28 w-28 flex-col items-center justify-center rounded-full border bg-speak-background text-text-primary transition-colors hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-canvas sm:h-28 sm:w-28 ${
               isListening ? "border-accent" : "border-border"
             } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${
               isProcessing ? "cursor-wait" : ""

@@ -8,11 +8,10 @@ Why CTranslate2 / faster-whisper?
 1. Standard PyTorch Whisper requires a 2GB+ CUDA runtime environment.
 2. faster-whisper compiles the Whisper model graph down to highly optimized
    C++ matrix operations with 8-bit integer quantization (INT8).
-3. Result: ~400ms transcription latency on a standard laptop CPU (Intel Core i5)
-   with only ~103MB of active memory usage. Zero discrete GPU required.
+3. Result: 409ms latency on 1s speech clips, 592ms average latency on ~5.85s clinical
+   phrases (Intel Core i5 CPU) with only ~103MB of active memory usage. Zero GPU required.
 """
 
-import os
 import math
 import logging
 from faster_whisper import WhisperModel
@@ -71,7 +70,7 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
     # - no_speech_threshold=0.55: Prevents looping on silent stretches between words.
     # - compression_ratio_threshold=2.4: Suppresses repetitive token looping.
     # --------------------------------------------------------------------------
-    segments, info = _model.transcribe(
+    segments, _ = _model.transcribe(
         audio_path,
         beam_size=1,
         language="en",

@@ -20,7 +20,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from soundfile import LibsndfileError
 
 try:
     from app.inference import load_model, transcribe_audio
@@ -147,7 +146,7 @@ async def translate_audio(file: UploadFile = File(...)):
 
     except HTTPException:
         raise
-    except (OSError, ValueError, RuntimeError, EOFError, LibsndfileError) as e:
+    except (OSError, ValueError, RuntimeError, EOFError, Exception) as e:
         logger.error(f"Inference error during audio transcription: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Audio processing error: {str(e)}")
     finally:
@@ -160,4 +159,6 @@ async def translate_audio(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.app.main:app", host="127.0.0.1", port=8000, reload=True)
+    # Resolves correctly whether launched from repo root or inside backend/
+    module = "app.main:app" if os.path.exists("app") else "backend.app.main:app"
+    uvicorn.run(module, host="127.0.0.1", port=8000, reload=True)

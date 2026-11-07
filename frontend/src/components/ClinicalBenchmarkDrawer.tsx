@@ -134,7 +134,7 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
               key={trial.id}
               type="button"
               onClick={() => handleSelectTrial(trial.id)}
-              className={`flex min-h-[44px] items-center justify-between rounded-[6px] border p-3 text-left font-mono text-xs transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-[0.98] ${
+              className={`flex min-h-[44px] items-center justify-between rounded-[6px] border p-3 text-left font-mono text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-[0.98] ${
                 isSelected
                   ? "border-accent bg-surface text-text-primary"
                   : "border-border bg-surface text-text-secondary hover:border-accent"
@@ -169,7 +169,7 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
           <button
             type="button"
             onClick={() => handleTogglePlayAudio(currentTrial)}
-            className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-[6px] border px-3 py-1.5 font-mono text-xs transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-95 ${
+            className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-[6px] border px-3 py-1.5 font-mono text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-95 ${
               playingAudioId === currentTrial.id
                 ? "border-accent bg-surface text-accent"
                 : "border-border bg-surface text-text-primary hover:border-accent"

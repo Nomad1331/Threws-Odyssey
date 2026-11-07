@@ -83,6 +83,10 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
       drawBars(() => 0);
     } else {
       const render = () => {
+        if (dims.width === 0) {
+          dims = setupCanvas();
+        }
+
         if (audioAnalyser && dataArray) {
           audioAnalyser.getByteTimeDomainData(dataArray);
         }

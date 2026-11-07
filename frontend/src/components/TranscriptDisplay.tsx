@@ -121,7 +121,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               onClick={handleSpeakAloud}
               title="Speak phrase aloud"
               aria-label="Speak phrase aloud"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
             >
               <Volume2 className="h-3.5 w-3.5" />
               <span>{isSpeaking ? "Speaking..." : "Say it"}</span>
@@ -132,7 +132,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                 onClick={onClear}
                 title="Clear transcript"
                 aria-label="Clear transcript"
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-[6px] border border-border bg-surface px-3 text-xs text-text-primary transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
               >
                 <X className="h-3.5 w-3.5" />
                 <span>Clear</span>
@@ -175,7 +175,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
           </p>
           <p className="mt-1 text-sm text-text-primary">
             {typeof confidenceScore === "number" && Number.isFinite(confidenceScore)
-              ? `${(confidenceScore * 100).toFixed(0)}%`
+              ? `${Math.min(100, Math.max(0, confidenceScore * 100)).toFixed(0)}%`
               : "N/A"}
           </p>
         </div>

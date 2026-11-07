@@ -36,7 +36,7 @@ Current commercial solutions also face accessibility hurdles:
    [ faster-whisper INT8 CPU Engine ]
      • Model: Whisper tiny.en (INT8)
      • Device: Local CPU (no GPU needed)
-     • VAD & pause compensation
+     • Greedy decoding (beam_size=1, no_speech_threshold=0.55)
                   │
                   ▼  (JSON Response)
    [ Next.js Accessible Frontend (:3000) ]

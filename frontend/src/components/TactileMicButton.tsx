@@ -12,6 +12,20 @@ interface TactileMicButtonProps {
   audioLevel?: number;
 }
 
+/**
+ * TactileMicButton: Motor-Accessible Audio Recording Toggle
+ * ==========================================================
+ * Designed specifically for users with neuromotor disabilities (e.g. Cerebral Palsy, ALS tremors).
+ *
+ * Accessibility Specifications:
+ * 1. Touch Target: 112px diameter (WCAG 2.1 AAA specifies a minimum of 44x44px).
+ * 2. Multi-Modal Feedback: Combines physical haptic vibration (45ms pulse on supported mobile hardware),
+ *    visual color changes, and dynamic RMS scale pulsing.
+ * 3. Assistive Switch Hotkey: Global spacebar trigger allows hands-free operation via adaptive switch
+ *    controllers (which map to the standard keyboard spacebar).
+ * 4. Input Safe: Automatically disables spacebar hijacking when focused inside text fields or textareas.
+ */
+
 export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
   state,
   onToggle,

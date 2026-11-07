@@ -43,6 +43,18 @@ interface ClinicalBenchmarkDrawerProps {
   className?: string;
 }
 
+/**
+ * ClinicalBenchmarkDrawer: Authentic TORGO Acoustic Evaluation Player
+ * ====================================================================
+ * Allows evaluators, judges, and clinicians to listen to authentic held-out acoustic
+ * recordings from the University of Toronto TORGO dysarthria corpus.
+ *
+ * Etiology Demographics:
+ * 1. Sample 01 (M05): Cerebral Palsy, Mild severity.
+ * 2. Sample 02 (M04): Post-Trauma Traumatic Brain Injury (TBI), Moderate severity.
+ * 3. Sample 03 (M02): Amyotrophic Lateral Sclerosis (ALS), Severe severity.
+ */
+
 export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = ({
   className = "",
 }) => {

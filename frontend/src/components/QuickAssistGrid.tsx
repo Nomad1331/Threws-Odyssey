@@ -24,6 +24,19 @@ interface QuickAssistGridProps {
   className?: string;
 }
 
+/**
+ * QuickAssistGrid: Augmentative & Alternative Communication (AAC) Preset Panel
+ * ===========================================================================
+ * Provides immediate one-touch access to essential clinical and personal care phrases
+ * (Water, Caregiver, Yes, No, Pain Alert).
+ *
+ * Spasticity & Involuntary Movement Protection:
+ * Individuals with spastic Cerebral Palsy or ALS frequently experience involuntary
+ * motor spasms. For high-urgency actions ("Pain Alert"), a 2-step confirmation window is
+ * enforced: the user must tap a second time within a 3000ms window before the alert
+ * triggers, eliminating false alarms.
+ */
+
 export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
   onSpeakPhrase,
   className = "",

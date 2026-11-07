@@ -8,6 +8,21 @@ interface AudioWaveformCanvasProps {
   className?: string;
 }
 
+/**
+ * AudioWaveformCanvas: 60 FPS HTML5 Canvas Audio Visualizer
+ * ==========================================================
+ * Provides instant kinetic visual feedback to dysarthric speakers that their
+ * acoustic vocalizations are being registered by the system.
+ *
+ * Technical Details:
+ * 1. High-DPI Rendering: Automatically reads window.devicePixelRatio and scales
+ *    the canvas internal 2D drawing context to eliminate blurry rendering on Retina displays.
+ * 2. Real-Time RMS Bars: Samples 48 discrete time-domain amplitude windows directly from the
+ *    Web Audio API AnalyserNode byte buffer.
+ * 3. Memory & Frame Loop Safety: Guarantees cancelAnimationFrame cleanup upon component unmount
+ *    or when recording stops.
+ */
+
 export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
   isRecording,
   audioAnalyser,

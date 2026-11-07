@@ -18,6 +18,21 @@ interface TranscriptDisplayProps {
   className?: string;
 }
 
+/**
+ * TranscriptDisplay: Accessible Speech Transcription & Telemetry Presentation
+ * ============================================================================
+ * Displays reconstructed speech text, live waveform canvas, confidence score,
+ * processing latency, and on-demand SpeechSynthesis ("Say it") vocalization.
+ *
+ * Key Implementation Highlights:
+ * 1. High Contrast & Legibility: Large 30px high-contrast typography in WCAG AAA slate themes.
+ * 2. Utterance Reference Retention: Retains a React useRef pointer to active SpeechSynthesisUtterance
+ *    instances to prevent browser garbage collection bugs that prematurely truncate vocal synthesis.
+ * 3. Live Telemetry: Shows verified wall-clock inference latency (in ms) and normalized confidence score.
+ * 4. Screen Reader Support: Uses `role="region"` and `aria-live="polite"` so screen readers automatically
+ *    announce newly transcribed sentences to visually impaired users without interrupting flow.
+ */
+
 export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   transcript,
   latencyMs = null,

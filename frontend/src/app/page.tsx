@@ -82,9 +82,13 @@ export default function Home() {
         setConfidenceScore(result.confidence);
         setStatusNotice(result.statusNotice);
         setSource(result.source);
+        if (result.source === "voicebridge-backend") {
+          setBackendConnected(true);
+        }
       } catch (err) {
         console.error("Transcription error:", err);
         setStatusNotice("Failed to transcribe audio. Please try again.");
+        setBackendConnected(false);
       } finally {
         setIdle();
       }
@@ -136,9 +140,9 @@ export default function Home() {
       </header>
 
       {/* 2. Main 2-Column Application Stage */}
-      <section className="grid flex-1 grid-cols-1 items-start gap-8 py-8 lg:grid-cols-2 lg:gap-12">
+      <div className="grid flex-1 grid-cols-1 items-start gap-8 py-8 lg:grid-cols-2 lg:gap-12">
         {/* Left Column: Reconstructed Speech Card & Waveform */}
-        <section className="flex flex-col items-center gap-5 w-full">
+        <section aria-label="Speech transcription output" className="flex flex-col items-center gap-5 w-full">
           <TranscriptDisplay
             transcript={transcript}
             latencyMs={latencyMs}
@@ -154,7 +158,7 @@ export default function Home() {
         </section>
 
         {/* Right Column: Record Button & AAC Quick Assist Cards */}
-        <section className="flex w-full flex-col items-center gap-8 rounded-[6px] border border-border bg-surface p-5 sm:p-8">
+        <section aria-label="Recording controls and AAC presets" className="flex w-full flex-col items-center gap-8 rounded-[6px] border border-border bg-surface p-5 sm:p-8">
           <TactileMicButton
             state={micState}
             onToggle={handleToggleMic}
@@ -162,22 +166,27 @@ export default function Home() {
           />
           <QuickAssistGrid onSpeakPhrase={(phrase) => setTranscript(phrase)} />
         </section>
-      </section>
+      </div>
 
       {/* 3. Footer: Clinical Verification Archive (TORGO Dataset) */}
       <footer className="w-full border-t border-border pt-6">
         <button
           type="button"
           onClick={() => setShowJudgeConsole((prev) => !prev)}
-          className="flex min-h-[44px] w-full items-center justify-between rounded-[6px] border border-border bg-surface px-4 text-left font-mono text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-3"
+          aria-expanded={showJudgeConsole}
+          aria-controls="clinical-verification-archive"
+          className="flex min-h-[44px] w-full items-center justify-between rounded-[6px] border border-border bg-surface px-4 text-left font-mono text-xs text-text-primary transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           <span>Clinical Verification Archive (TORGO Dataset)</span>
           {showJudgeConsole ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </button>
 
         {showJudgeConsole && (
-          <div className="mt-3 w-full max-w-3xl rounded-[6px] border border-border bg-surface p-4">
-            <div className="mb-4 space-y-1 text-sm text-text-secondary font-mono text-xs">
+          <div
+            id="clinical-verification-archive"
+            className="mt-3 w-full rounded-[6px] border border-border bg-surface p-4"
+          >
+            <div className="mb-4 space-y-1 font-mono text-xs text-text-secondary">
               <p>Reference corpus: University of Toronto TORGO Database (Rudzicz et al., 2012).</p>
               <p>Clinical evaluation clips: M05 (Cerebral Palsy), M04 (Post-Trauma TBI), M02 (ALS).</p>
             </div>

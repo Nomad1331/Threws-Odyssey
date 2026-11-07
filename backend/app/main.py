@@ -164,6 +164,9 @@ async def translate_audio(file: UploadFile = File(...)):
         logger.error(f"Inference error during audio transcription: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Audio processing error: {str(e)}")
     finally:
+        # Release Starlette upload spool file descriptor
+        await file.close()
+
         # Always remove temporary audio file to prevent storage exhaustion
         if temp_path and os.path.exists(temp_path):
             try:

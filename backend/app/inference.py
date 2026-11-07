@@ -12,6 +12,7 @@ Why CTranslate2 / faster-whisper?
    phrases (Intel Core i5 CPU) with only ~103MB of active memory usage. Zero GPU required.
 """
 
+import os
 import math
 import logging
 from faster_whisper import WhisperModel
@@ -60,6 +61,9 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
     if _model is None:
         raise RuntimeError("Acoustic engine could not be initialized.")
 
+    if not os.path.isfile(audio_path):
+        raise FileNotFoundError(f"Audio file does not exist: {audio_path}")
+
     # --------------------------------------------------------------------------
     # Decoding Parameters (Configured specifically for dysarthric speech patterns):
     # - beam_size=1: Greedy decoding for minimal CPU processing time (0.10 RTF).
@@ -89,9 +93,9 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
     transcription = " ".join(text_parts).strip()
 
     # Calculate average log-probability confidence across decoded segments.
-    # In faster-whisper, avg_logprob is a property of each Segment object (not TranscriptionInfo).
+    # Confidence is only evaluated if words were actually recognized (null on silence).
     confidence: float | None = None
-    if seg_list:
+    if transcription and seg_list:
         valid_logprobs = [s.avg_logprob for s in seg_list if getattr(s, "avg_logprob", None) is not None]
         if valid_logprobs:
             mean_logprob = sum(valid_logprobs) / len(valid_logprobs)

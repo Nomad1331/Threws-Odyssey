@@ -100,7 +100,7 @@ async def translate_audio(file: UploadFile = File(...)):
 
     Execution Flow:
     1. Ingests multipart/form-data audio file (.webm from browser or .wav).
-    2. Validates payload boundaries (maximum 10MB, non-empty) to prevent memory DOS.
+    2. Validates payload boundaries (maximum 10MB, non-empty) BEFORE disk I/O to prevent memory DOS.
     3. Writes audio bytes safely to an OS temporary file for CTranslate2 decoding.
     4. Runs CPU-quantized INT8 Whisper inference with dysarthria-tuned decoding.
     5. Returns transcription text, normalized confidence score, and processing latency.
@@ -108,13 +108,20 @@ async def translate_audio(file: UploadFile = File(...)):
     """
     start_time = time.perf_counter()
 
-    # Determine file extension (defaulting to .webm from browser MediaRecorder)
+    # 1. Read and validate payload boundaries in-memory BEFORE touching disk
+    content = await file.read(10 * 1024 * 1024 + 1)
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Audio file exceeds the 10 MB limit.")
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
+
+    # 2. Determine file extension (defaulting to .webm from browser MediaRecorder)
     filename = file.filename or "audio.webm"
     ext = os.path.splitext(filename)[1].lower()
     if not ext:
         ext = ".webm"
 
-    # Create temporary file on disk.
+    # 3. Create temporary file on disk for CTranslate2 audio decoding.
     # Note for Windows: We close the NamedTemporaryFile handle immediately before
     # opening it with standard file I/O ('wb') to prevent WinError 32 (file in use).
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
@@ -122,13 +129,6 @@ async def translate_audio(file: UploadFile = File(...)):
     temp_file.close()
 
     try:
-        # Read uploaded bytes with a 10MB safety boundary check (+1 byte to detect overflow)
-        content = await file.read(10 * 1024 * 1024 + 1)
-        if len(content) > 10 * 1024 * 1024:
-            raise HTTPException(status_code=413, detail="Audio file exceeds the 10 MB limit.")
-        if not content:
-            raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
-
         with open(temp_path, "wb") as audio_file:
             audio_file.write(content)
 
@@ -151,7 +151,7 @@ async def translate_audio(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=f"Audio processing error: {str(e)}")
     finally:
         # Always remove temporary audio file to prevent storage exhaustion
-        if os.path.exists(temp_path):
+        if temp_path and os.path.exists(temp_path):
             try:
                 os.unlink(temp_path)
             except OSError as err:

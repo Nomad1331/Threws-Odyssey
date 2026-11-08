@@ -28,8 +28,8 @@ from typing import Dict, List, Tuple, Any
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("voicebridge-quantization")
 
-BASE_MODEL_ID = "openai/whisper-tiny"
-LORA_ADAPTER_ID = "Aaliya05/voicebridge"
+BASE_MODEL_ID = os.getenv("VOICEBRIDGE_BASE_MODEL", "openai/whisper-small")
+LORA_ADAPTER_ID = os.getenv("VOICEBRIDGE_ADAPTER_MODEL", "Aaliya05/voicebridge")
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -48,7 +48,7 @@ TORGO_SAMPLES = [
     },
     {
         "filename": "torgo_moderate_sample.wav",
-        "severity": "Moderate",
+        "severity": "Moderate-to-Severe",
         "speaker": "TORGO-M04",
         "condition": "Post-Trauma (TBI)",
         "reference": "Their house is grey and white",
@@ -208,7 +208,7 @@ def get_encoder_decoder_size_mb(directory: str, quantized: bool = False) -> floa
 def step_1_merge_lora() -> str:
     """Verify and merge LoRA adapter into base Whisper-tiny model."""
     logger.info("=" * 65)
-    logger.info("STEP 1: VERIFYING & MERGING LORA WEIGHTS INTO BASE WHISPER-TINY")
+    logger.info(f"STEP 1: VERIFYING & MERGING LORA WEIGHTS INTO BASE {BASE_MODEL_ID.upper()}")
     logger.info("=" * 65)
 
     from peft import PeftConfig, PeftModel

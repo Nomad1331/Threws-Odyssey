@@ -162,7 +162,7 @@ export default function Home() {
           <span className={`h-2 w-2 rounded-full ${backendConnected ? "bg-accent" : "bg-text-secondary"}`} />
           <span>
             {backendConnected
-              ? "Backend connected (FastAPI • Whisper INT8)"
+              ? "Backend connected (FastAPI • Clinical LoRA)"
               : "Backend offline • Start with: uvicorn app.main:app --port 8000"}
           </span>
         </div>

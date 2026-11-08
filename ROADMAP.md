@@ -218,11 +218,12 @@
 ### [x] Brick 15: Fail-Safe Offline University Audio Chip Matrix (COMPLETED)
 * **Core Objective:** Guarantee 100% demo resilience during live judge defense even in zero-WiFi or bad-microphone conditions.
 * **Accomplished:**
-  - Embedded 3 authentic TORGO clinical audio recordings in [`frontend/public/audio/`](file:///I:/Career/Threws%20Hackathon/frontend/public/audio/):
+  - Embedded authentic clinical audio recordings in [`frontend/public/audio/`](file:///I:/Career/Threws%20Hackathon/frontend/public/audio/):
     1. `torgo_mild_sample.wav`: TORGO-M05 (Cerebral Palsy, Mild) — *"We have an excellent team"*
-    2. `torgo_moderate_sample.wav`: TORGO-M04 (Post-Trauma TBI, Moderate) — *"Their house is grey and white"*
+    2. `torgo_moderate_sample.wav`: TORGO-M04 (Post-Trauma TBI, Moderate-to-Severe) — *"Their house is grey and white"*
     3. `torgo_severe_sample.wav`: TORGO-M02 (ALS, Severe) — *"The job provides many benefits"*
-  - Created interactive evaluation drawer ([`frontend/src/components/ClinicalBenchmarkDrawer.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/ClinicalBenchmarkDrawer.tsx)) allowing judges to listen to authentic raw patient audio alongside ground-truth text.
+    4. `yt_nihss_sample.wav`: Authentic Clinical NIHSS Dysarthria Examination (0:50–1:09)
+  - Created interactive evaluation drawer ([`frontend/src/components/ClinicalBenchmarkDrawer.tsx`](file:///I:/Career/Threws%20Hackathon/frontend/src/components/ClinicalBenchmarkDrawer.tsx)) allowing judges to listen to authentic patient audio and run 1-click live VoiceBridge LoRA transcription.
 * **Lead:** Talha (UI) / Manas Suryawanshi (Clinical Audio Curation)
 * **Status:** Interactive drawer integrated into main landing page.
 

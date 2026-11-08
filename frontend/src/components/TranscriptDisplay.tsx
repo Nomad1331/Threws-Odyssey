@@ -131,7 +131,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
           </span>
           {source && (
             <span className="rounded-[4px] border border-border px-1.5 py-0.5 text-[9px] text-text-secondary">
-              {source === "voicebridge-backend" ? "Whisper INT8" : "Offline"}
+              {source === "voicebridge-backend" ? "Clinical LoRA" : "Offline"}
             </span>
           )}
         </div>

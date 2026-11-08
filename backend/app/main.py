@@ -26,9 +26,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 try:
-    from app.inference import load_model, transcribe_audio
+    from app.inference import load_model, transcribe_audio, get_active_engine_name
 except ImportError:
-    from backend.app.inference import load_model, transcribe_audio
+    from backend.app.inference import load_model, transcribe_audio, get_active_engine_name
 
 # Whitelist of permissible audio extensions to prevent creating executable suffixes in %TEMP%
 ALLOWED_AUDIO_EXTENSIONS = {".webm", ".wav", ".ogg", ".mp3", ".m4a", ".mp4", ".aac", ".flac"}
@@ -44,9 +44,10 @@ async def lifespan(app: FastAPI):
     Pre-loads the Whisper model into RAM during server boot so the first user
     request does not suffer cold-start latency.
     """
-    logger.info("Initializing VoiceBridge Whisper Tiny INT8 engine on CPU...")
+    active_engine = get_active_engine_name()
+    logger.info(f"Initializing VoiceBridge acoustic engine ({active_engine})...")
     load_model()
-    logger.info("VoiceBridge Whisper model loaded and ready for inference.")
+    logger.info(f"VoiceBridge acoustic engine ({active_engine}) loaded and ready for inference.")
     yield
     logger.info("Shutting down VoiceBridge service...")
 
@@ -100,7 +101,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         service="VoiceBridge ASR Service",
-        engine="whisper-tiny-int8",
+        engine=get_active_engine_name(),
     )
 
 @app.post("/api/v1/translate-audio", response_model=TranscriptionResponse)

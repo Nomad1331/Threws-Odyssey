@@ -1,15 +1,19 @@
 """
-VoiceBridge CPU Inference Engine
-================================
-Runs INT8 dynamic quantized Whisper on CPU using faster-whisper (CTranslate2).
+VoiceBridge Acoustic Inference Engine
+=====================================
+Multi-Tier Assistive Speech-to-Text Engine supporting:
 
-Why CTranslate2 / faster-whisper?
----------------------------------
-1. Standard PyTorch Whisper requires a 2GB+ CUDA runtime environment.
-2. faster-whisper compiles the Whisper model graph down to highly optimized
-   C++ matrix operations with 8-bit integer quantization (INT8).
-3. Result: 409ms latency on 1s speech clips, 592ms average latency on ~5.85s clinical
-   phrases (Intel Core i5 CPU) with only ~103MB of active memory usage. Zero GPU required.
+1. Clinical Acoustic Adaptation Mode (Default: "whisper-small-lora"):
+   - Base Model: openai/whisper-small (243.5M parameters)
+   - Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge (r=16, alpha=32)
+   - Evaluated on University of Toronto TORGO dysarthria corpus.
+   - Computes normalized token-level softmax confidence scores.
+
+2. Edge AI Deployment Mode (Fallback / Low-Resource: "whisper-tiny-int8"):
+   - faster-whisper (CTranslate2) running INT8 quantization on CPU.
+   - Sub-second latency for resource-constrained client environments.
+
+Configured dynamically via the `VOICEBRIDGE_ENGINE` environment variable.
 """
 
 from __future__ import annotations
@@ -17,83 +21,144 @@ from __future__ import annotations
 import os
 import math
 import logging
-from faster_whisper import WhisperModel
+from typing import Tuple, Optional
 
-# Configure logger for inference lifecycle events
 logger = logging.getLogger("voicebridge-inference")
 
-# Singleton model handle: loaded once into memory on server startup
-_model: WhisperModel | None = None
+# Engine selection: "whisper-small-lora" (default) or "whisper-tiny-int8"
+ACTIVE_ENGINE = os.getenv("VOICEBRIDGE_ENGINE", "whisper-small-lora").strip().lower()
+BASE_MODEL_ID = os.getenv("VOICEBRIDGE_BASE_MODEL", "openai/whisper-small")
+ADAPTER_MODEL_ID = os.getenv("VOICEBRIDGE_ADAPTER_MODEL", "Aaliya05/voicebridge")
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+# Global handles
+_processor = None
+_pytorch_model = None
+_ct2_model = None
+_device = "cpu"
 
 
-def load_model() -> None:
-    """
-    Initializes and caches the quantized INT8 Whisper model on CPU.
-    Called during FastAPI lifespan startup to avoid cold-start delays on requests.
-    Dynamically scales CPU threads up to 4, preventing oversubscription on dual-core hosts.
-    Uses offline-first cache resolution to eliminate startup delay and guarantee demo resilience in zero-WiFi venues.
-    """
-    global _model
-    if _model is not None:
+def get_active_engine_name() -> str:
+    """Returns the identifier of the active transcription engine."""
+    return ACTIVE_ENGINE
+
+
+def _load_clinical_lora_engine() -> None:
+    """Loads the fine-tuned Whisper-Small LoRA clinical model using PyTorch and PEFT."""
+    global _processor, _pytorch_model, _device
+    if _pytorch_model is not None:
         return
 
+    import torch
+    from transformers import WhisperProcessor, WhisperForConditionalGeneration
+    from peft import PeftModel
+
+    _device = "cuda" if torch.cuda.is_available() else "cpu"
+    logger.info(f"Loading Clinical Acoustic Engine: base={BASE_MODEL_ID}, adapter={ADAPTER_MODEL_ID} on {_device}...")
+
+    _processor = WhisperProcessor.from_pretrained(BASE_MODEL_ID)
+    base = WhisperForConditionalGeneration.from_pretrained(BASE_MODEL_ID)
+    _pytorch_model = PeftModel.from_pretrained(base, ADAPTER_MODEL_ID, token=HF_TOKEN)
+    _pytorch_model.to(_device)
+    _pytorch_model.eval()
+    logger.info(f"VoiceBridge Clinical LoRA engine successfully initialized on {_device}.")
+
+
+def _load_edge_int8_engine() -> None:
+    """Loads the lightweight INT8 CTranslate2 engine for low-latency Edge AI execution."""
+    global _ct2_model
+    if _ct2_model is not None:
+        return
+
+    from faster_whisper import WhisperModel
+
     threads = min(4, os.cpu_count() or 4)
-    logger.info(f"Loading VoiceBridge quantized INT8 acoustic engine (tiny.en on {threads} CPU threads)...")
+    logger.info(f"Loading Edge AI INT8 Engine (tiny.en on {threads} CPU threads)...")
     try:
-        # Attempt instant offline loading from local Hugging Face cache (zero network delay)
-        _model = WhisperModel(
+        _ct2_model = WhisperModel(
             "tiny.en",
             device="cpu",
             compute_type="int8",
             cpu_threads=threads,
             local_files_only=True,
         )
-        logger.info("VoiceBridge INT8 acoustic engine loaded from local cache (offline mode).")
+        logger.info("Edge AI INT8 engine loaded from local cache.")
     except Exception:
-        # Fall back to online download if starting on a clean machine for the first time
-        logger.info("Cached weights not found locally. Downloading faster-whisper-tiny.en from Hugging Face...")
-        _model = WhisperModel(
+        logger.info("Local cache missing. Downloading faster-whisper-tiny.en...")
+        _ct2_model = WhisperModel(
             "tiny.en",
             device="cpu",
             compute_type="int8",
             cpu_threads=threads,
             local_files_only=False,
         )
-        logger.info("VoiceBridge INT8 acoustic engine downloaded and cached.")
+        logger.info("Edge AI INT8 engine downloaded and ready.")
 
 
-def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
-    """
-    Transcribes an audio file (.webm, .wav, .ogg) using the INT8 engine.
-    
-    Parameters:
-        audio_path (str): Filepath to the audio file on local disk.
-        
-    Returns:
-        tuple[str, float | None]:
-            - transcription (str): Joined text string of all decoded segments.
-            - confidence (float | None): Confidence score normalized between 0.0 and 1.0.
-    """
-    if _model is None:
-        load_model()
+def load_model() -> None:
+    """Pre-warms the active transcription engine during FastAPI server startup."""
+    if ACTIVE_ENGINE == "whisper-small-lora":
+        try:
+            _load_clinical_lora_engine()
+        except Exception as e:
+            logger.warning(f"Failed to initialize Clinical LoRA engine ({e}). Falling back to Edge AI INT8 engine.")
+            _load_edge_int8_engine()
+    else:
+        _load_edge_int8_engine()
 
-    if _model is None:
-        raise RuntimeError("Acoustic engine could not be initialized.")
 
-    if not os.path.isfile(audio_path):
-        raise FileNotFoundError(f"Audio file does not exist: {audio_path}")
+def _transcribe_clinical_lora(audio_path: str) -> Tuple[str, Optional[float]]:
+    """Inference path using the fine-tuned whisper-small LoRA model."""
+    import torch
+    from faster_whisper.audio import decode_audio
 
-    # --------------------------------------------------------------------------
-    # Decoding Parameters (Configured specifically for dysarthric speech patterns):
-    # - beam_size=1: Greedy decoding for minimal CPU processing time (0.10 RTF).
-    # - language="en": Locks language to English, suppressing language identification overhead.
-    # - temperature=0.0: Deterministic greedy argmax sampling (prevents hallucination drift).
-    # - vad_filter=False: Disabled because dysarthric speech has irregular phonation energy;
-    #   standard VAD algorithms can mistakenly classify dysarthric words as background noise.
-    # - no_speech_threshold=0.55: Prevents looping on silent stretches between words.
-    # - compression_ratio_threshold=2.4: Suppresses repetitive token looping.
-    # --------------------------------------------------------------------------
-    segments, _ = _model.transcribe(
+    if _pytorch_model is None or _processor is None:
+        _load_clinical_lora_engine()
+
+    if _pytorch_model is None or _processor is None:
+        raise RuntimeError("Clinical LoRA engine could not be initialized.")
+
+    # High-performance PyAV audio decoding: decodes WebM, WAV, MP4, AAC, OGG to 16kHz mono
+    audio_array = decode_audio(audio_path, sampling_rate=16000)
+    inputs = _processor(audio_array, sampling_rate=16000, return_tensors="pt")
+    input_features = inputs.input_features.to(_device)
+
+    with torch.inference_mode():
+        out = _pytorch_model.generate(
+            input_features=input_features,
+            language="en",
+            task="transcribe",
+            max_new_tokens=128,
+            return_dict_in_generate=True,
+            output_scores=True,
+        )
+
+    transcription = _processor.batch_decode(out.sequences, skip_special_tokens=True)[0].strip()
+
+    # Calculate token-level confidence using step logits softmax
+    confidence: Optional[float] = None
+    if out.scores and transcription:
+        token_probs = []
+        gen_ids = out.sequences[0, -len(out.scores):]
+        for step_logits, tok in zip(out.scores, gen_ids):
+            p = torch.softmax(step_logits[0].float(), dim=-1)[tok].item()
+            token_probs.append(p)
+        if token_probs:
+            avg_prob = sum(token_probs) / len(token_probs)
+            confidence = round(min(max(avg_prob, 0.0), 1.0), 3)
+
+    return transcription, confidence
+
+
+def _transcribe_edge_int8(audio_path: str) -> Tuple[str, Optional[float]]:
+    """Inference path using the faster-whisper CTranslate2 INT8 CPU engine."""
+    if _ct2_model is None:
+        _load_edge_int8_engine()
+
+    if _ct2_model is None:
+        raise RuntimeError("Edge AI INT8 engine could not be initialized.")
+
+    segments, _ = _ct2_model.transcribe(
         audio_path,
         beam_size=1,
         language="en",
@@ -103,17 +168,11 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
         compression_ratio_threshold=2.4,
     )
 
-    # Consume the generator into a list so we can access segments multiple times
-    # and compute aggregate metrics without generator exhaustion.
     seg_list = list(segments)
-
-    # Combine text from all recognized audio segments
-    text_parts = [segment.text.strip() for segment in seg_list if segment.text.strip()]
+    text_parts = [s.text.strip() for s in seg_list if s.text.strip()]
     transcription = " ".join(text_parts).strip()
 
-    # Calculate average log-probability confidence across decoded segments.
-    # Confidence is only evaluated on segments that contributed transcribed words (null on silence).
-    confidence: float | None = None
+    confidence: Optional[float] = None
     if transcription and seg_list:
         valid_logprobs = [
             s.avg_logprob
@@ -123,13 +182,37 @@ def transcribe_audio(audio_path: str) -> tuple[str, float | None]:
         if valid_logprobs:
             mean_logprob = sum(valid_logprobs) / len(valid_logprobs)
             try:
-                # Convert log-probability (typically -0.0 to -2.0) into a [0.0 - 1.0] confidence score
                 val = math.exp(mean_logprob)
                 if math.isfinite(val):
                     confidence = round(min(max(val, 0.0), 1.0), 3)
-                else:
-                    confidence = None
             except (OverflowError, ValueError):
                 confidence = None
 
     return transcription, confidence
+
+
+def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
+    """
+    Transcribes an audio file (.webm, .wav, .mp4, .aac, .ogg) using the active engine.
+    
+    Parameters:
+        audio_path: Local filepath to the audio recording.
+        
+    Returns:
+        tuple[str, float | None]:
+            - transcription: Decoded text transcription.
+            - confidence: Normalized confidence score between 0.0 and 1.0 (or None).
+    """
+    if not os.path.isfile(audio_path):
+        raise FileNotFoundError(f"Audio file does not exist: {audio_path}")
+
+    if ACTIVE_ENGINE == "whisper-small-lora" and _pytorch_model is not None:
+        return _transcribe_clinical_lora(audio_path)
+    elif _ct2_model is not None:
+        return _transcribe_edge_int8(audio_path)
+    else:
+        # If neither is loaded yet, run through general loader
+        load_model()
+        if _pytorch_model is not None:
+            return _transcribe_clinical_lora(audio_path)
+        return _transcribe_edge_int8(audio_path)

@@ -63,8 +63,8 @@ for t in trials:
     saved_paths.append(out_path)
     print(f"[+] Saved {t['filename']} ({len(raw_bytes)} bytes) | Target: '{t['target']}' ({t['duration']}s)")
 
-print("\nBenchmarking with Whisper-base on CPU to capture baseline transcription...")
-model = WhisperModel("base", device="cpu", compute_type="int8")
+print("\nBenchmarking with Whisper-tiny on CPU to capture baseline zero-shot transcription...")
+model = WhisperModel("tiny", device="cpu", compute_type="int8")
 
 for t in trials:
     segments, info = model.transcribe(t["path"], beam_size=1, language="en", task="transcribe")

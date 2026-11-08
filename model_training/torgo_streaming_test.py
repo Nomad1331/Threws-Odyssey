@@ -18,9 +18,13 @@ def run_torgo_baseline():
     print("[+] Connecting to Hugging Face Hub ('abnerh/TORGO-database')...")
     dataset = load_dataset("abnerh/TORGO-database", split="train", streaming=True)
 
-    # Initialize baseline Whisper-tiny ASR pipeline
+    # Initialize baseline Whisper-tiny ASR pipeline locked to English transcription
     print("[+] Initializing baseline OpenAI Whisper-tiny model...")
-    asr_pipeline = pipeline("automatic-speech-recognition", model="openai/whisper-tiny")
+    asr_pipeline = pipeline(
+        "automatic-speech-recognition",
+        model="openai/whisper-tiny",
+        generate_kwargs={"language": "english", "task": "transcribe"}
+    )
     wer_metric = evaluate.load("wer")
 
     print("\n" + "-" * 60)

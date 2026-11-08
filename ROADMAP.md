@@ -148,7 +148,7 @@
   - Built [`backend/app/main.py`](file:///I:/Career/Threws%20Hackathon/backend/app/main.py) with CORS middleware configured for Next.js frontend origin.
   - Implemented `POST /api/v1/translate-audio` route accepting multipart audio (`.wav`, `.webm`, `.ogg`).
   - Implemented `GET /health` system diagnostics route reporting service status and model engine.
-  - Integrated CPU-optimized INT8 Whisper inference engine in [`backend/app/inference.py`](file:///I:/Career/Threws%20Hackathon/backend/app/inference.py).
+  - Integrated Clinical Whisper-Small LoRA inference engine (`Aaliya05/voicebridge`) with token-level softmax confidence scoring and native PyAV multi-format decoding in [`backend/app/inference.py`](file:///I:/Career/Threws%20Hackathon/backend/app/inference.py).
 * **Lead:** Talha (Full-Stack Backend)
 * **Status:** Fully functional and verified live on port 8000.
 
@@ -157,7 +157,7 @@
 ### [x] Brick 10: ONNX INT8 Quantization, Edge Acceleration & Low-Latency Pipeline (COMPLETED)
 * **Core Objective:** Quantize the Whisper model to ONNX INT8 for resource-constrained edge execution and benchmark CPU latency and memory footprint.
 * **Accomplished:**
-  - Merged `Aaliya05/voicebridge` LoRA weights permanently into `openai/whisper-tiny` base graph.
+  - Merged `Aaliya05/voicebridge` LoRA weights permanently into base Whisper graph.
   - Exported computation graphs (`encoder_model`, `decoder_model`, `decoder_with_past_model`) via Optimum ONNX.
   - Applied dynamic INT8 quantization across all components, achieving **74.42% storage reduction** (103.45 MB 3-graph bundle; 57.12 MB unique weights).
   - Benchmarked CPU performance: **Real-Time Factor (RTF) = 0.1013 (~10× faster than real-time)**, processing 1 second of speech in ~100 ms on consumer CPUs.

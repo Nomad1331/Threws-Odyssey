@@ -6,8 +6,8 @@ FastAPI microservice providing assistive speech-to-text endpoints.
 Flow:
 1. Receives audio recordings (.webm / .wav) from the Next.js frontend.
 2. Validates in-memory boundaries (<=10MB, non-empty, safe audio extension) with zero disk I/O on invalid requests.
-3. Temporarily writes valid audio bytes to disk for faster-whisper's CTranslate2 engine.
-4. Offloads CPU-optimized INT8 Whisper inference to a worker thread (`asyncio.to_thread`) to keep the main event loop non-blocking.
+3. Temporarily writes valid audio bytes to disk for PyAV audio decoding and inference.
+4. Offloads clinical LoRA acoustic inference to a worker thread (`asyncio.to_thread`) to keep the main event loop non-blocking.
 5. Returns the transcribed text along with telemetry (confidence score and latency in ms).
 6. Cleans up the temporary audio file in a guaranteed `finally` block.
 """
@@ -115,8 +115,8 @@ async def translate_audio(file: UploadFile = File(...)):
     Execution Flow:
     1. Ingests multipart/form-data audio file (.webm from browser or .wav).
     2. Validates payload boundaries (maximum 10MB, non-empty) BEFORE disk I/O to prevent memory DOS.
-    3. Writes audio bytes safely to an OS temporary file for CTranslate2 decoding.
-    4. Runs CPU-quantized INT8 Whisper inference with dysarthria-tuned decoding.
+    3. Writes audio bytes safely to an OS temporary file for PyAV audio decoding.
+    4. Runs fine-tuned Whisper-Small LoRA clinical acoustic inference with dysarthria-adapted decoding.
     5. Returns transcription text, normalized confidence score, and processing latency.
     6. Guaranteed cleanup of both OS temporary file and Starlette spool handle in finally block.
     """
@@ -139,7 +139,7 @@ async def translate_audio(file: UploadFile = File(...)):
         if ext not in ALLOWED_AUDIO_EXTENSIONS:
             ext = ".webm"
 
-        # 3. Create temporary file on disk for CTranslate2 audio decoding.
+        # 3. Create temporary file on disk for PyAV audio decoding.
         # Note for Windows: We close the NamedTemporaryFile handle immediately before
         # opening it with standard file I/O ('wb') to prevent WinError 32 (file in use).
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
@@ -149,7 +149,7 @@ async def translate_audio(file: UploadFile = File(...)):
         with open(temp_path, "wb") as audio_file:
             audio_file.write(content)
 
-        # Offload synchronous CTranslate2 CPU inference to a worker thread so the
+        # Offload synchronous clinical LoRA inference to a worker thread so the
         # asyncio event loop remains non-blocking for /health checks and concurrent traffic.
         full_text, confidence = await asyncio.to_thread(transcribe_audio, temp_path)
 

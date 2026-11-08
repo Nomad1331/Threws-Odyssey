@@ -74,7 +74,8 @@
         "int8Wer": 100.0,
         "int8LatencyMs": 518.7,
         "loraOutput": "then there's the grey and white",
-        "loraConfidence": 0.607
+        "loraConfidence": 0.607,
+        "loraWer": 50.0
       },
       {
         "clip": "torgo_severe_sample.wav",
@@ -88,7 +89,8 @@
         "int8Wer": 100.0,
         "int8LatencyMs": 597.2,
         "loraOutput": "Get the apple by Fimasy Bezzi bit",
-        "loraConfidence": 0.266
+        "loraConfidence": 0.266,
+        "loraWer": 140.0
       }
     ]
   },

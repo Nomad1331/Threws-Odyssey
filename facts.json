@@ -57,7 +57,10 @@
         "fp32Wer": 20.0,
         "int8Output": "We have in 18th Team.",
         "int8Wer": 40.0,
-        "int8LatencyMs": 660.0
+        "int8LatencyMs": 660.0,
+        "loraOutput": "We have an excellent team",
+        "loraConfidence": 0.901,
+        "loraWer": 0.0
       },
       {
         "clip": "torgo_moderate_sample.wav",
@@ -69,7 +72,9 @@
         "fp32Wer": 66.7,
         "int8Output": "Good night.",
         "int8Wer": 100.0,
-        "int8LatencyMs": 518.7
+        "int8LatencyMs": 518.7,
+        "loraOutput": "then there's the grey and white",
+        "loraConfidence": 0.607
       },
       {
         "clip": "torgo_severe_sample.wav",
@@ -81,7 +86,9 @@
         "fp32Wer": 160.0,
         "int8Output": "I will be very happy.",
         "int8Wer": 100.0,
-        "int8LatencyMs": 597.2
+        "int8LatencyMs": 597.2,
+        "loraOutput": "Get the apple by Fimasy Bezzi bit",
+        "loraConfidence": 0.266
       }
     ]
   },

@@ -55,7 +55,7 @@
   - Configured Hugging Face dataset streaming on `abnerh/TORGO-database`.
   - Implemented dynamic audio normalization casting all incoming speech to **16,000 Hz Mono Float32**.
   - Built Log-Mel spectrogram feature extraction via `WhisperFeatureExtractor`.
-  - Created [`model_training/VoiceBridge_Colab_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Colab_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py) configuring LoRA adaptation on `openai/whisper-tiny`.
+  - Created [`model_training/VoiceBridge_Colab_Trainer.ipynb`](file:///I:/Career/Threws%20Hackathon/model_training/VoiceBridge_Colab_Trainer.ipynb) and [`model_training/torgo_streaming_test.py`](file:///I:/Career/Threws%20Hackathon/model_training/torgo_streaming_test.py) establishing dataset streaming, 16kHz audio normalization, and Log-Mel feature extraction.
 * **Lead:** Aaliya Hussain (ML) / Talha (Pipeline Review)
 * **Status:** Verified live with zero-copy tensor extraction.
 
@@ -65,7 +65,7 @@
 * **Core Objective:** Establish empirical proof of the "70% Failure Wall" where commercial speech foundation models completely collapse on dysarthric speech.
 * **Accomplished:**
   - Benchmarked unmodified `openai/whisper-tiny` (39M parameters).
-  - Evaluated clinical speech from Cerebral Palsy (CP) and Amyotrophic Lateral Sclerosis (ALS) speakers.
+  - Evaluated clinical speech from Cerebral Palsy (CP), Traumatic Brain Injury (TBI), and Amyotrophic Lateral Sclerosis (ALS) speakers.
   - Confirmed that standard foundation Whisper achieves an unacceptable **65%–82% WER** on dysarthric audio.
 * **Lead:** Aaliya Hussain (ML) / Manas Suryawanshi (Metrics Logging)
 * **Status:** Documented and verified as the core clinical problem statement.

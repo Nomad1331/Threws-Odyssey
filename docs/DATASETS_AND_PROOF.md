@@ -14,7 +14,7 @@
 * **Recording Specifications:** 16kHz uncompressed acoustic waveform data (`.wav`), time-aligned phonetic transcriptions, orthographic target sentences, and 3D electromagnetic articulography (EMA) tracking.
 
 ### 1.2 Severity Distribution & Acoustic Pathologies
-* **Speaker Classifications:** 8 dysarthric subjects spanning clinical classifications of Mild, Moderate, and Severe dysarthria.
+* **Speaker Classifications:** 8 dysarthric subjects (`F01`, `F03`, `F04`, `M01`, `M02`, `M03`, `M04`, `M05`) spanning Mild, Moderate, and Severe dysarthria across Cerebral Palsy, ALS, and Post-Trauma TBI, alongside 7 matched non-dysarthric control subjects (`FC01`, `FC02`, `FC03`, `FC06`, `MC01`, `MC02`, `MC04`) totaling 15 subjects.
 * **Primary Acoustic Degradation Modes:**
   1. **Formant Centralization:** Acoustic resonances ($F_1$ and $F_2$) collapse toward a central neutral frequency (schwa-like sound `/ə/`) due to lingual and labial motor restrictions.
   2. **Transient Burst Loss:** Stop consonants ($p, b, t, d, k, g$) lose acoustic release bursts, sounding like breathy fricatives or indistinct murmurs.

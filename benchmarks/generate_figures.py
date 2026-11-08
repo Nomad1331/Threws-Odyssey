@@ -51,8 +51,8 @@ def generate_figure1_wer_comparison():
 
     bars1 = ax.bar([i - width/2 for i in x], baseline_fp32, width, label="Baseline Whisper FP32",
                    color="#F43F5E", edgecolor="#334155", linewidth=1.2, zorder=3)
-    bars2 = ax.bar([i + width/2 for i in x], voicebridge_int8, width, label="VoiceBridge INT8 (CPU)",
-                   color="#14B8A6", edgecolor="#2DD4BF", linewidth=1.5, zorder=3)
+    bars2 = ax.bar([i + width/2 for i in x], voicebridge_int8, width, label="Baseline Whisper INT8 (CPU)",
+                   color="#38BDF8", edgecolor="#0284C7", linewidth=1.5, zorder=3)
 
     # 65% Failure Wall reference line
     ax.axhline(65, color="#EF4444", linestyle=":", linewidth=2, zorder=2, label="Commercial Failure Wall (>65% WER)")
@@ -126,7 +126,7 @@ def generate_figure2_formant_centralization():
     d_f1.append(d_f1[0])
     d_f2.append(d_f2[0])
 
-    ax.plot(d_f2, d_f1, color="#F43F5E", linewidth=2.5, linestyle="--", label="Dysarthric Collapsed Vowel Space (CP/ALS)", zorder=3)
+    ax.plot(d_f2, d_f1, color="#F43F5E", linewidth=2.5, linestyle="--", label="Dysarthric Collapsed Vowel Space (TORGO Dysarthria)", zorder=3)
     ax.fill(d_f2, d_f1, color="#F43F5E", alpha=0.25, zorder=2)
 
     for label, (f1, f2) in dysarthric_vowels.items():

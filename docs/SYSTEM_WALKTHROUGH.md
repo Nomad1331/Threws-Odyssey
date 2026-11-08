@@ -38,10 +38,11 @@ Automatic Speech Recognition (ASR) systems (OpenAI Whisper, Google Speech API, A
   • Measures wall-clock execution time
                      │
                      ▼
-  [ 4. faster-whisper INT8 CPU Engine ] <--- (backend/app/inference.py)
-  • Model: tiny.en quantized to INT8
-  • CTranslate2 C++ runtime on 4 CPU threads
-  • Generates transcript string + confidence score
+  [ 4. Clinical Acoustic LoRA Engine ] <--- (backend/app/inference.py)
+  • Model: openai/whisper-small + Aaliya05/voicebridge LoRA adapter
+  • PyTorch + PEFT runtime with token softmax confidence scoring
+  • Native PyAV audio decoding (.webm, .wav, .mp4 in ~2ms)
+  • Generates transcript string + normalized confidence score
                      │
                      ▼
   [ 5. JSON Response to Browser ]
@@ -62,7 +63,7 @@ Here is exactly what happens in memory and across the network from the moment th
 
 ### Step 1: Server Boot & Pre-Warming
 * **Backend (`backend/app/main.py`):**
-  When you run `uvicorn app.main:app`, FastAPI's `@asynccontextmanager lifespan` executes **before** the server accepts traffic. It calls `load_model()`, loading the `tiny.en` INT8 CTranslate2 model into RAM once (~103MB). This ensures the very first user transcription has zero cold-start delay.
+  When you run `uvicorn app.main:app`, FastAPI's `@asynccontextmanager lifespan` executes **before** the server accepts traffic. It calls `load_model()`, loading the `whisper-small-lora` clinical acoustic model into RAM once. This ensures the very first user transcription has zero cold-start delay.
 * **Frontend (`frontend/src/app/page.tsx`):**
   When Next.js mounts in the browser, a `useEffect` sends a quick ping to `GET http://127.0.0.1:8000/health`. If the server responds with HTTP 200, the top-right header badge flips from gray to green (`Backend connected`).
 
@@ -170,7 +171,7 @@ To verify the entire pipeline end-to-end on any machine:
 1. **Check Backend Readiness:**
    ```bash
    curl http://127.0.0.1:8000/health
-   # Expected output: {"status":"healthy","service":"VoiceBridge ASR Service","engine":"whisper-tiny-int8"}
+   # Expected output: {"status":"healthy","service":"VoiceBridge ASR Service","engine":"whisper-small-lora"}
    ```
 
 2. **Test End-to-End Transcription via API:**

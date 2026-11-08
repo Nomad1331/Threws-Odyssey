@@ -4,7 +4,6 @@ VoiceBridge — THREWS Odyssey 2026
 Track: Human-AI & Assistive Technology
 """
 
-import os
 from datasets import load_dataset
 from transformers import pipeline
 import evaluate

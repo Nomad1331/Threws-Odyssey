@@ -26,16 +26,16 @@
 
 ---
 
-## 2. Model & LoRA Adapter Compatibility
+## 2. Model & Architecture Demarcation
 
-* **Base Model:** `openai/whisper-tiny`
-* **LoRA Adapter:** `Aaliya05/voicebridge`
-* **Verification via `PeftConfig.from_pretrained("Aaliya05/voicebridge")`:**
-  * `base_model_name_or_path`: `openai/whisper-tiny` (Compatible)
+* **Clinical Production Engine:** `openai/whisper-small` (243.5M parameters) fine-tuned with PEFT LoRA adapter `Aaliya05/voicebridge` ($r=16, \alpha=32$).
+* **Edge AI Quantization Baseline (This Report):** `openai/whisper-tiny` (39M parameters) evaluated to benchmark dynamic INT8 ONNX footprint reduction and sub-second CPU execution.
+* **LoRA Specification (`Aaliya05/voicebridge`):**
+  * `base_model_name_or_path`: `openai/whisper-small`
   * `peft_type`: `LORA`
   * `r`: `16`, `lora_alpha`: `32`, `lora_dropout`: `0.05`
-  * `target_modules`: `{'q_proj', 'v_proj'}`
-* **Merge Output:** Saved standalone merged PyTorch model and `WhisperProcessor` to `model_training/voicebridge_merged/`.
+  * `target_modules`: `{'q_proj', 'v_proj'}` (Attention projections in encoder and decoder)
+* **Merge Output:** Standalone merged model and `WhisperProcessor` verified in `model_training/voicebridge_merged/`.
 
 ---
 

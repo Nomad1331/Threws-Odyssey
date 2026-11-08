@@ -1,8 +1,13 @@
 import os
+import glob
 import pyarrow.parquet as pq
 from faster_whisper import WhisperModel
 
-PARQUET_PATH = os.path.expanduser(
+cache_pattern = os.path.expanduser(
+    r"~/.cache/huggingface/hub/datasets--abnerh--TORGO-database/snapshots/*/data/train-00002-of-00004.parquet"
+)
+matched = glob.glob(cache_pattern)
+PARQUET_PATH = matched[0] if matched else os.path.expanduser(
     r"~/.cache/huggingface/hub/datasets--abnerh--TORGO-database/snapshots/c4e0b560a515465e61bb555455e34fc620031fe8/data/train-00002-of-00004.parquet"
 )
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -13,10 +13,14 @@
     "status": "Preliminary Research Baseline"
   },
   "models": {
-    "base": "openai/whisper-tiny",
-    "baseParameters": 39000000,
+    "clinicalAdaptedModel": "openai/whisper-small",
+    "clinicalAdaptedParameters": 243500000,
     "adapter": "Aaliya05/voicebridge",
-    "adapterType": "LoRA (r=16, alpha=32, target: q_proj, v_proj)",
+    "adapterType": "LoRA (r=16, alpha=32, target: q_proj, v_proj in encoder & decoder)",
+    "adapterWeightsMb": 7.1,
+    "trainableParameterPercent": 0.72,
+    "baselineModel": "openai/whisper-tiny",
+    "baselineParameters": 39000000,
     "dataset": "University of Toronto TORGO Database (Cerebral Palsy, ALS, Traumatic Brain Injury)"
   },
   "quantization": {

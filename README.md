@@ -33,10 +33,11 @@ Current commercial solutions also face accessibility hurdles:
    [ FastAPI Backend Gateway (:8000) ]
                   │
                   ▼
-   [ faster-whisper INT8 CPU Engine ]
-     • Model: Whisper tiny.en (INT8)
-     • Device: Local CPU (no GPU needed)
-     • Greedy decoding (beam_size=1, no_speech_threshold=0.55)
+   [ Clinical Acoustic LoRA Engine ]
+     • Base: openai/whisper-small (243.5M params)
+     • Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge (r=16, alpha=32)
+     • Token-Level Softmax Confidence Scoring
+     • Native PyAV Audio Ingestion (.webm, .wav, .mp4, .aac)
                   │
                   ▼  (JSON Response)
    [ Next.js Accessible Frontend (:3000) ]
@@ -70,8 +71,8 @@ Threws-Odyssey/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI microservice endpoints (/health, /api/v1/translate-audio)
-│   │   └── inference.py         # faster-whisper INT8 CPU transcription engine
-│   ├── requirements.txt         # Minimal, production dependencies (FastAPI, faster-whisper)
+│   │   └── inference.py         # Whisper-Small LoRA clinical acoustic inference engine
+│   ├── requirements.txt         # Production dependencies (FastAPI, PyTorch, Transformers, PEFT)
 │   └── test_server.py           # Automated TestClient verification test suite (7/7 tests)
 │
 ├── frontend/

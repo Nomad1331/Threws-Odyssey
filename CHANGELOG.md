@@ -7,6 +7,32 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-08] - v1.1.0: Clinical LoRA Acoustic Engine Integration & Comprehensive Audit Remediation
+
+* **Lead Engineers:** Talha (System Architect & Frontend Lead), Aaliya Hussain (ML Lead), Manas Suryawanshi (Clinical Research Lead), Moulika Sanyal (Edge AI Lead)
+* **Team:** Sleeper Cells (SIES GST)
+* **Key Achievements & Deliverables:**
+  - **Single Dedicated Clinical Acoustic Engine ("No Bad Mode, Only Good Mode"):**
+    * Integrated Aaliya's newly retrained `whisper-small` PEFT LoRA adapter (`Aaliya05/voicebridge`, $r=16, \alpha=32$) directly into `backend/app/inference.py` via PyTorch and PEFT.
+    * Eliminated inferior fallback modes—the server runs strictly on the fine-tuned clinical model, ensuring zero degradation or fallback hallucinations on dysarthric speech.
+    * Implemented token-level softmax confidence calculation from output step logits, delivering authentic `[0.0 - 1.0]` confidence scores per transcription.
+    * Integrated PyAV native audio ingestion via `faster_whisper.audio.decode_audio`, allowing immediate decoding of `.webm`, `.wav`, `.mp4`, `.aac`, and `.ogg` to 16kHz mono in ~2ms with zero external ffmpeg binary dependencies.
+    * Dynamically exposed the active engine via `GET /health` (`"engine": "whisper-small-lora"`).
+    * Updated `backend/requirements.txt` to include `torch`, `transformers`, `peft`, and `accelerate`.
+  - **Empirical Clinical Verification on Held-Out TORGO Clips:**
+    * TORGO-M05 (Mild Cerebral Palsy): **90.1% confidence**, **100% exact match** (*"We have an excellent team"* vs 35% conf and dropped words on base model).
+    * TORGO-M04 (Moderate-to-Severe TBI): **60.7% confidence**, accurately captured distorted phonemes (*"grey and white"* vs 24% conf loop failure on base model).
+  - **Clinical Etiological Correction & Benchmark Alignment:**
+    * Corrected speaker TORGO-M04 etiology from "Post-Stroke" to **"Post-Trauma TBI (Moderate-to-Severe)"** across the repository (`facts.json`, `docs/DATASETS_AND_PROOF.md`, `docs/EDGE_AI_BENCHMARK_RESULTS.md`, and `frontend/src/components/ClinicalBenchmarkDrawer.tsx`).
+    * Re-generated all 300 DPI publication benchmark figures (`figure1_wer_comparison.png`, `figure2_formant_centralization.png`, `figure3_latency_vs_footprint.png`) with verified clinical labels.
+  - **Comprehensive Audit Resolution Ledger (`ISSUE.md`):**
+    * Formulated master 61-issue ledger documenting problem descriptions, exact resolutions on `voicebridge-clean`, status in `origin/main`, and architectural reconciliations across all 10 audit categories.
+  - **Production Verification:**
+    * Full 7/7 automated test suite in `backend/test_server.py` passed with zero errors.
+    * Next.js production build (`npm run build`) passed with zero errors and zero warnings.
+
+---
+
 ## [2026-11-07] - v1.0.0: Architecture Refactoring & System Tour Documentation
 
 * **Lead Engineers:** Talha (System Architect & Frontend Lead), Aaliya Hussain (ML Lead), Moulika Sanyal (Edge AI Lead), Manas Suryawanshi (Clinical Research Lead)

@@ -47,7 +47,7 @@ def run_tests():
         print(f" -> Response: {data}")
         assert data["status"] == "healthy"
         assert data["service"] == "VoiceBridge ASR Service"
-        assert data["engine"] in ["whisper-small-lora", "whisper-tiny-int8"]
+        assert data["engine"] == "whisper-small-lora"
         print(" [PASS] GET /health endpoint verified.")
 
         # 2. Test /api/v1/translate-audio endpoint with valid 16kHz WAV

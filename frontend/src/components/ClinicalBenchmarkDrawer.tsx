@@ -37,10 +37,20 @@ const TORGO_TRIALS: BenchmarkTrial[] = [
     targetText: "The job provides many benefits",
     audioUrl: "/audio/torgo_severe_sample.wav",
   },
+  {
+    id: "trial-4",
+    sampleLabel: "Sample 04",
+    speakerId: "NIHSS",
+    condition: "NIHSS Dysarthria Test (0:50–1:09)",
+    targetText: "Mama, Tip-Top, Fifty-Fifty, Thanks, Huckleberry, Baseball Player",
+    audioUrl: "/audio/yt_nihss_sample.wav",
+  },
 ];
 
 interface ClinicalBenchmarkDrawerProps {
   className?: string;
+  onRunInference?: (audioUrl: string) => void;
+  isProcessing?: boolean;
 }
 
 /**
@@ -57,6 +67,8 @@ interface ClinicalBenchmarkDrawerProps {
 
 export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = ({
   className = "",
+  onRunInference,
+  isProcessing = false,
 }) => {
   const [selectedTrialId, setSelectedTrialId] = useState<string>("trial-1");
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -126,7 +138,7 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
       </div>
 
       {/* Sample selector */}
-      <div className="my-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="my-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {TORGO_TRIALS.map((trial) => {
           const isSelected = trial.id === selectedTrialId;
           return (
@@ -167,27 +179,40 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => handleTogglePlayAudio(currentTrial)}
-            aria-label={
-              playingAudioId === currentTrial.id
-                ? `Pause ${currentTrial.sampleLabel} recording`
-                : `Play ${currentTrial.sampleLabel} recording`
-            }
-            className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-[6px] border px-3 py-1.5 font-mono text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-95 ${
-              playingAudioId === currentTrial.id
-                ? "border-accent bg-surface text-accent"
-                : "border-border bg-surface text-text-primary hover:border-accent"
-            }`}
-          >
-            {playingAudioId === currentTrial.id ? (
-              <Square className="h-3 w-3 fill-accent text-accent" />
-            ) : (
-              <Play className="h-3 w-3" />
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleTogglePlayAudio(currentTrial)}
+              aria-label={
+                playingAudioId === currentTrial.id
+                  ? `Pause ${currentTrial.sampleLabel} recording`
+                  : `Play ${currentTrial.sampleLabel} recording`
+              }
+              className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-[6px] border px-3 py-1.5 font-mono text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-95 ${
+                playingAudioId === currentTrial.id
+                  ? "border-accent bg-surface text-accent"
+                  : "border-border bg-surface text-text-primary hover:border-accent"
+              }`}
+            >
+              {playingAudioId === currentTrial.id ? (
+                <Square className="h-3 w-3 fill-accent text-accent" />
+              ) : (
+                <Play className="h-3 w-3" />
+              )}
+              <span>{playingAudioId === currentTrial.id ? "Pause" : "Play audio"}</span>
+            </button>
+
+            {onRunInference && (
+              <button
+                type="button"
+                onClick={() => onRunInference(currentTrial.audioUrl)}
+                disabled={isProcessing}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[6px] border border-accent bg-accent/10 px-3 py-1.5 font-mono text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:scale-95 disabled:opacity-50"
+              >
+                <span>{isProcessing ? "Transcribing..." : "Transcribe with VoiceBridge"}</span>
+              </button>
             )}
-            <span>{playingAudioId === currentTrial.id ? "Pause" : "Play recording"}</span>
-          </button>
+          </div>
         </div>
       </div>
     </div>

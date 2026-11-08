@@ -119,6 +119,25 @@ export default function Home() {
     setTranscript(phrase);
   }, []);
 
+  // Transcribe pre-recorded clinical sample audio
+  const handleRunSampleAudio = useCallback(async (audioUrl: string) => {
+    setStatusNotice("Transcribing clinical sample audio...");
+    try {
+      const res = await fetch(audioUrl);
+      const blob = await res.blob();
+      const result = await transcribeAudio(blob);
+      setTranscript(result.text);
+      setLatencyMs(result.latencyMs);
+      setConfidenceScore(result.confidence);
+      setStatusNotice(result.statusNotice);
+      setSource(result.source);
+      setBackendConnected(result.source === "voicebridge-backend");
+    } catch (err) {
+      console.error("Clinical sample transcription error:", err);
+      setStatusNotice("Failed to transcribe sample.");
+    }
+  }, []);
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col bg-canvas px-4 py-6 text-text-primary sm:px-6 lg:px-8">
       {/* 1. Header */}
@@ -200,7 +219,10 @@ export default function Home() {
               <p>Reference corpus: University of Toronto TORGO Database (Rudzicz et al., 2012).</p>
               <p>Clinical evaluation clips: M05 (Cerebral Palsy), M04 (Post-Trauma TBI), M02 (ALS).</p>
             </div>
-            <ClinicalBenchmarkDrawer />
+            <ClinicalBenchmarkDrawer
+              onRunInference={handleRunSampleAudio}
+              isProcessing={statusNotice?.includes("Transcribing")}
+            />
           </div>
         )}
 

@@ -1,5 +1,5 @@
 # VoiceBridge Backend Dependencies
-# Multi-Tier Acoustic Engine: Clinical LoRA (PyTorch/PEFT) + Edge AI INT8 (faster-whisper/CTranslate2)
+# Dedicated Clinical LoRA Engine (PyTorch/PEFT) & Native Audio Ingestion (faster-whisper PyAV)
 
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0

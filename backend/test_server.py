@@ -37,7 +37,7 @@ def run_tests():
     print("VOICEBRIDGE FASTAPI BACKEND: FULL TEST SUITE VERIFICATION")
     print("=" * 60)
 
-    # Use TestClient with lifespan context (pre-warms the Whisper INT8 engine)
+    # Use TestClient with lifespan context (pre-warms the Whisper-Small LoRA engine)
     with TestClient(app) as client:
         # 1. Test /health endpoint
         print("\n[Test 1] Testing GET /health ...")

@@ -125,7 +125,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
         confidence: isFiniteConfidence ? data.confidence_score : null,
         latencyMs: validLatency,
         source: "voicebridge-backend",
-        statusNotice: "Transcribed with VoiceBridge Whisper INT8 (CPU)",
+        statusNotice: "Transcribed with VoiceBridge Clinical LoRA Engine",
         isError: false,
       };
     }

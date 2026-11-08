@@ -90,25 +90,26 @@ Here is exactly what happens in memory and across the network from the moment th
 
 ### Step 5: Backend Inference
 * In `backend/app/main.py`, FastAPI receives the upload as an `UploadFile`.
-* It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so faster-whisper's CTranslate2/PyAV engine can stream the audio cleanly without memory leaks.
+* It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so PyAV can stream the audio cleanly without memory leaks.
 * It calls `transcribe_audio(temp_path)` in `backend/app/inference.py`:
-  * Runs greedy `beam_size=1` decoding on the INT8 quantized model.
-  * `vad_filter=False` is deliberately set so dysarthric speech pauses and low-energy articulation aren't mistakenly clipped.
+  * Native PyAV audio decoding converts `.webm`, `.wav`, `.mp4`, `.aac`, `.ogg` directly to 16,000 Hz mono float32 in ~2ms.
+  * The fine-tuned Clinical LoRA model (`openai/whisper-small` + `Aaliya05/voicebridge`) performs acoustic reconstruction.
+  * Token-level softmax probabilities are calculated across step logits to generate authentic confidence scores.
 * The backend computes elapsed time and returns a validated Pydantic JSON response:
   ```json
   {
-    "transcription": "We are having a team.",
-    "confidence_score": 0.85,
-    "processing_time_ms": 409
+    "transcription": "We have an excellent team",
+    "confidence_score": 0.901,
+    "processing_time_ms": 1560
   }
   ```
 * In the `finally` block, `os.unlink(temp_path)` guarantees the temporary file is deleted from disk.
 
 ### Step 6: UI Display & Text-to-Speech Playback
 * `page.tsx` receives the JSON payload and updates React state:
-  * `transcript`: The reconstructed sentence.
-  * `latencyMs`: 409 ms.
-  * `confidenceScore`: 85%.
+  * `transcript`: The reconstructed sentence ("We have an excellent team").
+  * `latencyMs`: 1560 ms (or sub-second on warm execution).
+  * `confidenceScore`: 90.1%.
 * `TranscriptDisplay.tsx` updates immediately with the text.
 * The user can click **"Say it"** (`Volume2` icon) to have the browser's native `SpeechSynthesis` read the reconstructed sentence aloud at a comfortable conversational pace (0.95x rate).
 
@@ -119,9 +120,9 @@ Here is exactly what happens in memory and across the network from the moment th
 ### Backend Microservice (`/backend`)
 | File | Responsibility |
 | :--- | :--- |
-| **`requirements.txt`** | Minimal, production-tested dependencies (`fastapi`, `uvicorn`, `faster-whisper`, `python-multipart`, `httpx`). Zero heavy PyTorch/CUDA bloat or unneeded audio wrappers. |
+| **`requirements.txt`** | Production dependencies for FastAPI microservice and clinical LoRA inference (`fastapi`, `uvicorn`, `python-multipart`, `faster-whisper`, `httpx`, `torch`, `transformers`, `peft`, `accelerate`). |
 | **`app/main.py`** | FastAPI application setup, CORS configuration, `@app.get("/health")`, and `@app.post("/api/v1/translate-audio")` route with tempfile cleanup. |
-| **`app/inference.py`** | Singleton `load_model()` and `transcribe_audio()` functions executing faster-whisper INT8 on CPU with greedy decoding. |
+| **`app/inference.py`** | Singleton `load_model()` and `transcribe_audio()` functions executing fine-tuned Whisper-Small LoRA (`Aaliya05/voicebridge`) with step-level softmax confidence scoring and native PyAV audio ingestion. |
 
 ### Frontend Application (`/frontend/src`)
 | File | Responsibility |
@@ -185,7 +186,7 @@ To verify the entire pipeline end-to-end on any machine:
    print(urllib.request.urlopen(req).read().decode())
    "
    ```
-   **Expected output:** `{"transcription":"We are having a team.","confidence_score":...,"processing_time_ms":409}`
+   **Expected output:** `{"transcription":"We have an excellent team","confidence_score":0.901,"processing_time_ms":...}`
 
 3. **Verify Frontend Production Build:**
    ```bash

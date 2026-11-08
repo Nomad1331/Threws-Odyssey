@@ -88,11 +88,11 @@
 ## Phase 2: Acoustic Adaptation & LoRA Fine-Tuning (Nov 1 – 2)
 
 ### [x] Brick 4: Parameter-Efficient Fine-Tuning (PEFT) Injection Architecture (COMPLETED)
-* **Core Objective:** Design and inject Low-Rank Adaptation (LoRA) matrices into Whisper attention in the encoder and decoder, freezing 99.6% of base weights to prevent catastrophic forgetting.
+* **Core Objective:** Design and inject Low-Rank Adaptation (LoRA) matrices into Whisper attention in the encoder and decoder, freezing ~99.28% of base weights to prevent catastrophic forgetting.
 * **Accomplished:**
-  - Configured `peft.LoraConfig` targeting Query (`q_proj`) and Value (`v_proj`) attention projection layers.
+  - Configured `peft.LoraConfig` targeting Query (`q_proj`) and Value (`v_proj`) attention projection layers across encoder and decoder.
   - Hyperparameters locked: $r = 16$, $\alpha = 32$, dropout = $0.05$, bias = `"none"`.
-  - Trainable parameters restricted to **~0.4% (~1.5 MB)** of total model weights, enabling lightweight edge distribution.
+  - Trainable parameters restricted to **~0.72% (~1.77M parameters, ~7.1 MB safetensors)** of base `openai/whisper-small` weights, enabling lightweight edge distribution.
 * **Lead:** Aaliya Hussain (ML)
 * **Status:** Verified and serialized in model config.
 
@@ -113,7 +113,7 @@
 * **Accomplished:**
   - Executed training loop with FP16 precision, linear warmup, and cosine learning rate decay.
   - Successfully exported trained adapter weights to Hugging Face Hub under [`Aaliya05/voicebridge`](https://huggingface.co/Aaliya05/voicebridge).
-  - Standalone checkpoint verified under 2 MB.
+  - Standalone checkpoint verified at ~7.1 MB safetensors payload.
 * **Lead:** Aaliya Hussain (ML)
 * **Status:** Model weights live and accessible via Hugging Face Hub.
 
@@ -122,11 +122,11 @@
 ### [x] Brick 7: Held-Out Adaptation Evaluation & Scientific Telemetry (COMPLETED)
 * **Core Objective:** Evaluate acoustic model behavior across held-out, unseen clinical speakers.
 * **Accomplished:**
-  - Evaluated `openai/whisper-tiny` on held-out TORGO clinical clips across Mild, Moderate, and Severe subjects.
-  - Confirmed empirical findings consistent with Google Euphonia: zero-shot foundation models collapse on severe dysarthria (82.2% baseline WER), and speaker-independent generalization across unseen atypical speech requires on-device personalization.
-  - Established the Edge AI baseline: proved that quantized INT8 Whisper runs at 0.10 RTF on consumer CPUs, enabling local edge personalization.
+  - Evaluated foundation Whisper (`openai/whisper-tiny` / unadapted baseline) across Mild, Moderate, and Severe TORGO subjects, confirming catastrophic foundation breakdown (65%–82% WER).
+  - Evaluated fine-tuned `whisper-small-lora` on held-out patient clips, achieving **0.0% WER (90.1% confidence)** on mild CP (`M05`) and recovering key articulatory phonemes on moderate-to-severe TBI speech (`M04`).
+  - Established the Edge AI baseline: proved that quantized INT8 Whisper runs at 0.10 RTF (592ms mean latency) on consumer CPUs, confirming edge feasibility.
 * **Lead:** Aaliya Hussain (ML) / Manas Suryawanshi (Analysis)
-* **Status:** Empirical baseline documented in `docs/EDGE_AI_BENCHMARK_RESULTS.md`.
+* **Status:** Telemetry and clinical evaluation documented in `facts.json` and `docs/EDGE_AI_BENCHMARK_RESULTS.md`.
 
 ---
 

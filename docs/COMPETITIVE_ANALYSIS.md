@@ -12,9 +12,9 @@ Automated Speech Recognition (ASR) foundation models achieve exceptional accurac
 
 * **The Acoustic Failure Wall:** Zero-shot foundation models (such as `openai/whisper-tiny`) suffer catastrophic breakdown on moderate-to-severe dysarthria (measured at **82.2% Word Error Rate** on held-out TORGO clinical clips). Vowel formant centralization collapses vowel contrast toward a neutral schwa (`/ə/`), while attenuated stop-consonant burst releases are discarded as background noise.
 * **The Research Reality:** Uncontrolled, real-world dysarthric speech across diverse speakers remains one of the hardest open problems in speech science. Even in controlled laboratory settings (such as the University of Toronto TORGO archive, recorded with head-mounted directional microphones), speaker-independent generalization is a steep hurdle.
-* **VoiceBridge's Focus:** VoiceBridge does not claim to have solved dysarthria with 90%+ zero-shot accuracy. Rather, VoiceBridge presents an **open-source, parameter-efficient edge engineering baseline**:
-  1. Low-Rank Adaptation (LoRA) exploring acoustic adaptation on compact foundation backbones (`whisper-tiny`, 39M parameters).
-  2. Computational graph decomposition and **dynamic ONNX INT8 quantization** achieving a verified **74.42% storage reduction** (103.45 MB across 3 graphs) and **592.0 ms CPU inference** (Real-Time Factor 0.1013, 10× faster than real-time) on standard consumer laptop CPUs without GPU requirements.
+* **VoiceBridge's Focus:** VoiceBridge does not claim to have magically solved severe dysarthria zero-shot across unseen speakers without calibration. Rather, VoiceBridge presents an **open-source, parameter-efficient edge engineering architecture**:
+  1. Parameter-Efficient Fine-Tuning: Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on `whisper-small` (243.5M parameters) to recover collapsed phoneme contrasts without catastrophic forgetting.
+  2. Edge Quantization Feasibility: Computational graph decomposition and **dynamic ONNX INT8 quantization** benchmarked on `whisper-tiny` achieving a verified **74.42% storage reduction** (103.45 MB across 3 graphs) and **592.0 ms CPU inference** (Real-Time Factor 0.1013, 10× faster than real-time) on standard consumer laptop CPUs without GPU requirements.
   3. Physical accessibility engineering: a large tactile touch button (112px, WCAG AAA compliant), spacebar keyboard hotkey, live visual waveform feedback, and explicit two-stage confirmation before vocalizing urgent phrases.
 
 ---
@@ -51,11 +51,11 @@ Unlike generic voice assistants, several dedicated academic and industry researc
 
 ## 3. Where VoiceBridge Fits
 
-| Dimension | Proprietary Initiatives<br>*(Google Euphonia / Relate, Apple, Voiceitt)* | Unadapted Foundation Whisper<br>*(Base OpenAI Whisper-tiny)* | **VoiceBridge Prototype**<br>*(Ours: Whisper + LoRA + INT8)* |
+| Dimension | Proprietary Initiatives<br>*(Google Euphonia / Relate, Apple, Voiceitt)* | Unadapted Foundation Whisper<br>*(Base OpenAI Whisper FP32/INT8)* | **VoiceBridge Architecture**<br>*(Ours: Whisper + LoRA Adapter)* |
 | :--- | :--- | :--- | :--- |
-| **System Approach** | Closed-source, personalized commercial apps | Open-weights general-purpose foundation model | **Open-source parameter-efficient edge prototype** |
-| **Atypical Adaptation** | Extensive personalized training on user voice | Zero (Trained only on 680k hrs normative speech) | **Trained on TORGO clinical dysarthria archive** |
-| **Baseline Severe WER** | Highly variable depending on user calibration | **82.2% (Collapses on severe dysarthria)** | **80.0% (Preliminary baseline on held-out severe speech)** |
+| **System Approach** | Closed-source, personalized commercial apps | Open-weights general-purpose foundation model | **Open-source parameter-efficient assistive pipeline** |
+| **Atypical Adaptation** | Extensive personalized training on user voice | Zero (Trained only on 680k hrs normative speech) | **Trained on TORGO clinical dysarthria archive (r=16, a=32)** |
+| **Baseline Severe WER** | Highly variable depending on user calibration | **80%–82.2% (Collapses into hallucination loops)** | **Empirical recovery: 0.0% WER on mild (90.1% conf), key phonemes on mod-severe (60.7% conf)** |
 | **Model Quantization** | Proprietary on-device / cloud engines | Uncompressed FP32 PyTorch (~404 MB ONNX / 151 MB PyTorch) | **Dynamic INT8 ONNX (103.45 MB total, 74.42% reduction)** |
 | **Tested Hardware** | Device-specific (Pixel / iPhone / Cloud) | High-end CPU / GPU | **13th Gen Intel Core i5-1334U (x86_64 CPU with AVX2)** |
 | **CPU Latency (~5.85s clip)** | Cloud or mobile neural engine dependent | ~638.1 ms (FP32 ONNX CPU) | **592.0 ms (INT8 ONNX CPU, RTF = 0.1013)** |

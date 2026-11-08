@@ -34,6 +34,7 @@ ENV/
 
 # Hackathon Tooling & Audit Scratches
 .bullseye/
+.dsh/
 audit_section.txt
 google_doc_export.*
 commands.md

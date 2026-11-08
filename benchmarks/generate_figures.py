@@ -38,7 +38,7 @@ def generate_figure1_wer_comparison():
 
     categories = [
         "Mild Dysarthria\n(M05, Cerebral Palsy)",
-        "Moderate Dysarthria\n(M04, Post-Trauma TBI)",
+        "Mod-to-Severe Dysarthria\n(M04, Post-Trauma TBI)",
         "Severe Dysarthria\n(M02, ALS)",
         "Mean Across\nHeld-Out Clips"
     ]

@@ -25,7 +25,7 @@ const TORGO_TRIALS: BenchmarkTrial[] = [
     id: "trial-2",
     sampleLabel: "Sample 02",
     speakerId: "M04",
-    condition: "Post-Trauma TBI (Moderate)",
+    condition: "Post-Trauma TBI (Moderate-to-Severe)",
     targetText: "Their house is grey and white",
     audioUrl: "/audio/torgo_moderate_sample.wav",
   },
@@ -51,7 +51,7 @@ interface ClinicalBenchmarkDrawerProps {
  *
  * Etiology Demographics:
  * 1. Sample 01 (M05): Cerebral Palsy, Mild severity.
- * 2. Sample 02 (M04): Post-Trauma Traumatic Brain Injury (TBI), Moderate severity.
+ * 2. Sample 02 (M04): Post-Trauma Traumatic Brain Injury (TBI), Moderate-to-Severe severity.
  * 3. Sample 03 (M02): Amyotrophic Lateral Sclerosis (ALS), Severe severity.
  */
 

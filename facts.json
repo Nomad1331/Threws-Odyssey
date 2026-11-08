@@ -58,7 +58,7 @@
       {
         "clip": "torgo_moderate_sample.wav",
         "speaker": "TORGO-M04",
-        "condition": "Post-Trauma (TBI)",
+        "condition": "Post-Trauma (TBI, Moderate-to-Severe)",
         "durationSec": 5.87,
         "reference": "Their house is grey and white",
         "fp32Output": "then down, great and white",

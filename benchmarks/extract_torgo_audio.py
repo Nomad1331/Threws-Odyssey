@@ -30,7 +30,7 @@ trials = [
     {
         "filename": "torgo_moderate_sample.wav",
         "index": 4087,
-        "severity": "Moderate",
+        "severity": "Moderate-to-Severe",
         "speaker": "TORGO-M04",
         "condition": "Post-Trauma (TBI)",
     },

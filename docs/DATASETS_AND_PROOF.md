@@ -46,7 +46,7 @@ Evaluated on authentic TORGO clinical audio clips using the verified benchmark p
 | Sample File | Speaker & Condition | Duration | Reference Transcript | Baseline Whisper FP32 (WER) | VoiceBridge INT8 CPU (WER) |
 | :--- | :--- | :---: | :--- | :--- | :--- |
 | `torgo_mild_sample.wav` | `TORGO-M05` (Mild, CP) | 5.69 s | *"We have an excellent team"* | *"We have an 8th team"* (20.0%) | *"We have in 18th Team."* (40.0%) |
-| `torgo_moderate_sample.wav` | `TORGO-M04` (Moderate, Post-Trauma TBI) | 5.87 s | *"Their house is grey and white"* | *"then down, great and white"* (66.7%) | *"Good night."* (100.0%) |
+| `torgo_moderate_sample.wav` | `TORGO-M04` (Moderate-to-Severe, Post-Trauma TBI) | 5.87 s | *"Their house is grey and white"* | *"then down, great and white"* (66.7%) | *"Good night."* (100.0%) |
 | `torgo_severe_sample.wav` | `TORGO-M02` (Severe, ALS) | 6.00 s | *"The job provides many benefits"* | *"I'm gonna put my nose in the bed"* (160.0%) | *"I will be very happy."* (100.0%) |
 | **Mean** | **Held-Out Clinical Audio** | **5.85 s** | — | **82.2% Mean WER** | **80.0% Mean WER** |
 

@@ -198,10 +198,11 @@ def render_edge_product(facts: dict) -> str:
             "* Moderate speech is only partially usable: half the words are wrong.",
             "* Severe speech is **not** usable; it is reported as a known limit, not hidden.",
             "* The latency target is missed by a wide margin. This is a CPU-only PyTorch "
-            "implementation of a 243.5M-parameter model; it is not a real-time system.",
+            f"implementation of a {params['totalMillions']}M-parameter model; it is not a "
+            "real-time system.",
             f"* Only {product['accuracy']['sampleCount']} clips from "
-            f"{product['accuracy']['sampleCount']} speakers were measured. These results are "
-            "preliminary and are not a clinical claim.",
+            f"{len({clip['speaker'] for clip in clips})} speakers were measured. These results "
+            "are preliminary and are not a clinical claim.",
             "",
             "### Reproduce",
             "",

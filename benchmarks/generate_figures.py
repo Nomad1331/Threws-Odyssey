@@ -1,227 +1,189 @@
 """
-VoiceBridge Publication Benchmark Figure Generator
-==================================================
-Generates 300 DPI publication figures using authentic telemetry from facts.json
-and docs/EDGE_AI_BENCHMARK_RESULTS.md.
+VoiceBridge publication figures, generated from facts.json.
+
+Every plotted value is read from facts.json (written by benchmark_product.py);
+nothing is typed into this script. Run:
+
+    backend/Scripts/python.exe benchmarks/generate_figures.py
+
+Figure 1: measured word error rate per TORGO severity tier.
+Figure 2: measured latency against the target, and measured footprint.
+
+The old formant-centralisation figure is gone: its coordinates were invented, not
+measured, and an invented chart is worse than no chart.
 """
 
-import os
-import matplotlib.pyplot as plt
+from __future__ import annotations
 
-# Ensure output directory exists
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "benchmarks")
+import json
+import os
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_DIR = os.path.join(REPO_ROOT, "assets", "benchmarks")
+FACTS_PATH = os.path.join(REPO_ROOT, "facts.json")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Set global publication styling (Clinical Assistive Slate theme)
-plt.rcParams.update({
-    "font.family": "sans-serif",
-    "font.sans-serif": ["Segoe UI", "DejaVu Sans", "Helvetica", "Arial"],
-    "figure.facecolor": "#0B1120",
-    "axes.facecolor": "#1E293B",
-    "axes.edgecolor": "#334155",
-    "axes.labelcolor": "#F8FAFC",
-    "xtick.color": "#94A3B8",
-    "ytick.color": "#94A3B8",
-    "grid.color": "#334155",
-    "grid.linestyle": "--",
-    "grid.alpha": 0.6,
-    "text.color": "#F8FAFC",
-    "figure.dpi": 300,
-})
+plt.rcParams.update(
+    {
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Segoe UI", "DejaVu Sans", "Helvetica", "Arial"],
+        "figure.facecolor": "#0B1120",
+        "axes.facecolor": "#1E293B",
+        "axes.edgecolor": "#334155",
+        "axes.labelcolor": "#F8FAFC",
+        "xtick.color": "#94A3B8",
+        "ytick.color": "#94A3B8",
+        "grid.color": "#334155",
+        "grid.linestyle": "--",
+        "grid.alpha": 0.6,
+        "text.color": "#F8FAFC",
+        "figure.dpi": 300,
+    }
+)
 
-def generate_figure1_wer_comparison():
-    """
-    Figure 1: Word Error Rate Comparison Across Clinical Severity Tiers
-    Authentic TORGO evaluation from docs/EDGE_AI_BENCHMARK_RESULTS.md
-    """
+
+def load_facts() -> dict:
+    with open(FACTS_PATH, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def provenance(facts: dict) -> str:
+    product = facts["product"]
+    return (
+        f"Source: facts.json · benchmark_product.py · {facts['_meta']['generatedAt'][:10]} · "
+        f"{product['baseModel']} + LoRA · CPU: {facts['_meta']['host']['cpu']}"
+    )
+
+
+def figure1_wer(facts: dict) -> str:
+    clips = facts["product"]["accuracy"]["clips"]
+    labels = [f"{c['severity']}\n({c['speaker']}, {c['condition'].split('(')[0].strip()})" for c in clips]
+    values = [c["werPct"] for c in clips]
+    mean = facts["product"]["accuracy"]["meanClipWerPct"]
+
     fig, ax = plt.subplots(figsize=(9, 5.5))
+    colors = ["#2DD4BF" if v <= 20 else "#F59E0B" if v <= 70 else "#F43F5E" for v in values]
+    bars = ax.bar(labels, values, color=colors, edgecolor="#334155", linewidth=1.2, width=0.55, zorder=3)
 
-    categories = [
-        "Mild Dysarthria\n(M05, Cerebral Palsy)",
-        "Mod-to-Severe Dysarthria\n(M04, Post-Trauma TBI)",
-        "Severe Dysarthria\n(M02, ALS)",
-        "Mean Across\nHeld-Out Clips"
-    ]
+    for bar, value in zip(bars, values):
+        ax.annotate(
+            f"{value:.1f}%",
+            xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+            xytext=(0, 4),
+            textcoords="offset points",
+            ha="center",
+            va="bottom",
+            fontsize=11,
+            fontweight="bold",
+        )
 
-    baseline_fp32 = [20.0, 66.7, 160.0, 82.2]
-    voicebridge_int8 = [40.0, 100.0, 100.0, 80.0]
+    ax.axhline(100, color="#F43F5E", linestyle=":", linewidth=1.5, zorder=2,
+               label="100% = every reference word wrong")
+    ax.axhline(mean, color="#94A3B8", linestyle="--", linewidth=1.2, zorder=2,
+               label=f"Mean of clips: {mean:.1f}%")
 
-    x = range(len(categories))
-    width = 0.35
-
-    bars1 = ax.bar([i - width/2 for i in x], baseline_fp32, width, label="Baseline Whisper FP32",
-                   color="#F43F5E", edgecolor="#334155", linewidth=1.2, zorder=3)
-    bars2 = ax.bar([i + width/2 for i in x], voicebridge_int8, width, label="Baseline Whisper INT8 (CPU)",
-                   color="#38BDF8", edgecolor="#0284C7", linewidth=1.5, zorder=3)
-
-    # 65% Failure Wall reference line
-    ax.axhline(65, color="#EF4444", linestyle=":", linewidth=2, zorder=2, label="Commercial Failure Wall (>65% WER)")
-
-    # Data labels on bars
-    for bar in bars1:
-        h = bar.get_height()
-        ax.annotate(f"{h:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, h),
-                    xytext=(0, 4), textcoords="offset points", ha="center", va="bottom",
-                    fontsize=9, fontweight="bold", color="#F8FAFC")
-
-    for bar in bars2:
-        h = bar.get_height()
-        ax.annotate(f"{h:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, h),
-                    xytext=(0, 4), textcoords="offset points", ha="center", va="bottom",
-                    fontsize=9, fontweight="bold", color="#2DD4BF")
-
-    ax.set_xticks(list(x))
-    ax.set_xticklabels(categories, fontsize=10)
-    ax.set_ylabel("Word Error Rate (WER %)", fontsize=11, fontweight="bold", labelpad=8)
-    ax.set_title("Word Error Rate Across Clinical Severities (University of Toronto TORGO)\nDemonstrating Foundation Model Acoustic Breakdown on Moderate & Severe Dysarthria",
-                 fontsize=11, fontweight="bold", pad=14)
-    ax.set_ylim(0, 180)
+    ax.set_ylim(0, max(values) * 1.25)
+    ax.set_ylabel("Word Error Rate (%)", fontsize=11, fontweight="bold", labelpad=8)
+    ax.set_title(
+        "Measured Word Error Rate by Severity\n"
+        "whisper-small + LoRA on the three TORGO demo clips",
+        fontsize=12,
+        fontweight="bold",
+        pad=14,
+    )
     ax.grid(axis="y", zorder=0)
     ax.legend(loc="upper left", facecolor="#0B1120", edgecolor="#334155", fontsize=9)
+    fig.text(0.01, 0.01, provenance(facts), fontsize=7, color="#94A3B8")
 
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, "figure1_wer_comparison.png")
-    plt.savefig(output_path, dpi=300)
-    plt.close()
-    print(f"[+] Saved Figure 1: {output_path}")
+    path = os.path.join(OUTPUT_DIR, "figure1_wer_comparison.png")
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    fig.savefig(path, dpi=300)
+    plt.close(fig)
+    return path
 
-def generate_figure2_formant_centralization():
-    """
-    Figure 2: Acoustic Vowel Formant Space (F1 vs F2)
-    Demonstrating vowel space reduction and acoustic formant collapse in dysarthria.
-    """
-    fig, ax = plt.subplots(figsize=(8.5, 6))
 
-    # Corner vowel formant coordinates (F1, F2) in Hz
-    healthy_vowels = {
-        "/i/ (heed)": (280, 2250),
-        "/u/ (who'd)": (310, 870),
-        "/a/ (hod)": (710, 1100),
-        "/æ/ (had)": (660, 1720)
-    }
+def figure2_latency_footprint(facts: dict) -> str:
+    product = facts["product"]
+    latency = product["latency"]
+    memory = product["memory"]
+    storage = product["storage"]
 
-    dysarthric_vowels = {
-        "/i/ (heed)": (390, 1780),
-        "/u/ (who'd)": (420, 1220),
-        "/a/ (hod)": (580, 1290),
-        "/æ/ (had)": (540, 1480)
-    }
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.8))
 
-    # Plot healthy polygon
-    h_f1 = [v[0] for v in healthy_vowels.values()]
-    h_f2 = [v[1] for v in healthy_vowels.values()]
-    h_f1.append(h_f1[0])
-    h_f2.append(h_f2[0])
-
-    ax.plot(h_f2, h_f1, color="#38BDF8", linewidth=2.5, linestyle="-", label="Healthy Control Vowel Space (TORGO)", zorder=3)
-    ax.fill(h_f2, h_f1, color="#38BDF8", alpha=0.15, zorder=2)
-
-    for label, (f1, f2) in healthy_vowels.items():
-        ax.scatter(f2, f1, color="#38BDF8", s=80, edgecolors="#F8FAFC", linewidth=1.5, zorder=4)
-        ax.annotate(label, (f2, f1), xytext=(8, -4), textcoords="offset points", fontsize=9, fontweight="bold", color="#38BDF8")
-
-    # Plot dysarthric collapsed polygon
-    d_f1 = [v[0] for v in dysarthric_vowels.values()]
-    d_f2 = [v[1] for v in dysarthric_vowels.values()]
-    d_f1.append(d_f1[0])
-    d_f2.append(d_f2[0])
-
-    ax.plot(d_f2, d_f1, color="#F43F5E", linewidth=2.5, linestyle="--", label="Dysarthric Collapsed Vowel Space (TORGO Dysarthria)", zorder=3)
-    ax.fill(d_f2, d_f1, color="#F43F5E", alpha=0.25, zorder=2)
-
-    for label, (f1, f2) in dysarthric_vowels.items():
-        ax.scatter(f2, f1, color="#F43F5E", s=80, edgecolors="#F8FAFC", linewidth=1.5, zorder=4)
-        ax.annotate(label, (f2, f1), xytext=(8, 4), textcoords="offset points", fontsize=9, fontweight="bold", color="#F43F5E")
-
-    # Central Neutral Schwa /ə/
-    ax.scatter(1450, 500, color="#F59E0B", s=130, marker="*", edgecolors="#F8FAFC", linewidth=1.5, zorder=5, label="Neutral Schwa /ə/ (Vocal Collapse Point)")
-
-    ax.set_xlim(2500, 700)
-    ax.set_ylim(850, 200)
-
-    ax.set_xlabel("Second Formant Frequency $F_2$ (Hz) [Inverted]", fontsize=11, fontweight="bold", labelpad=8)
-    ax.set_ylabel("First Formant Frequency $F_1$ (Hz) [Inverted]", fontsize=11, fontweight="bold", labelpad=8)
-    ax.set_title("Neuromotor Vowel Centralization ($F_1$ vs $F_2$ Formant Space Collapse)\nRoot Physical Cause of Commercial Speech Recognition Breakdown",
-                 fontsize=11, fontweight="bold", pad=14)
-
-    ax.grid(True, zorder=0)
-    ax.legend(loc="lower left", facecolor="#0B1120", edgecolor="#334155", fontsize=9)
-
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, "figure2_formant_centralization.png")
-    plt.savefig(output_path, dpi=300)
-    plt.close()
-    print(f"[+] Saved Figure 2: {output_path}")
-
-def generate_figure3_latency_vs_footprint():
-    """
-    Figure 3: Edge AI Optimization: Model Footprint & Latency Benchmarks
-    Drawn from verified metrics in facts.json & docs/EDGE_AI_BENCHMARK_RESULTS.md
-    """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.8))
-
-    # Subplot 1: Model Storage & RAM Footprint
-    metrics = ["Model Size\n(Disk)", "Active RAM\nFootprint"]
-    fp32_vals = [151.7, 380.0]
-    int8_vals = [38.9, 103.0]
-
-    x = range(len(metrics))
-    width = 0.35
-
-    b1 = ax1.bar([i - width/2 for i in x], fp32_vals, width, label="FP32 Baseline",
-                 color="#64748B", edgecolor="#334155", linewidth=1.2, zorder=3)
-    b2 = ax1.bar([i + width/2 for i in x], int8_vals, width, label="VoiceBridge INT8 (CPU)",
-                 color="#14B8A6", edgecolor="#2DD4BF", linewidth=1.5, zorder=3)
-
-    for bar in b1:
-        h = bar.get_height()
-        ax1.annotate(f"{h:.1f} MB", xy=(bar.get_x() + bar.get_width() / 2, h),
-                     xytext=(0, 4), textcoords="offset points", ha="center", va="bottom",
-                     fontsize=9, fontweight="bold", color="#F8FAFC")
-
-    for bar in b2:
-        h = bar.get_height()
-        ax1.annotate(f"{h:.1f} MB", xy=(bar.get_x() + bar.get_width() / 2, h),
-                     xytext=(0, 4), textcoords="offset points", ha="center", va="bottom",
-                     fontsize=9, fontweight="bold", color="#2DD4BF")
-
-    ax1.set_xticks(list(x))
-    ax1.set_xticklabels(metrics, fontsize=10)
-    ax1.set_ylabel("Megabytes (MB)", fontsize=11, fontweight="bold", labelpad=8)
-    ax1.set_title("Memory & Storage Compression\n(74.42% Footprint Cut)", fontsize=11, fontweight="bold", pad=12)
-    ax1.set_ylim(0, 450)
-    ax1.grid(axis="y", zorder=0)
-    ax1.legend(loc="upper right", facecolor="#0B1120", edgecolor="#334155", fontsize=9)
-
-    # Subplot 2: Inference Latency on Consumer CPU
-    latency_labels = ["FP32 PyTorch\n(Baseline)", "VoiceBridge INT8\n(~5.85s Audio)", "VoiceBridge INT8\n(1.0s Audio)"]
-    latency_vals = [1480, 592, 409]
-    colors = ["#F43F5E", "#14B8A6", "#2DD4BF"]
-
-    bars = ax2.bar(latency_labels, latency_vals, color=colors, width=0.45,
-                   edgecolor="#334155", linewidth=1.2, zorder=3)
-
-    ax2.axhline(1000, color="#F59E0B", linestyle=":", linewidth=1.5, zorder=2, label="1-Second Barrier")
-
+    # Left: measured latency against the recorded target.
+    bars = ax1.bar(
+        ["Measured mean", "Target"],
+        [latency["meanMs"], latency["targetMs"]],
+        color=["#F43F5E", "#2DD4BF"],
+        edgecolor="#334155",
+        linewidth=1.2,
+        width=0.45,
+        zorder=3,
+    )
     for bar in bars:
-        h = bar.get_height()
-        ax2.annotate(f"{h} ms", xy=(bar.get_x() + bar.get_width() / 2, h),
-                     xytext=(0, 4), textcoords="offset points", ha="center", va="bottom",
-                     fontsize=9, fontweight="bold", color="#F8FAFC")
+        value = bar.get_height()
+        ax1.annotate(
+            f"{value:,.0f} ms",
+            xy=(bar.get_x() + bar.get_width() / 2, value),
+            xytext=(0, 4),
+            textcoords="offset points",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            fontweight="bold",
+        )
+    ax1.set_ylim(0, max(latency["meanMs"], latency["targetMs"]) * 1.25)
+    ax1.set_ylabel("Processing latency (ms)", fontsize=11, fontweight="bold", labelpad=8)
+    ax1.set_title(
+        f"Latency per sentence — {latency['targetStatus']} target\n"
+        f"({latency['meanMs'] / latency['targetMs']:.1f}× the target)",
+        fontsize=11,
+        fontweight="bold",
+        pad=12,
+    )
+    ax1.grid(axis="y", zorder=0)
 
-    ax2.set_ylabel("Processing Latency (ms)", fontsize=11, fontweight="bold", labelpad=8)
-    ax2.set_title("CPU Inference Latency\n(Benchmarked on Intel Core i5)", fontsize=11, fontweight="bold", pad=12)
-    ax2.set_ylim(0, 1800)
+    # Right: what the model costs on disk and in RAM.
+    labels = ["On disk", "RSS delta at load", "Peak RSS"]
+    values = [storage["totalMb"], memory["rssDeltaMb"], memory["peakRssDuringRunMb"]]
+    bars2 = ax2.bar(labels, values, color="#38BDF8", edgecolor="#334155",
+                    linewidth=1.2, width=0.55, zorder=3)
+    for bar, value in zip(bars2, values):
+        ax2.annotate(
+            f"{value:,.1f} MB",
+            xy=(bar.get_x() + bar.get_width() / 2, value),
+            xytext=(0, 4),
+            textcoords="offset points",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+            fontweight="bold",
+        )
+    ax2.set_ylim(0, max(values) * 1.2)
+    ax2.set_ylabel("Megabytes (MB)", fontsize=11, fontweight="bold", labelpad=8)
+    ax2.set_title("Footprint of the shipped model\n(no quantisation)", fontsize=11,
+                  fontweight="bold", pad=12)
     ax2.grid(axis="y", zorder=0)
-    ax2.legend(loc="upper right", facecolor="#0B1120", edgecolor="#334155", fontsize=9)
 
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, "figure3_latency_vs_footprint.png")
-    plt.savefig(output_path, dpi=300)
-    plt.close()
-    print(f"[+] Saved Figure 3: {output_path}")
+    fig.text(0.01, 0.01, provenance(facts), fontsize=7, color="#94A3B8")
+    path = os.path.join(OUTPUT_DIR, "figure3_latency_vs_footprint.png")
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    fig.savefig(path, dpi=300)
+    plt.close(fig)
+    return path
+
+
+def main() -> int:
+    facts = load_facts()
+    for path in (figure1_wer(facts), figure2_latency_footprint(facts)):
+        print(f"[+] wrote {path}")
+    return 0
+
 
 if __name__ == "__main__":
-    generate_figure1_wer_comparison()
-    generate_figure2_formant_centralization()
-    generate_figure3_latency_vs_footprint()
+    raise SystemExit(main())

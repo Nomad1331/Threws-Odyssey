@@ -7,6 +7,30 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.6.0: Phase 5 — Surgical Fixes for the Verified Highs
+
+* **Backend**
+  - `main.py`: client-fixable failures stay 4xx (`ValueError`/FFmpeg decode → 400, over-long audio → 422); everything else returns **500** with a constant message. Raw exception text no longer reaches the client.
+  - `main.py`: the full transcript is no longer written to logs (length and confidence only).
+  - `inference.py`: model load is guarded by a `threading.Lock`, globals are published only after `to(device)`/`eval()`, and `_device` is resolved once at import instead of twice.
+  - `main.py`: CORS now trusts explicit localhost origins only, with `allow_credentials=False`; LAN demos require `VOICEBRIDGE_ALLOWED_ORIGINS`. The private-range regex is gone.
+  - **30-second window enforced:** recordings longer than the model's window return 422 with the limit in the message instead of a silently truncated transcript (measured before: 45 s in → 30.0 s transcribed, HTTP 200).
+  - `test_server.py`: 8 tests — CORS now asserts private-range origins are denied by default, and test 8 asserts a 31 s recording is rejected.
+* **Frontend**
+  - `TactileMicButton`: Space no longer hijacks focused buttons/links/fields; it only starts the mic when nothing interactive has focus.
+  - `page.tsx`: a phrase-card tap clears the previous confidence/latency/source instead of attributing them to a preset.
+  - `page.tsx` + `transcriptionService.ts`: an error response keeps the previous transcript and telemetry; an HTTP error no longer marks the backend "offline"; sample playback validates `res.ok` and the audio content type.
+* **Scripts and figures**
+  - `generate_figures.py`: rewritten to plot only `facts.json` values (WER by severity; latency vs target; disk/RSS). The formant-centralisation figure was **deleted** — its coordinates were invented — and archived outside the repo.
+  - `export_and_quantize_onnx.py`: storage reduction and completion messages are computed from the measured statuses; on Windows/macOS x86_64 it now selects the AVX2 config instead of silently building an ARM64 graph.
+  - `benchmark_product.py`: the WER negative control now uses a deliberately wrong transcript (the old one re-ran an identical pair and could not fail); `--baseline` requires equal clip lists and matching transcripts/parameter counts, with zero guards.
+  - `render_docs.py`: model size and speaker count are derived from `facts.json` instead of hardcoded/reused values.
+* **Regenerated:** `facts.json`, all generated doc blocks, and both figures. Latency moved within tolerance (1,720.1 → 1,671.6 ms mean) after the code changes; WER unchanged.
+* **Verification:** backend 8/8, `npm run build` exit 0, `claims_check.py` exit 0, two benchmark runs reproduce, Figure 1 inspected and matches the table.
+* **Still open (medium, deliberately not fixed now):** claims-check does not scan `SYSTEM_WALKTHROUGH.md` and does not validate `facts.json` provenance; `useAudioRecorder` state guard is still before its first `await`; abort timer ends before the response body is read; `extract_torgo_audio.py` selects rows by index without asserting labels; `QuickAssistGrid` has no minimum gap between the two urgent taps; border contrast is 1.49:1.
+
+---
+
 ## [2026-11-09] - v1.5.0: Phase 4 — Bloat Removal
 
 * **Root before:** 10 markdown files, a 9.4 MB tool checkout (`.bullseye/` with its own `.git`), 2.5 MB of session exports, and an agent-skill copy (`.agents/`). **Root after:** code directories plus `README.md`, `CHANGELOG.md`, `facts.json`.

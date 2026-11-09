@@ -146,10 +146,13 @@ def self_test() -> int:
         ):
             failures.append((ref, hyp, got, want_wer))
 
-    # A check that cannot fail proves nothing: the same metric must reject a
-    # wrong answer, which the first case above would if we swapped the labels.
-    if word_error_rate("We have an excellent team", "We have an excellent team")["werPct"] != 0.0:
-        failures.append(("negative control", "", {}, "0.0"))
+    # A check that cannot fail proves nothing. This pair is wrong on purpose and
+    # must produce a non-zero WER; an identical pair would always pass.
+    wrong = word_error_rate("We have an excellent team", "We have a different team")
+    if wrong["werPct"] != 20.0:
+        failures.append(
+            ("negative control", "", wrong, "20.0 for one substitution in five words")
+        )
 
     for ref, hyp, got, want in failures:
         print(f"FAIL self-test: ref={ref!r} hyp={hyp!r} got={got} want WER {want}")
@@ -423,8 +426,8 @@ def run(args) -> dict:
                 "trainableInThisRun": trainable_params,
                 "trainableNote": (
                     "0 is expected: the server loads the adapter frozen for inference "
-                    "(peft is_trainable=False). adapterPercentOfTotal is the training-time "
-                    "figure the docs quote as '0.72% trainable'."
+                    "(peft is_trainable=False). adapterPercentOfTotal is the share the "
+                    "training docs call 'trainable'."
                 ),
                 "loraAdapters": peft_layers,
             },
@@ -501,21 +504,44 @@ def compare_to_baseline(facts: dict, baseline_path: Path) -> int:
     new = facts["product"]
     problems = []
 
-    for old_clip, new_clip in zip(old["accuracy"]["clips"], new["accuracy"]["clips"]):
+    old_clips = old.get("accuracy", {}).get("clips", [])
+    new_clips = new["accuracy"]["clips"]
+    if len(old_clips) != len(new_clips):
+        problems.append(
+            f"baseline has {len(old_clips)} clips, this run has {len(new_clips)}"
+        )
+    if old.get("parameters", {}).get("total") != new.get("parameters", {}).get("total"):
+        problems.append(
+            f"model parameter count changed: {old.get('parameters', {}).get('total')} -> "
+            f"{new.get('parameters', {}).get('total')}"
+        )
+
+    for old_clip, new_clip in zip(old_clips, new_clips):
+        if old_clip["clip"] != new_clip["clip"]:
+            problems.append(
+                f"clip order changed: {old_clip['clip']} vs {new_clip['clip']}"
+            )
+            continue
         if old_clip["werPct"] != new_clip["werPct"]:
             problems.append(
                 f"{new_clip['clip']}: WER {old_clip['werPct']}% -> {new_clip['werPct']}%"
             )
+        if old_clip["hypothesis"] != new_clip["hypothesis"]:
+            problems.append(f"{new_clip['clip']}: transcript changed")
         old_ms = old_clip["latencyMs"]["mean"]
         new_ms = new_clip["latencyMs"]["mean"]
-        if abs(new_ms - old_ms) / old_ms > 0.30:
+        if old_ms <= 0:
+            problems.append(f"{new_clip['clip']}: baseline latency is not positive")
+        elif abs(new_ms - old_ms) / old_ms > 0.30:
             problems.append(
                 f"{new_clip['clip']}: latency {old_ms} ms -> {new_ms} ms (>30% drift)"
             )
 
     old_rss = old["memory"]["rssDeltaMb"]
     new_rss = new["memory"]["rssDeltaMb"]
-    if abs(new_rss - old_rss) / max(old_rss, 1) > 0.20:
+    if old_rss <= 0:
+        problems.append("baseline RSS delta is not positive")
+    elif abs(new_rss - old_rss) / old_rss > 0.20:
         problems.append(f"RSS delta {old_rss} MB -> {new_rss} MB (>20% drift)")
 
     if problems:

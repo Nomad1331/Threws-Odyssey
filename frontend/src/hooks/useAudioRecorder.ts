@@ -22,11 +22,11 @@ export interface AudioRecorderHook {
  * Architecture & Design Highlights:
  * 1. 16kHz Mono Capture: Captures 1-channel 16,000 Hz audio directly from the browser hardware
  *    layer to match Whisper's expected acoustic sample rate and minimize network payload size.
- * 2. Disabled Noise Suppression: Set to false intentionally because standard browser AGC/noise
- *    suppression algorithms often erroneously discard atypical dysarthric phonations (such as
- *    breathy fricatives and low-energy formant transitions) as ambient noise.
- * 3. Dual-Branch Stream: Feeds into both an AnalyserNode (for 60 FPS live waveform rendering)
- *    and a MediaRecorder (for binary audio chunking).
+ * 2. Raw Capture: browser noise suppression, echo cancellation and automatic gain control are
+ *    all disabled. AGC was observed clipping input (peak 1.0 vs 0.49 source), which changed the
+ *    transcription from "excellent team" to "incident beam"; the model is level-robust.
+ * 3. Dual-Branch Stream: Feeds into both an AnalyserNode (for a live waveform) and a
+ *    MediaRecorder (for binary audio chunking).
  * 4. Resource Hygiene: Guarantees full microphone track termination and AudioContext closure on stop.
  */
 export function useAudioRecorder(): AudioRecorderHook {
@@ -137,9 +137,14 @@ export function useAudioRecorder(): AudioRecorderHook {
         audio: {
           channelCount: 1,
           sampleRate: 16000,
-          echoCancellation: true,
+          // Automatic gain control amplifies quiet speech until it clips; a
+          // clipped recording turned "excellent team" into "incident beam" in
+          // testing. Echo cancellation likewise removes breathy consonants.
+          // Capture the microphone as raw as the browser allows and leave
+          // normalisation to the model, which is robust to low levels.
+          echoCancellation: false,
           noiseSuppression: false,
-          autoGainControl: true,
+          autoGainControl: false,
         },
       });
       mediaStreamRef.current = stream;

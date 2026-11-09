@@ -239,12 +239,21 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       </p>
 
       {recordedAudioUrl && (
-        <audio
-          controls
-          src={recordedAudioUrl}
-          aria-label="Replay your recording"
-          className="mt-4 w-full"
-        />
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <audio
+            controls
+            src={recordedAudioUrl}
+            aria-label="Replay your recording"
+            className="min-w-0 flex-1"
+          />
+          <a
+            href={recordedAudioUrl}
+            download="voicebridge-recording.webm"
+            className="text-xs text-accent underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            Download recording
+          </a>
+        </div>
       )}
 
       {speechError && (

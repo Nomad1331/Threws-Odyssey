@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-10] - v1.20.0: Microphone Capture — Clipping Fixed, Recording Downloadable
+
+* **Found a real capture defect.** A browser-captured take of the clean TORGO clip arrived with **peak 1.0 and RMS 2.7× the source** (source peak 0.49), i.e. the microphone chain was clipping. On that clipped audio the model produced “We have an accident here” instead of “We have an excellent team”. Disabling `autoGainControl` and `echoCancellation` (noise suppression was already off) brought the recorded peak back to **0.502**. The model itself is level-robust: the same clip at 0.01× amplitude still transcribes correctly.
+* **What this does and does not prove.** The fake-microphone test loops its source file, so its transcript cannot validate content — correlation with the source was only 0.33 at the best offset. It is useful for measuring capture level, not for judging accuracy. Clean TTS and the TORGO WAV both transcribe correctly through LoRA **and** the base model, so the adapter is not universally broken.
+* **Added a “Download recording” link** next to the replay player, so a failing live take can be sent for direct analysis instead of described in chat.
+* **Retest required:** the teammate’s screenshots show the pre-v1.19 UI (no confidence note, red TTS error), so they were testing an old build. Pull, rebuild and retest; the AGC change only takes effect in a fresh frontend build.
+* Live microphone accuracy remains **unmeasured**. The 0% WER figure is for the provided TORGO clip, not arbitrary speech.
+
+---
+
 ## [2026-11-10] - v1.19.0: Live-Test Findings — TTS Failure and Confidence Semantics
 
 * **Real-user test exposed a confusing UI failure.** The same mild sentence produced “We have an incident beam” on one live take and the correct sentence on the next. The model is deterministic for identical audio, so the difference is the recording (mic, distance, level, timing), not run-to-run randomness. The documented 0% WER applies to the provided TORGO clip, not to arbitrary live microphone input. README and `LIMITS.md` now say this explicitly.

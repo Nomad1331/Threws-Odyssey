@@ -105,25 +105,46 @@ def run_tests():
         assert safari_resp.status_code == 200, f"Expected 200, got {safari_resp.status_code}"
         print(" [PASS] Safe extension fallback and Safari audio formats validated.")
 
-        # 7. Test CORS preflight and origin isolation (localhost & LAN allowed, untrusted denied)
+        # 7. Test CORS preflight and origin isolation (localhost allowed, LAN/private denied by default)
         print("\n[Test 7] Testing CORS preflight and origin boundaries ...")
         cors_headers = {
-            "Origin": "http://192.168.1.100:3000",
+            "Origin": "http://localhost:3000",
             "Access-Control-Request-Method": "POST",
         }
         cors_resp = client.options("/api/v1/translate-audio", headers=cors_headers)
         assert cors_resp.status_code == 200, f"Expected 200, got {cors_resp.status_code}"
-        assert cors_resp.headers.get("access-control-allow-origin") == "http://192.168.1.100:3000"
+        assert cors_resp.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+        # A private-range origin is not trusted unless explicitly listed in
+        # VOICEBRIDGE_ALLOWED_ORIGINS; the old regex trusted every one of them.
+        lan_headers = {
+            "Origin": "http://192.168.1.100:3000",
+            "Access-Control-Request-Method": "POST",
+        }
+        lan_resp = client.options("/api/v1/translate-audio", headers=lan_headers)
+        assert lan_resp.headers.get("access-control-allow-origin") is None, (
+            "private-range origin must not be allowed by default"
+        )
 
         evil_cors = client.options("/api/v1/translate-audio", headers={
             "Origin": "http://untrusted-domain.com",
             "Access-Control-Request-Method": "POST",
         })
         assert evil_cors.headers.get("access-control-allow-origin") is None
-        print(" [PASS] CORS local & LAN boundary validation verified.")
+        print(" [PASS] CORS origin boundary validated (localhost only by default).")
+
+        # 8. Test over-long audio rejection (HTTP 422, not a silent 30 s truncation)
+        print("\n[Test 8] Testing >30s audio rejection ...")
+        long_wav = generate_test_wav(31.0)
+        long_files = {"file": ("long.wav", long_wav, "audio/wav")}
+        long_resp = client.post("/api/v1/translate-audio", files=long_files)
+        assert long_resp.status_code == 422, f"Expected 422, got {long_resp.status_code}: {long_resp.text}"
+        assert "30" in long_resp.json().get("detail", "")
+        print(f" -> Rejected 31s recording as expected: {long_resp.json()}")
+        print(" [PASS] 30-second input window enforced.")
 
     print("\n" + "=" * 60)
-    print("ALL 7 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
+    print("ALL 8 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
 
 if __name__ == "__main__":

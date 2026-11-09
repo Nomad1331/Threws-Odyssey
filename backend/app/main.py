@@ -26,9 +26,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 try:
-    from app.inference import load_model, transcribe_audio, get_active_engine_name
+    from app.inference import (
+        AudioTooLongError,
+        get_active_engine_name,
+        load_model,
+        transcribe_audio,
+    )
 except ImportError:
-    from backend.app.inference import load_model, transcribe_audio, get_active_engine_name
+    from backend.app.inference import (
+        AudioTooLongError,
+        get_active_engine_name,
+        load_model,
+        transcribe_audio,
+    )
 
 # Whitelist of permissible audio extensions to prevent creating executable suffixes in %TEMP%
 ALLOWED_AUDIO_EXTENSIONS = {".webm", ".wav", ".ogg", ".mp3", ".m4a", ".mp4", ".aac", ".flac"}
@@ -58,18 +68,26 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Middleware: Configured for Next.js frontend on localhost:3000
-# as well as local network IP addresses (allowing tablet/mobile evaluation over LAN).
+# CORS: only the local frontend origins are trusted by default. The browser client
+# does not send cookies, so credentials stay off. For a tablet/mobile demo over LAN,
+# list the exact origins in VOICEBRIDGE_ALLOWED_ORIGINS (comma-separated); do not
+# widen this to "any private-range address".
+_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+_ALLOWED_ORIGINS += [
+    origin.strip()
+    for origin in os.getenv("VOICEBRIDGE_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?",
-    allow_credentials=True,
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -154,7 +172,11 @@ async def translate_audio(file: UploadFile = File(...)):
         full_text, confidence = await asyncio.to_thread(transcribe_audio, temp_path)
 
         elapsed_ms = int(round((time.perf_counter() - start_time) * 1000))
-        logger.info(f"Transcribed '{clean_filename}' in {elapsed_ms}ms -> '{full_text}' (confidence={confidence})")
+        # Do not write the transcript itself (patient speech) to logs.
+        logger.info(
+            f"Transcribed '{clean_filename}' in {elapsed_ms}ms "
+            f"({len(full_text)} chars, confidence={confidence})"
+        )
 
         return TranscriptionResponse(
             transcription=full_text,
@@ -164,17 +186,25 @@ async def translate_audio(file: UploadFile = File(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Inference error during audio transcription: {e}", exc_info=True)
-        # Avoid leaking internal server filesystem paths in API error responses
-        err_msg = str(e)
-        if temp_path:
-            # Handle Cython/C++ repr escaped backslashes (e.g. PyAV on Windows)
-            err_msg = err_msg.replace(temp_path.replace("\\", "\\\\"), clean_filename)
-            err_msg = err_msg.replace(temp_path, clean_filename)
-            err_msg = err_msg.replace(temp_path.replace("\\", "/"), clean_filename)
-            err_msg = err_msg.replace(temp_path.replace("/", "\\"), clean_filename)
-        raise HTTPException(status_code=400, detail=f"Audio processing error: {err_msg}")
+    except AudioTooLongError as e:
+        # The client can fix this: record a shorter phrase.
+        logger.warning(f"Rejected over-long audio: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
+    except ValueError as e:
+        # PyAV/FFmpeg decode failures subclass ValueError: the client sent bad audio.
+        logger.warning(f"Rejected undecodable audio: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail="Audio could not be decoded. Please try a different recording.",
+        )
+    except Exception:
+        # Model, device or memory failure: not the client's fault, and the details
+        # (paths, cache locations, tensor shapes) stay in the server log.
+        logger.exception("Internal inference failure during transcription")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal transcription error. Please try again.",
+        )
     finally:
         # Release Starlette upload spool file descriptor
         await file.close()

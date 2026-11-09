@@ -76,10 +76,10 @@ Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 | :--- | ---: | ---: | :--- |
 | Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
 | Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
-| Memory added when the model loads (RSS) | 1,021.3 MB | — | — |
-| Peak process memory | 1,748.1 MB | — | — |
-| Latency per sentence | 1,720.1 ms mean (1,725.4 ms median, 1,526.5–1,908.2 ms range) | 280 ms | **MISS, 6.1× over** |
-| Real-time factor | 0.294 | below 1.0 | processes faster than playback |
+| Memory added when the model loads (RSS) | 1,020.8 MB | — | — |
+| Peak process memory | 1,744.1 MB | — | — |
+| Latency per sentence | 1,683.5 ms mean (1,645.9 ms median, 1,547.5–1,853.5 ms range) | 280 ms | **MISS, 6.0× over** |
+| Real-time factor | 0.288 | below 1.0 | processes faster than playback |
 
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
@@ -99,7 +99,7 @@ Threws-Odyssey/
 │   │   ├── main.py              # FastAPI microservice endpoints (/health, /api/v1/translate-audio)
 │   │   └── inference.py         # Whisper-Small LoRA clinical acoustic inference engine
 │   ├── requirements.txt         # Production dependencies (FastAPI, PyTorch, Transformers, PEFT)
-│   └── test_server.py           # Automated TestClient verification test suite (7/7 tests)
+│   └── test_server.py           # Automated TestClient verification suite (8/8 tests)
 │
 ├── frontend/
 │   ├── src/
@@ -125,7 +125,7 @@ Threws-Odyssey/
 │   ├── generate_figures.py      # 300 DPI publication chart generator
 │   └── extract_torgo_audio.py   # TORGO parquet sample extraction script
 │
-├── assets/benchmarks/           # 300 DPI publication figures (Figures 1, 2, 3)
+├── assets/benchmarks/           # 300 DPI figures generated from facts.json (accuracy; latency/footprint)
 │
 ├── docs/
 │   ├── SYSTEM_WALKTHROUGH.md        # Complete end-to-end architecture & code tour
@@ -169,7 +169,7 @@ python -m venv .venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Run backend verification suite (7/7 tests)
+# Run backend verification suite (8/8 tests)
 python test_server.py
 
 # Start the FastAPI server

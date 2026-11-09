@@ -73,11 +73,13 @@ STRICT = {
 
 
 def strip_region(text: str, begin: str, end: str) -> str:
+    """Remove a marked region so its content is not scanned as prose."""
     pattern = re.compile(re.escape(begin) + r".*?" + re.escape(end), re.S)
     return pattern.sub("\n", text)
 
 
 def block_body(text: str, name: str) -> str | None:
+    """Return the text between a generated block's markers, or None if absent."""
     begin, end = render_docs.BEGIN.format(name=name), render_docs.END.format(name=name)
     if begin not in text or end not in text:
         return None
@@ -87,6 +89,7 @@ def block_body(text: str, name: str) -> str | None:
 
 
 def normalise(body: str) -> list[str]:
+    """Compare blocks line-by-line while ignoring trailing whitespace and newlines."""
     return [line.rstrip() for line in body.strip("\n").splitlines()]
 
 
@@ -98,6 +101,7 @@ def script_hash() -> str:
 
 
 def main() -> int:
+    """Run provenance, generated-block and retired-number checks."""
     parser = argparse.ArgumentParser(description="Check documented numbers against facts.json")
     parser.add_argument("--facts", default=str(FACTS), help="facts file to validate")
     parser.add_argument(

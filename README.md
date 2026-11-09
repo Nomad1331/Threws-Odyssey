@@ -17,7 +17,7 @@
 Commercial automatic speech recognition (ASR) foundation models achieve high accuracy on normative speech. However, for individuals with **dysarthria**—neuromotor speech impairments caused by Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), or Traumatic Brain Injury (TBI)—standard speech recognition frequently produces unusable output.
 
 Current commercial solutions also face accessibility hurdles:
-- **Cloud Dependency:** Many assistive tools require cloud streaming, posing privacy concerns and failing in offline environments.
+- **Cloud Dependency:** Some assistive tools require cloud streaming, posing privacy concerns and failing in offline environments.
 - **Hardware Barrier:** Running large speech models locally typically demands expensive, power-hungry discrete GPUs.
 - **Physical Usability:** Standard voice apps lack physical accommodations for users with accompanying motor spasticity or tremors.
 
@@ -82,10 +82,10 @@ Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 | :--- | ---: | ---: | :--- |
 | Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
 | Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
-| Memory added when the model loads (RSS) | 1,020.8 MB | — | — |
-| Peak process memory | 1,760.6 MB | — | — |
-| Latency per sentence | 1,770.5 ms mean (1,680.9 ms median, 1,606.5–2,277 ms range) | 280 ms | **MISS, 6.3× over** |
-| Real-time factor | 0.302 | below 1.0 | processing beats playback; the response still takes seconds |
+| Memory added when the model loads (RSS) | 1,020.5 MB | — | — |
+| Peak process memory | 1,759.1 MB | — | — |
+| Latency per sentence | 1,695.3 ms mean (1,656.8 ms median, 1,587.3–1,888.9 ms range) | 280 ms | **MISS, 6.1× over** |
+| Real-time factor | 0.29 | below 1.0 | processing beats playback; the response still takes seconds |
 
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->

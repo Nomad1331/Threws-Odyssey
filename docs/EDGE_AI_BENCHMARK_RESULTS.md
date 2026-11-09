@@ -25,16 +25,16 @@ Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the onl
 * **PyTorch:** 2.15.0+cpu · **Transformers:** 5.22.2 · **PEFT:** 0.21.2 · **Python:** 3.12.9
 * **Model:** openai/whisper-small (243.5M parameters) + Aaliya05/voicebridge LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB total (971.4 MB base + 7.1 MB adapter)
-* **Model load time:** 1,309.8 ms
+* **Model load time:** 1,230.4 ms
 
 ### Accuracy (word error rate)
 
 | Clip | Severity | Condition | Duration | Reference | Model output | WER | S / D / I | Latency |
 | :--- | :--- | :--- | ---: | :--- | :--- | ---: | :---: | ---: |
-| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,659.4 ms |
-| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 3 / 0 / 0 | 1,643.6 ms |
-| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 4 / 0 / 2 | 2,008.4 ms |
-| **Totals** | **3 clips** |  |  |  |  | **mean 56.7%** |  | **1,770.5 ms** |
+| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,619.1 ms |
+| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 3 / 0 / 0 | 1,658.5 ms |
+| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 4 / 0 / 2 | 1,808.4 ms |
+| **Totals** | **3 clips** |  |  |  |  | **mean 56.7%** |  | **1,695.3 ms** |
 
 * **Mean of clip WERs:** 56.7%
 * **Corpus WER (all edits ÷ all reference words):** 56.2%
@@ -43,17 +43,17 @@ Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the onl
 ### Latency
 
 * **Protocol:** 2 warm-up runs per clip, then 5 timed runs.
-* **Mean:** 1,770.5 ms · **median:** 1,680.9 ms · **range:** 1,606.5–2,277 ms
-* **Real-time factor:** 0.302
-* **Target:** 280 ms → **MISS** (6.3× the target)
+* **Mean:** 1,695.3 ms · **median:** 1,656.8 ms · **range:** 1,587.3–1,888.9 ms
+* **Real-time factor:** 0.29
+* **Target:** 280 ms → **MISS** (6.1× the target)
 * **Measurement point:** wall time around inference.transcribe_audio, including audio decode
 
 ### Memory
 
-* **RSS before model load:** 377.5 MB
-* **RSS after model load:** 1,398.3 MB
-* **RSS delta:** **1,020.8 MB**
-* **Peak RSS during timed runs:** 1,760.6 MB
+* **RSS before model load:** 376.9 MB
+* **RSS after model load:** 1,397.4 MB
+* **RSS delta:** **1,020.5 MB**
+* **Peak RSS during timed runs:** 1,759.1 MB
 * **Peak working set (OS counter):** 1,763.7 MB
 
 ### Interpretation

@@ -10,7 +10,7 @@
 
 Automated Speech Recognition (ASR) foundation models achieve exceptional accuracy (<4% Word Error Rate) on fluent, normative speech. However, for individuals living with neuromotor speech disorders (dysarthria arising from Cerebral Palsy, ALS, Parkinson’s, or Traumatic Brain Injury), standard acoustic models collapse:
 
-* **The Acoustic Failure Wall:** Zero-shot foundation models (such as `openai/whisper-tiny`) break down on moderate-to-severe dysarthria. Vowel formant centralization collapses vowel contrast toward a neutral schwa (`/ə/`), while attenuated stop-consonant burst releases are discarded as background noise.
+* **The Acoustic Failure Wall:** Zero-shot foundation models (such as `openai/whisper-tiny`) break down on moderate-to-severe dysarthria. Vowel formant centralization (a commonly reported acoustic pattern, not measured in this project) collapses vowel contrast toward a neutral schwa (`/ə/`), while attenuated stop-consonant burst releases are discarded as background noise.
 * **The Research Reality:** Uncontrolled, real-world dysarthric speech across diverse speakers remains one of the hardest open problems in speech science. Even in controlled laboratory settings (such as the University of Toronto TORGO archive, recorded with head-mounted directional microphones), speaker-independent generalization is a steep hurdle.
 * **VoiceBridge's Focus:** VoiceBridge does not claim to have magically solved severe dysarthria zero-shot across unseen speakers without calibration. Rather, VoiceBridge presents an **open-source, parameter-efficient edge engineering architecture**:
   1. Parameter-Efficient Fine-Tuning: Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on `whisper-small` (243.5M parameters) to recover collapsed phoneme contrasts without catastrophic forgetting.
@@ -21,22 +21,22 @@ Automated Speech Recognition (ASR) foundation models achieve exceptional accurac
 
 ## 2. The Assistive Speech Research Ecosystem
 
-Unlike generic voice assistants, several dedicated academic and industry research initiatives focus specifically on atypical and impaired speech:
+Unlike generic voice assistants, several dedicated academic and industry research initiatives focus specifically on atypical and impaired speech. The descriptions below summarise each project's public page (linked where available); we have **not** independently benchmarked any of these systems.
 
 ### 2.1 Existing Academic & Industry Initiatives
 
 * **Project Euphonia (Google Research):**
   * *Focus:* Research initiative collecting thousands of hours of disordered speech from individuals with ALS, Cerebral Palsy, and stroke to train personalized speech models.
-  * *Key Finding:* Confirmed that severe dysarthria exhibits extreme idiosyncratic speaker variance; personalized, speaker-dependent fine-tuning is required for high clinical intelligibility.
+  * *Reported finding:* severe dysarthria exhibits extreme idiosyncratic speaker variance; personalized, speaker-dependent fine-tuning is needed for high intelligibility.
   * *Official Link:* [https://sites.research.google/euphonia/](https://sites.research.google/euphonia/)
 
 * **Project Relate (Google):**
   * *Focus:* Android application enabling individuals with non-standard speech to record custom training phrases on their personal device to train a personalized acoustic model.
-  * *Key Finding:* Provides customizable listening, repeating, and assistant modes for everyday communication.
+  * *Reported focus:* Provides customizable listening, repeating, and assistant modes for everyday communication.
 
 * **The Speech Accessibility Project (SAP):**
   * *Focus:* Major research consortium led by the University of Illinois Urbana-Champaign (UIUC) alongside Google, Apple, Amazon, Microsoft, and the Davis Phinney Foundation.
-  * *Key Finding:* Creating large-scale, de-identified datasets of impaired speech (Parkinson's, ALS, CP, Down syndrome) for researchers under licensed terms to address the scarcity of clinical training data.
+  * *Reported focus:* Creating large-scale, de-identified datasets of impaired speech (Parkinson's, ALS, CP, Down syndrome) for researchers under licensed terms to address the scarcity of clinical training data.
   * *Official Link:* [https://speechaccessibilityproject.org/](https://speechaccessibilityproject.org/)
 
 * **Voiceitt:**
@@ -84,8 +84,8 @@ All metrics below come from `facts.json`, written by `benchmarks/benchmark_produ
 * **Host:** Intel(R) Core(TM) i5-14400F (10 cores), Windows 11 (10.0.26300), CPU-only
 * **Model:** openai/whisper-small (243.5M parameters) + LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB (971.4 MB base + 7.1 MB adapter)
-* **Memory:** 1,020.8 MB RSS delta at load; 1,760.6 MB peak
-* **Latency:** 1,770.5 ms mean per sentence (RTF 0.302); target 280 ms → **MISS**
+* **Memory:** 1,020.5 MB RSS delta at load; 1,759.1 MB peak
+* **Latency:** 1,695.3 ms mean per sentence (RTF 0.29); target 280 ms → **MISS**
 * **Accuracy:**
   * TORGO-M05 (Cerebral Palsy): **0.0% WER** — “We have an excellent team” → “We have an excellent team”
   * TORGO-M04 (Post-Trauma (TBI)): **50.0% WER** — “Their house is grey and white” → “then there's the grey and white”
@@ -97,7 +97,7 @@ All metrics below come from `facts.json`, written by `benchmarks/benchmark_produ
 
 ## 6. Strategic Jury Defense: Handling Difficult Questions
 
-| Juror Question | Verified Academic Answer |
+| Juror Question | Answer (linked sources; competitor claims not independently tested) |
 | :--- | :--- |
 | **"Why is your Word Error Rate 50% on moderate speech? Isn't that high?"** | *"Yes, and the severe clip is worse still. That is the honest result: the system fixes mild dysarthric speech and only partially handles moderate speech. We report per-severity WER in `facts.json` instead of hiding it behind a blended average. Our contribution is a working CPU-only open pipeline plus the measurement that shows exactly where it stops working; we do not claim that speaker-independent severe dysarthria is solved."* |
 | **"Why did you compare with Sarvam AI earlier?"** | *"That was an early conceptual mistake in our drafts. Sarvam AI and AI4Bharat's IndicWhisper are excellent platforms for normative Indian languages, but they do not focus on clinical dysarthria, and our current evaluation is English-only on TORGO. We have removed that comparison. Our real comparative context is atypical speech research like Google Project Euphonia and the Speech Accessibility Project."* |

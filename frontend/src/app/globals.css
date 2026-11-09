@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * VoiceBridge palette.
+ *
+ * One light palette, defined as variables so components never hardcode hex
+ * values. `--text-primary` on `--surface` is roughly 16:1 and
+ * `--text-secondary` roughly 8:1; `--border` was darkened from #d4d4d0 to pass
+ * the 3:1 non-text contrast guideline against the white surface.
+ *
+ * `--pain-*` is a separate red scale so urgent AAC phrases stay visually
+ * distinct without reusing the accent colour (which means "interactive" here).
+ */
 :root {
   --canvas: #f5f5f2;
   --surface: #ffffff;
@@ -26,14 +37,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Accessible High-Contrast Focus Ring for Motor Tremor Accessibility */
+/*
+ * Global focus ring. Users with tremor or switch access need a target that is
+ * visible without relying on hover; `:focus-visible` keeps it off for mouse
+ * clicks but on for keyboard and switch navigation.
+ */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: 6px;
 }
 
-/* Custom Discreet Hardware Scrollbars */
+/* Thin scrollbars keep the transcript and AAC panels from jumping on overflow. */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;

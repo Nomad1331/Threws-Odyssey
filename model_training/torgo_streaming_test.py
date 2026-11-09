@@ -16,6 +16,7 @@ import evaluate
 
 
 def run_torgo_baseline():
+    """Stream three TORGO items, transcribe with whisper-tiny, print WER only."""
     print("=" * 60)
     print("  TORGO DYSARTHRIC SPEECH BENCHMARK (STREAMING PIPELINE)")
     print("=" * 60)
@@ -40,6 +41,8 @@ def run_torgo_baseline():
     references = []
     predictions = []
 
+    # Stream only the first three items: this is a smoke check, not a corpus
+    # benchmark. No shuffle is applied, so results depend on shard order.
     for i, item in enumerate(dataset.take(3)):
         audio_array = item["audio"]["array"]
         sampling_rate = item["audio"]["sampling_rate"]

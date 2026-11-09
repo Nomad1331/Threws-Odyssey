@@ -65,7 +65,7 @@ PARAM_TOLERANCE = 0.01
 # Word error rate
 # --------------------------------------------------------------------------- #
 def normalize(text: str) -> list[str]:
-    """Lowercase, drop punctuation, collapse whitespace."""
+    """Lowercase, drop punctuation and split into words for WER scoring."""
     text = text.lower().replace("\u2019", "'")
     text = re.sub(r"[^\w\s']", " ", text)
     return text.split()
@@ -110,6 +110,7 @@ def edit_counts(reference: list[str], hypothesis: list[str]) -> tuple[int, int, 
 
 
 def word_error_rate(reference: str, hypothesis: str) -> dict:
+    """Return WER percentage plus substitution/deletion/insertion counts."""
     ref, hyp = normalize(reference), normalize(hypothesis)
     subs, dels, ins = edit_counts(ref, hyp)
     errors = subs + dels + ins
@@ -165,6 +166,7 @@ def self_test() -> int:
 # Host / provenance
 # --------------------------------------------------------------------------- #
 def cpu_name() -> str:
+    """Best-effort human-readable CPU name (registry on Windows, else platform)."""
     if platform.system() == "Windows":
         try:
             import winreg
@@ -180,6 +182,7 @@ def cpu_name() -> str:
 
 
 def host_info() -> dict:
+    """Machine facts that make the measurement reproducible (CPU, RAM, OS)."""
     freq = None
     try:
         f = psutil.cpu_freq()
@@ -200,6 +203,7 @@ def host_info() -> dict:
 
 
 def library_versions() -> dict:
+    """Record the exact runtime versions the numbers belong to."""
     import torch
     import transformers
 
@@ -218,10 +222,12 @@ def library_versions() -> dict:
 
 
 def file_sha256(relative_path: str) -> str:
+    """Short hash of a source file, used to prove facts.json matches the code."""
     return hashlib.sha256((REPO_ROOT / relative_path).read_bytes()).hexdigest()[:16]
 
 
 def script_sha256() -> str:
+    """Hash of this script, stored in facts.json for provenance checks."""
     return file_sha256("benchmarks/benchmark_product.py")
 
 
@@ -242,16 +248,19 @@ def cache_size(repo_id: str) -> int | None:
 # Measurement
 # --------------------------------------------------------------------------- #
 def rss_mb() -> float:
+    """Current process resident set size in decimal megabytes."""
     return round(psutil.Process().memory_info().rss / 1e6, 1)
 
 
 def peak_working_set_mb() -> float | None:
+    """OS-reported peak working set (Windows), or None elsewhere."""
     info = psutil.Process().memory_info()
     peak = getattr(info, "peak_wset", None)  # Windows only
     return round(peak / 1e6, 1) if peak else None
 
 
 def audio_duration_sec(path: Path) -> float:
+    """Duration via soundfile, falling back to the product's PyAV decoder."""
     try:
         import soundfile
 
@@ -266,6 +275,7 @@ def audio_duration_sec(path: Path) -> float:
 
 
 def run(args) -> dict:
+    """Measure the loaded product engine and return the facts document."""
     import logging
 
     logging.getLogger("transformers").setLevel(logging.ERROR)
@@ -336,6 +346,7 @@ def run(args) -> dict:
     sampled_peak = {"rss": rss_after}
 
     def _sample_rss() -> None:
+        """Background sampler: records the highest RSS seen during the runs."""
         while not stop_sampler.wait(0.05):
             try:
                 sampled_peak["rss"] = max(sampled_peak["rss"], rss_mb())
@@ -591,6 +602,7 @@ def compare_to_baseline(facts: dict, baseline_path: Path) -> int:
 # CLI
 # --------------------------------------------------------------------------- #
 def main() -> int:
+    """Parse flags, measure, write facts.json and optionally compare to a baseline."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default=str(REPO_ROOT / "facts.json"))
     parser.add_argument("--clips-dir", default=str(REPO_ROOT / "frontend" / "public" / "audio"))

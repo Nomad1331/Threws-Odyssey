@@ -90,13 +90,13 @@ Here is exactly what happens in memory and across the network from the moment th
 
 ### Step 5: Backend Inference
 * In `backend/app/main.py`, FastAPI receives the upload as an `UploadFile`.
-* It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so PyAV can stream the audio cleanly without memory leaks.
+* It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so PyAV can open it as a normal file (PyAV does not accept an in-memory upload handle directly).
 * It calls `transcribe_audio(temp_path)` in `backend/app/inference.py`:
   * Native PyAV audio decoding converts `.webm`, `.wav`, `.mp4`, `.aac`, `.ogg` directly to 16,000 Hz mono float32. Decoding time is included in the end-to-end latency published in `facts.json`.
   * The fine-tuned Clinical LoRA model (`openai/whisper-small` + `Aaliya05/voicebridge`) performs acoustic reconstruction.
   * Token-level softmax probabilities are calculated across step logits to generate authentic confidence scores.
 * The backend computes elapsed time and returns a validated Pydantic JSON response with `transcription` (string), `confidence_score` (float in [0, 1] or null) and `processing_time_ms` (int).
-* In the `finally` block, `os.unlink(temp_path)` guarantees the temporary file is deleted from disk.
+* In the `finally` block, `os.unlink(temp_path)` removes the temporary file; if deletion fails (for example, the file is locked), the failure is logged rather than silently ignored.
 
 ### Step 6: UI Display & Text-to-Speech Playback
 * `page.tsx` receives the JSON payload and updates React state:
@@ -128,7 +128,7 @@ Here is exactly what happens in memory and across the network from the moment th
 | **`components/TranscriptDisplay.tsx`** | Displays reconstructed text, live waveform canvas, confidence/latency telemetry, and the "Say it" browser text-to-speech button. |
 | **`components/QuickAssistGrid.tsx`** | 5 high-frequency assistive phrase buttons (Water, Caregiver, Yes, No, Pain Alert) with a 2-step confirmation window on Pain Alert. |
 | **`components/ClinicalBenchmarkDrawer.tsx`** | Collapsible evaluation archive allowing users and judges to listen to authentic University of Toronto TORGO dysarthria audio clips (M05, M04, M02). |
-| **`components/AudioWaveformCanvas.tsx`** | High-DPI HTML5 Canvas 2D component rendering real-time 48-bar audio frequency/waveform visualizations. |
+| **`components/AudioWaveformCanvas.tsx`** | High-DPI HTML5 Canvas 2D component rendering a live 48-bar time-domain amplitude waveform. |
 
 ### Project Root & Documentation
 | File | Responsibility |

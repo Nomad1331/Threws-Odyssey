@@ -12,6 +12,9 @@ export interface BenchmarkTrial {
   audioUrl: string;
 }
 
+// Fixed demo metadata. Keep these three entries aligned with
+// backend/evaluate_samples.py and facts.json; the benchmark uses the same
+// references, so a change here without changing those would break traceability.
 const TORGO_TRIALS: BenchmarkTrial[] = [
   {
     id: "trial-1",
@@ -67,6 +70,8 @@ export const ClinicalBenchmarkDrawer: React.FC<ClinicalBenchmarkDrawerProps> = (
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // One reusable Audio element for all trials: creating a new one per click
+    // leaks decoders in some browsers. The cleanup releases the source too.
     const audio = new Audio();
     audioPlayerRef.current = audio;
 

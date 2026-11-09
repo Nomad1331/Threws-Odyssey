@@ -17,8 +17,13 @@ from faster_whisper import WhisperModel
 
 
 def words(text: str) -> list[str]:
+    """Lowercase, strip punctuation and split, for tolerant transcript comparison."""
     return re.sub(r"[^a-z0-9\s]", "", text.lower()).split()
 
+
+# The parquet shard lives in the Hugging Face datasets cache. The glob picks the
+# current snapshot; the fallback hash is the snapshot this project used, so the
+# script still works if the cache has no `refs/main` entry.
 cache_pattern = os.path.expanduser(
     r"~/.cache/huggingface/hub/datasets--abnerh--TORGO-database/snapshots/*/data/train-00002-of-00004.parquet"
 )
@@ -31,6 +36,9 @@ OUTPUT_DIR = os.path.join(ROOT_DIR, "frontend", "public", "audio")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 table = pq.read_table(PARQUET_PATH)
+# Three columns are enough: audio bytes, the reference transcript, and duration.
+# Speaker/severity labels are not in this shard, so they are asserted indirectly
+# through the expected transcript for each fixed row index.
 audio_col = table["audio"]
 transcriptions = table["transcription"].to_pylist()
 durations = table["duration"].to_pylist()
@@ -74,6 +82,8 @@ for t in trials:
     item = audio_col[idx].as_py()
     raw_bytes = item["bytes"]
     actual = transcriptions[idx]
+    # Guard against a reordered shard: writing the wrong audio under a demo
+    # label would silently corrupt both the UI and the WER reference.
     if words(actual) != words(t["expect"]):
         raise SystemExit(
             f"Row {idx} is '{actual}', expected '{t['expect']}'. "

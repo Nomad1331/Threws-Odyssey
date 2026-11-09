@@ -12,6 +12,20 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.17.0: Documentation Claims and Comment Coverage
+
+* **Removed the last overstated doc lines:**
+  - `SYSTEM_WALKTHROUGH` said the temp file is “guaranteed” deleted; it is attempted and failure is logged.
+  - It also claimed PyAV “streams the audio cleanly without memory leaks”; it opens a temp file, and no leak claim was measured.
+  - The waveform was called “frequency” visualisation; it renders a time-domain amplitude buffer.
+  - `COMPETITIVE_ANALYSIS` now labels competitor descriptions as summaries of their public pages, explicitly **not independently benchmarked**, and “Verified Academic Answer” became “Answer (linked sources; competitor claims not independently tested)”.
+  - “Many assistive tools” → “Some”; the formant-centralisation mechanism is marked as background, not measured here.
+* **Comment coverage, measured:** every Python module and every function outside `node_modules` now has a docstring (`0` missing), and every frontend `.ts`/`.tsx`/`.css`/config file has comments (`0` without). Added explanations to `next.config`, `postcss.config`, Tailwind theme, the CSS palette/contrast/focus rules, TORGO extraction, figure generation, doc rendering, the claims checker, benchmark helpers and the training scripts. No logic changed.
+* **The provenance gate caught the comment-only edits** to `benchmark_product.py` / `evaluate_samples.py` and forced a fresh measurement — correct, if strict, behaviour. Facts/docs/figures regenerated; WER unchanged.
+* **Verification:** 12/12 tests, build, lint, claims + three-source provenance.
+
+---
+
 ## [2026-11-09] - v1.16.0: PyAV 19 and Browser Format Verification
 
 * **PyAV 19 tested directly.** Installed `av==19.0.0` in an isolated venv. It rejects `av.open(..., metadata_errors="ignore")` with `TypeError: open() got an unexpected keyword argument 'metadata_errors'` — the exact failure Aaliya reported. The new product decoder has no such argument and decoded both the WAV and WebM/Opus probes under PyAV 19 with identical sample counts (91,040 and 91,024) to PyAV 13.

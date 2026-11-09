@@ -25,6 +25,7 @@ END = "<!-- END:generated:{name} -->"
 
 
 def _pct(value: float) -> str:
+    """Format a WER value with exactly one decimal and a percent sign."""
     return f"{value:.1f}%"
 
 
@@ -36,6 +37,7 @@ def _num(value: float | None) -> str:
 
 
 def render_readme_accuracy(facts: dict) -> str:
+    """Markdown table: per-clip reference, output, WER and the two aggregates."""
     product = facts["product"]
     clips = product["accuracy"]["clips"]
     rows = []
@@ -65,6 +67,7 @@ def render_readme_accuracy(facts: dict) -> str:
 
 
 def render_readme_performance(facts: dict) -> str:
+    """Markdown table: model identity, disk, memory, latency and RTF."""
     product = facts["product"]
     latency = product["latency"]
     memory = product["memory"]
@@ -107,6 +110,7 @@ def render_readme_performance(facts: dict) -> str:
 
 
 def render_edge_product(facts: dict) -> str:
+    """Full product section of the benchmark doc: environment, accuracy, latency, memory."""
     product = facts["product"]
     clips = product["accuracy"]["clips"]
     latency = product["latency"]
@@ -218,6 +222,7 @@ def render_edge_product(facts: dict) -> str:
 
 
 def render_competitive_telemetry(facts: dict) -> str:
+    """Compact telemetry block used by the competitive-analysis document."""
     product = facts["product"]
     host = facts["_meta"]["host"]
     latency = product["latency"]
@@ -253,6 +258,7 @@ def render_competitive_telemetry(facts: dict) -> str:
 
 
 def render_datasets_accuracy(facts: dict) -> str:
+    """Per-clip accuracy table for the dataset/provenance document."""
     clips = facts["product"]["accuracy"]["clips"]
     rows = []
     for clip in clips:
@@ -274,6 +280,7 @@ def render_datasets_accuracy(facts: dict) -> str:
 
 
 def render_limits(facts: dict) -> str:
+    """The measured facts a reader needs before trusting the claim scope."""
     product = facts["product"]
     latency = product["latency"]
     memory = product["memory"]
@@ -323,6 +330,7 @@ TARGETS = {
 
 
 def replace_block(text: str, name: str, body: str) -> str:
+    """Swap the content between a pair of BEGIN/END markers, preserving the rest."""
     begin, end = BEGIN.format(name=name), END.format(name=name)
     pattern = re.compile(re.escape(begin) + r".*?" + re.escape(end), re.S)
     if not pattern.search(text):
@@ -332,6 +340,7 @@ def replace_block(text: str, name: str, body: str) -> str:
 
 
 def main() -> int:
+    """Render every registered block into its target document."""
     facts = json.loads(FACTS.read_text(encoding="utf-8"))
     for path, names in TARGETS.items():
         text = path.read_text(encoding="utf-8")

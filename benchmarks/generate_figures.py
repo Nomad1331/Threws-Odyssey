@@ -48,11 +48,13 @@ plt.rcParams.update(
 
 
 def load_facts() -> dict:
+    """Read the single source of truth that every plotted value comes from."""
     with open(FACTS_PATH, "r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
 def provenance(facts: dict) -> str:
+    """Footer line proving which run and machine produced the chart."""
     product = facts["product"]
     return (
         f"Source: facts.json · benchmark_product.py · {facts['_meta']['generatedAt'][:10]} · "
@@ -61,6 +63,7 @@ def provenance(facts: dict) -> str:
 
 
 def figure1_wer(facts: dict) -> str:
+    """Bar chart of measured WER per severity tier, with the 100% line and mean."""
     clips = facts["product"]["accuracy"]["clips"]
     labels = [f"{c['severity']}\n({c['speaker']}, {c['condition'].split('(')[0].strip()})" for c in clips]
     values = [c["werPct"] for c in clips]
@@ -108,6 +111,7 @@ def figure1_wer(facts: dict) -> str:
 
 
 def figure2_latency_footprint(facts: dict) -> str:
+    """Two panels: measured latency vs target, and measured disk/RSS footprint."""
     product = facts["product"]
     latency = product["latency"]
     memory = product["memory"]
@@ -179,6 +183,7 @@ def figure2_latency_footprint(facts: dict) -> str:
 
 
 def main() -> int:
+    """Render both figures; returns a shell exit code."""
     facts = load_facts()
     for path in (figure1_wer(facts), figure2_latency_footprint(facts)):
         print(f"[+] wrote {path}")

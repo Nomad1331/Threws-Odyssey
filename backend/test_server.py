@@ -1,3 +1,13 @@
+"""Backend verification suite for VoiceBridge.
+
+Runs the FastAPI app with TestClient (no live server/port needed) and checks the
+contract a browser depends on: health, transcription of WAV and WebM, the 30 s
+window, size/empty/corrupt rejection, silence handling, 500 mapping and CORS.
+
+Run from the backend directory:
+    python test_server.py
+"""
+
 import sys
 import os
 import io
@@ -74,6 +84,7 @@ def wav_file_to_webm(wav_path: str) -> bytes:
             os.unlink(tmp_path)
 
 def run_tests():
+    """Run every backend check in order; raises AssertionError on a regression."""
     print("=" * 60)
     print("VOICEBRIDGE FASTAPI BACKEND: FULL TEST SUITE VERIFICATION")
     print("=" * 60)
@@ -191,6 +202,7 @@ def run_tests():
         original_transcribe = main_module.transcribe_audio
 
         def failing_transcribe(_path):
+            """Stand-in for the engine: raises so the endpoint must map to 500."""
             raise RuntimeError("simulated failure at C:\\secret\\model.bin")
 
         main_module.transcribe_audio = failing_transcribe

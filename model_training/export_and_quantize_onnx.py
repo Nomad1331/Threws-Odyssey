@@ -629,6 +629,7 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
 
 
 def main():
+    """Run merge → ONNX export → INT8 quantization → benchmark, end to end."""
     versions = check_dependencies()
     logger.info(
         "Environment verified: "

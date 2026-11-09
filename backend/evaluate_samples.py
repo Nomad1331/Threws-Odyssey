@@ -20,6 +20,9 @@ from app.inference import load_model, transcribe_audio, get_active_engine_name
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AUDIO_DIR = os.path.join(REPO_ROOT, "frontend", "public", "audio")
 
+# The single source of demo metadata. The frontend drawer and this list must
+# describe the same clips; the benchmark imports SAMPLES from here so its WER
+# references cannot drift from what the demo plays.
 SAMPLES = [
     {
         "file": "torgo_mild_sample.wav",
@@ -46,10 +49,13 @@ SAMPLES = [
 
 
 def run_evaluation():
+    """Transcribe each demo clip once and print reference, output and latency."""
     print("=" * 70)
     print("VOICEBRIDGE LIVE CLINICAL MODEL EVALUATION")
     print("=" * 70)
     print(f"Active Engine: {get_active_engine_name()}")
+    # Load once, outside the loop: the first call is dominated by model load,
+    # so including it would make clip 1 look much slower than the rest.
     print("Pre-warming clinical LoRA model in memory...")
 
     t0 = time.perf_counter()
@@ -60,6 +66,8 @@ def run_evaluation():
     evaluated = 0
     for i, s in enumerate(SAMPLES, 1):
         path = os.path.join(AUDIO_DIR, s["file"])
+        # A missing clip is a setup problem, not a model result: skip it, but
+        # fail the run below if nothing was actually evaluated.
         if not os.path.exists(path):
             print(f"[{i}/3] Skipping {s['file']} (file not found)")
             continue

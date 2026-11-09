@@ -5,14 +5,14 @@
     "track": "Human-AI & Assistive Technology",
     "team": "Sleeper Cells",
     "institution": "SIES Graduate School of Technology",
-    "generatedAt": "2026-11-09T15:05:53+00:00",
+    "generatedAt": "2026-11-09T15:24:34+00:00",
     "generatedBy": "python benchmarks/benchmark_product.py",
     "script": "benchmarks/benchmark_product.py",
-    "scriptSha256": "52ee3b6301c506de",
+    "scriptSha256": "032526a87aad88e5",
     "sourceHashes": {
-      "benchmarks/benchmark_product.py": "52ee3b6301c506de",
+      "benchmarks/benchmark_product.py": "032526a87aad88e5",
       "backend/app/inference.py": "680aef9c0338098e",
-      "backend/evaluate_samples.py": "a662a25e585e5056"
+      "backend/evaluate_samples.py": "8f20e8beaa0799db"
     },
     "host": {
       "cpu": "Intel(R) Core(TM) i5-14400F",
@@ -60,7 +60,7 @@
       "totalMb": 978.5,
       "definition": "megabytes = 10^6 bytes, as reported by the Hugging Face cache index"
     },
-    "modelLoadMs": 1309.8,
+    "modelLoadMs": 1230.4,
     "accuracy": {
       "referenceSource": "backend/evaluate_samples.py:SAMPLES (same sentences the demo page shows)",
       "metric": "word error rate after lowercasing and stripping punctuation; (S+D+I)/reference words",
@@ -86,16 +86,16 @@
           "errors": 0,
           "latencyMs": {
             "runs": [
-              1716.7,
-              1606.5,
-              1608.9,
-              1688.1,
-              1676.9
+              1587.3,
+              1594.5,
+              1618.5,
+              1638.3,
+              1656.8
             ],
-            "mean": 1659.4,
-            "median": 1676.9,
-            "min": 1606.5,
-            "max": 1716.7
+            "mean": 1619.1,
+            "median": 1618.5,
+            "min": 1587.3,
+            "max": 1656.8
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -117,16 +117,16 @@
           "errors": 3,
           "latencyMs": {
             "runs": [
-              1680.9,
-              1625.7,
-              1667.0,
-              1629.8,
-              1614.8
+              1645.2,
+              1656.2,
+              1679.6,
+              1653.8,
+              1657.5
             ],
-            "mean": 1643.6,
-            "median": 1629.8,
-            "min": 1614.8,
-            "max": 1680.9
+            "mean": 1658.5,
+            "median": 1656.2,
+            "min": 1645.2,
+            "max": 1679.6
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -148,16 +148,16 @@
           "errors": 6,
           "latencyMs": {
             "runs": [
-              1981.3,
-              1955.0,
-              2277.0,
-              1931.7,
-              1896.8
+              1822.4,
+              1757.5,
+              1740.8,
+              1888.9,
+              1832.6
             ],
-            "mean": 2008.4,
-            "median": 1955.0,
-            "min": 1896.8,
-            "max": 2277.0
+            "mean": 1808.4,
+            "median": 1822.4,
+            "min": 1740.8,
+            "max": 1888.9
           },
           "outputsIdenticalAcrossRuns": true
         }
@@ -166,11 +166,11 @@
     "latency": {
       "warmupRunsPerClip": 2,
       "timedRunsPerClip": 5,
-      "meanMs": 1770.5,
-      "medianMs": 1680.9,
-      "minMs": 1606.5,
-      "maxMs": 2277.0,
-      "realTimeFactor": 0.302,
+      "meanMs": 1695.3,
+      "medianMs": 1656.8,
+      "minMs": 1587.3,
+      "maxMs": 1888.9,
+      "realTimeFactor": 0.29,
       "targetMs": 280,
       "targetStatus": "MISS",
       "targetSource": "project latency target carried in facts.json since 2026-11-04",
@@ -179,10 +179,10 @@
       "status": "MISS"
     },
     "memory": {
-      "rssBeforeLoadMb": 377.5,
-      "rssAfterLoadMb": 1398.3,
-      "rssDeltaMb": 1020.8,
-      "peakRssDuringRunMb": 1760.6,
+      "rssBeforeLoadMb": 376.9,
+      "rssAfterLoadMb": 1397.4,
+      "rssDeltaMb": 1020.5,
+      "peakRssDuringRunMb": 1759.1,
       "processPeakWorkingSetMb": 1763.7,
       "totalSystemRamGb": 137.3,
       "peakSampling": "background sampler every 50 ms during the timed runs",

@@ -7,6 +7,25 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.2.0: Phase 1 — Product Re-Benchmark (real whisper-small + LoRA)
+
+* **Branch / commit:** `voicebridge-clean`, `a9a16ab`
+* **Why this exists:** every headline number in the repo (151.7 → 38.9 MB, 1,480 → 592 ms, "103 MB active memory", 74.42% reduction) was produced by a **whisper-tiny INT8 ONNX** experiment, while the product serves **whisper-small + LoRA** through PyTorch. `facts.json` also carried tiny's ONNX export sizes (404.49 / 103.45 MB) as if they described the product. Phase 1 replaces all of that with numbers from the code users actually run.
+* **What changed:**
+  - Added `benchmarks/benchmark_product.py`: imports the product's own `backend/app/inference.py`, computes word-level Levenshtein WER, runs 2 warm-ups + 5 timed runs per clip, records RSS before load / after load / peak, and writes `facts.json` atomically with script hash, host and library versions.
+  - Gates that exit non-zero: missing clip, wrong model (243.5M ±1% parameter check — the tiny-vs-small bug can no longer pass silently), missing LoRA weights, empty transcripts, and `--baseline` (WER must match exactly, latency within 30%, RSS within 20%). `--self-test` covers the WER arithmetic.
+* **Measured (Intel Core i5-14400F, CPU-only, Windows 11, PyTorch 2.15.0+cpu, Transformers 5.22.2):**
+  - WER: mild **0.0%**, moderate **50.0%**, severe **120.0%**; mean clip **56.7%**, corpus **56.2%**.
+  - Latency: **1,720 ms** mean (1,527–1,908 ms), RTF 0.294 — **MISS** against the 280 ms target (6.1×).
+  - Memory: RSS delta **1,021 MB** (380 → 1,402 MB after load), peak RSS **1,748 MB**.
+  - Disk: **978.5 MB** total (971.4 MB base + 7.1 MB adapter). Parameters 243.5M total, 1.77M adapter (0.73%).
+* **Corrections to earlier entries below:** "103 MB active memory" was a *file size*, not RAM. "409 ms response" and the 592 ms / 38.9 MB / 74.42% figures belong to the whisper-tiny INT8 side study, not the product. Severe WER was hand-calculated as 140%; the single WER function gives 120% (4 substitutions + 2 insertions over 5 reference words). Benchmark hardware is a desktop i5-14400F with 137 GB RAM, not a laptop.
+* **Verification:** two consecutive runs reproduce (WER identical, latency within 1.1%, RSS within 0.1%). A doctored baseline (WER 5% instead of 0%) makes the reproduction gate exit 2. The WER self-test failed once on a wrong hand expectation before passing 6/6 — the check is proven able to fail.
+* **Newly found false claim (Phase 3 input):** `ISSUE.md` 2.10 states anti-hallucination decoding (`temperature=0.0`, `no_speech_threshold=0.55`, `compression_ratio_threshold=2.4`) is implemented in `backend/app/inference.py`; lines 93–100 pass none of these arguments.
+* **Next:** Phase 2 — rewrite `README.md` benchmark table and `docs/EDGE_AI_BENCHMARK_RESULTS.md` from `facts.json`, relabel the whisper-tiny INT8 study as a separate side result, and add `claims-check` so a wrong number in a doc fails CI.
+
+---
+
 ## [2026-11-08] - v1.1.0: Clinical LoRA Acoustic Engine Integration & Comprehensive Audit Remediation
 
 * **Lead Engineers:** Talha (System Architect & Frontend Lead), Aaliya Hussain (ML Lead), Manas Suryawanshi (Clinical Research Lead), Moulika Sanyal (Edge AI Lead)

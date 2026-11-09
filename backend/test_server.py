@@ -187,8 +187,20 @@ def run_tests():
         print(" -> Silence returned an empty transcript, not invented words.")
         print(" [PASS] Near-silent audio is not hallucinated.")
 
+        # 11. Exact window boundary: just over 30 s rejected, under 30 s accepted
+        print("\n[Test 11] Testing the 30-second boundary ...")
+        over_files = {"file": ("over.wav", generate_test_wav(30.01), "audio/wav")}
+        over_resp = client.post("/api/v1/translate-audio", files=over_files)
+        assert over_resp.status_code == 422, f"Expected 422, got {over_resp.status_code}"
+
+        under_files = {"file": ("under.wav", generate_test_wav(29.5), "audio/wav")}
+        under_resp = client.post("/api/v1/translate-audio", files=under_files)
+        assert under_resp.status_code == 200, f"Expected 200, got {under_resp.status_code}"
+        print(" -> 30.01 s rejected, 29.5 s accepted.")
+        print(" [PASS] 30-second boundary behaves correctly.")
+
     print("\n" + "=" * 60)
-    print("ALL 10 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
+    print("ALL 11 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
 
 if __name__ == "__main__":

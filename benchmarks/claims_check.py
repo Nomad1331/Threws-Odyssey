@@ -126,12 +126,30 @@ def main() -> int:
             f"benchmarks/benchmark_product.py ({actual!r}). Rerun the benchmark."
         )
 
+    sources = facts.get("_meta", {}).get("sourceHashes") or {}
+    if not sources:
+        failures.append("facts.json has no sourceHashes; rerun the benchmark.")
+    for relative_path, recorded_hash in sources.items():
+        source = REPO_ROOT / relative_path
+        if not source.is_file():
+            failures.append(f"facts.json references a missing source file: {relative_path}")
+            continue
+        current_hash = hashlib.sha256(source.read_bytes()).hexdigest()[:16]
+        if current_hash != recorded_hash:
+            failures.append(
+                f"source changed since the benchmark: {relative_path} "
+                f"({recorded_hash!r} -> {current_hash!r}). Rerun the benchmark."
+            )
+
     if args.provenance_only:
         if failures:
             for failure in failures:
                 print("  FAIL " + failure)
             return 1
-        print(f"provenance: facts.json was written by benchmark_product.py ({actual})")
+        print(
+            f"provenance: facts.json matches benchmark_product.py ({actual}) and "
+            f"{len(sources)} source files"
+        )
         return 0
 
     # 1. Generated blocks must equal a fresh render.

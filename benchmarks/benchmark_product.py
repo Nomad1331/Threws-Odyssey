@@ -33,6 +33,7 @@ import re
 import statistics
 import sys
 import tempfile
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -216,8 +217,12 @@ def library_versions() -> dict:
     }
 
 
+def file_sha256(relative_path: str) -> str:
+    return hashlib.sha256((REPO_ROOT / relative_path).read_bytes()).hexdigest()[:16]
+
+
 def script_sha256() -> str:
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]
+    return file_sha256("benchmarks/benchmark_product.py")
 
 
 def cache_size(repo_id: str) -> int | None:
@@ -323,6 +328,21 @@ def run(args) -> dict:
     latencies_all: list[float] = []
     peak_rss = rss_after
 
+    # Sample RSS in the background: reading it only after each call misses the
+    # allocation peak inside generate().
+    stop_sampler = threading.Event()
+    sampled_peak = {"rss": rss_after}
+
+    def _sample_rss() -> None:
+        while not stop_sampler.wait(0.05):
+            try:
+                sampled_peak["rss"] = max(sampled_peak["rss"], rss_mb())
+            except Exception:
+                return
+
+    sampler = threading.Thread(target=_sample_rss, daemon=True)
+    sampler.start()
+
     for sample in SAMPLES:
         path = audio_dir / sample["file"]
         duration = audio_duration_sec(path)
@@ -373,6 +393,10 @@ def run(args) -> dict:
         )
 
     # ---- accuracy gates ---------------------------------------------------- #
+    stop_sampler.set()
+    sampler.join(timeout=1.0)
+    peak_rss = max(peak_rss, sampled_peak["rss"])
+
     if not any(c["hypothesisWords"] > 0 for c in clips):
         print("GATE FAILED: every transcript is empty; the decoder is not working")
         sys.exit(2)
@@ -403,6 +427,13 @@ def run(args) -> dict:
             "generatedBy": "python benchmarks/benchmark_product.py",
             "script": "benchmarks/benchmark_product.py",
             "scriptSha256": script_sha256(),
+            # The numbers also depend on the engine and the reference metadata, not
+            # just this script. claims_check verifies all three hashes.
+            "sourceHashes": {
+                "benchmarks/benchmark_product.py": script_sha256(),
+                "backend/app/inference.py": file_sha256("backend/app/inference.py"),
+                "backend/evaluate_samples.py": file_sha256("backend/evaluate_samples.py"),
+            },
             "host": host_info(),
             "versions": versions,
             "note": (
@@ -471,9 +502,10 @@ def run(args) -> dict:
                 "peakRssDuringRunMb": round(peak_rss, 1),
                 "processPeakWorkingSetMb": peak_working_set_mb(),
                 "totalSystemRamGb": host_info()["totalRamGb"],
+                "peakSampling": "background sampler every 50 ms during the timed runs",
                 "definition": (
                     "RSS delta = resident set after model load minus resident set "
-                    "after imports; peak = highest observed during the timed runs"
+                    "after imports; peak = highest value sampled during the timed runs"
                 ),
             },
             "determinism": {

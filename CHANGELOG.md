@@ -12,6 +12,19 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.11.0: Fourth Pass — Convergence Sweep
+
+* **Provenance now covers three sources.** `facts.json` records hashes of `benchmark_product.py`, `backend/app/inference.py` and `backend/evaluate_samples.py`; `claims_check.py` verifies all of them. Demonstrated failing on a doctored inference hash and passing on the real file.
+* **Offline detection hardened.** It no longer treats an empty or partial cache directory as ready: it requires `model.safetensors` and `adapter_model.safetensors` in a cached snapshot. A half-finished download can still fetch instead of locking the engine offline.
+* **Peak RSS is now sampled every 50 ms in a background thread during the timed runs**, instead of only after each call. The measured peak rose from about 1,747 MB to 1,753.8 MB, confirming the old figure understated the allocation peak. The field is documented as sampled.
+* **Boundary test added.** Test 11 checks 30.01 s is rejected and 29.5 s is accepted; suite is 11/11.
+* **Concurrency exercised live.** Two simultaneous requests against uvicorn returned the correct mild and moderate transcripts, `/health` stayed responsive, and the server log contained zero Hub calls.
+* **Bloat:** removed the one genuinely unused import (`Tuple`); an AST scan now reports no unused imports across the Python tree.
+* **Regenerated:** `facts.json`, doc blocks and figures (latency 1,674.1 ms; WER unchanged).
+* **Convergence:** after these fixes, a full sweep — Python compile/unused imports, dead doc references, 11 tests, build, lint, claims + provenance, live edge/concurrency behaviour, dependency checks — produced **zero new verified defects**. That is the defined stopping point, not a proof that no latent bug exists.
+
+---
+
 ## [2026-11-09] - v1.10.0: Third Pass — Provenance, Dependencies, Served Build
 
 * **`facts.json` provenance is now enforced.** `claims_check.py` hashes `benchmarks/benchmark_product.py` and compares it with `_meta.scriptSha256`, so numbers produced by a different version of the script fail the check. Added `--facts` and `--provenance-only` for testing; the gate was demonstrated failing on a doctored hash (`deadbeef…`) and passing on the real file.

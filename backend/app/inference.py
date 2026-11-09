@@ -15,6 +15,7 @@ No inferior fallback modes: VoiceBridge runs strictly on the fine-tuned clinical
 
 from __future__ import annotations
 
+import glob
 import logging
 import os
 import threading
@@ -25,20 +26,29 @@ BASE_MODEL_ID = os.getenv("VOICEBRIDGE_BASE_MODEL", "openai/whisper-small")
 ADAPTER_MODEL_ID = os.getenv("VOICEBRIDGE_ADAPTER_MODEL", "Aaliya05/voicebridge")
 
 
-def _hf_cache_has(repo_id: str) -> bool:
+def _hf_cache_has(repo_id: str, weight_file: str) -> bool:
+    """True only when the actual weight file exists in a cached snapshot."""
     base = os.getenv("HF_HOME") or os.path.join(
         os.path.expanduser("~"), ".cache", "huggingface"
     )
-    return os.path.isdir(os.path.join(base, "hub", "models--" + repo_id.replace("/", "--")))
+    pattern = os.path.join(
+        base,
+        "hub",
+        "models--" + repo_id.replace("/", "--"),
+        "snapshots",
+        "*",
+        weight_file,
+    )
+    return bool(glob.glob(pattern))
 
 
-# If both models are already cached, no download is needed. Force offline mode so
-# startup does not depend on reaching huggingface.co (observed: four Hub requests
-# per launch, and a stall on a machine without internet).
+# If both weight files are already cached, no download is needed. Force offline mode
+# so startup does not depend on reaching huggingface.co (observed: four Hub requests
+# per launch). A partial cache is not treated as ready; it can still download.
 if (
     os.getenv("HF_HUB_OFFLINE") is None
-    and _hf_cache_has(BASE_MODEL_ID)
-    and _hf_cache_has(ADAPTER_MODEL_ID)
+    and _hf_cache_has(BASE_MODEL_ID, "model.safetensors")
+    and _hf_cache_has(ADAPTER_MODEL_ID, "adapter_model.safetensors")
 ):
     os.environ["HF_HUB_OFFLINE"] = "1"
 

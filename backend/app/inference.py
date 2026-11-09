@@ -22,7 +22,7 @@ from typing import Tuple, Optional
 import torch
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from peft import PeftModel
-from faster_whisper.audio import decode_audio
+import librosa
 
 logger = logging.getLogger("voicebridge-inference")
 
@@ -85,7 +85,7 @@ def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
         raise RuntimeError("Clinical LoRA engine could not be initialized.")
 
     # High-performance PyAV audio decoding: decodes WebM, WAV, MP4, AAC, OGG to 16kHz mono float32
-    audio_array = decode_audio(audio_path, sampling_rate=16000)
+    audio_array, _ = librosa.load(audio_path, sr=16000, mono=True)
     inputs = _processor(audio_array, sampling_rate=16000, return_tensors="pt")
     input_features = inputs.input_features.to(_device)
 

@@ -7,6 +7,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.5.0: Phase 4 — Bloat Removal
+
+* **Root before:** 10 markdown files, a 9.4 MB tool checkout (`.bullseye/` with its own `.git`), 2.5 MB of session exports, and an agent-skill copy (`.agents/`). **Root after:** code directories plus `README.md`, `CHANGELOG.md`, `facts.json`.
+* **Moved out of the repository** to `I:\Career\VoiceBridge-archive\` (sibling folder, nothing deleted): `.bullseye/` (9.4 MB, 226 files), `Threws.docx` (1.76 MB team audit), `AUTOPILOT_AUDIT_SESSION_TRANSCRIPT.md` (367 KB), `AUTOPILOT_AUDIT_SESSION_SUMMARY.md`, `google_doc_export.html/.txt`, `audit_section.txt`, `commands.md`, `.agents/` skill copy, and the scratch client `backend/test_yt_slice.py`.
+* **Archived inside the repo** as clearly non-judge-facing: `ISSUE.md` → `docs/archive/ISSUE_audit_ledger.md`, `ROADMAP.md` → `docs/archive/ROADMAP_planning.md`, `docs/BRANCH_COMPARISON_AND_LORA_ANALYSIS.md` → `docs/archive/`.
+* **Also:** README repository tree updated (`docs/archive/`, `CHANGELOG.md`); `claims-check` no longer scans the archived branch comparison.
+* **Verification:** `npm run build` exit 0, five static pages generated; `claims_check.py` exit 0. No imports changed, so the build passing is the check that nothing referenced the removed files.
+
+---
+
 ## [2026-11-09] - v1.4.0: Phase 3 — Code Audit (verified findings)
 
 * **Method:** three independent read-only readers on disjoint slices (backend + training scripts / frontend UI / hooks + lib + scripts). **Control:** the backend reader had to find, unaided, at least three of the four defects already known before the audit (400-mapping, load race, permissive CORS, double `_device`). It found **2 of 4** (missed CORS and `_device`), so the control gate **failed**; its output was treated as leads only and every item below was re-checked against the source by the lead. The other two readers were verified line by line.

@@ -131,7 +131,8 @@ Threws-Odyssey/
 │   ├── SYSTEM_WALKTHROUGH.md        # Complete end-to-end architecture & code tour
 │   ├── EDGE_AI_BENCHMARK_RESULTS.md # Product benchmark + whisper-tiny INT8 side study
 │   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
-│   └── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
+│   ├── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
+│   └── archive/                     # Internal planning/audit ledgers, superseded, not judge-facing
 │
 ├── model_training/
 │   ├── VoiceBridge_Colab_Trainer.ipynb # Kaggle/Colab GPU LoRA fine-tuning notebook
@@ -139,6 +140,7 @@ Threws-Odyssey/
 │   └── export_and_quantize_onnx.py     # Standalone ONNX export & INT8 quantization script
 │
 ├── facts.json                       # Single source of truth for all verified numbers
+├── CHANGELOG.md                     # Dated engineering ledger, including corrections
 └── README.md
 ```
 

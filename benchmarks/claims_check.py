@@ -40,7 +40,6 @@ JUDGE_FACING = [
     REPO_ROOT / "docs" / "COMPETITIVE_ANALYSIS.md",
     REPO_ROOT / "docs" / "SYSTEM_WALKTHROUGH.md",
     REPO_ROOT / "docs" / "DATASETS_AND_PROOF.md",
-    REPO_ROOT / "docs" / "BRANCH_COMPARISON_AND_LORA_ANALYSIS.md",
 ]
 
 # Values from the whisper-tiny INT8 study or from superseded claims. They may

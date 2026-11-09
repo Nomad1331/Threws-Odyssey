@@ -4,6 +4,9 @@ import io
 import wave
 import math
 import struct
+import tempfile
+import av
+import numpy as np
 from fastapi.testclient import TestClient
 
 # Ensure backend root is on sys.path
@@ -42,6 +45,33 @@ def generate_silent_wav(duration: float = 2.0) -> bytes:
         wav.setframerate(sample_rate)
         wav.writeframes(b'\x00\x00' * int(sample_rate * duration))
     return buf.getvalue()
+
+def wav_file_to_webm(wav_path: str) -> bytes:
+    """Repackages a 16 kHz WAV as the WebM/Opus format a browser uploads."""
+    with wave.open(wav_path, "rb") as wav:
+        sample_rate = wav.getframerate()
+        samples = np.frombuffer(wav.readframes(wav.getnframes()), dtype="<i2")
+    audio = samples.astype(np.float32) / 32768.0
+
+    tmp_path = tempfile.mktemp(suffix=".webm")
+    try:
+        container = av.open(tmp_path, "w", format="webm")
+        stream = container.add_stream("libopus", rate=48000)
+        stream.layout = "mono"
+        frame = av.AudioFrame.from_ndarray(
+            audio.reshape(1, -1), format="flt", layout="mono"
+        )
+        frame.sample_rate = sample_rate
+        resampler = av.AudioResampler(format="s16", layout="mono", rate=48000)
+        for resampled in resampler.resample(frame):
+            container.mux(stream.encode(resampled))
+        container.mux(stream.encode(None))
+        container.close()
+        with open(tmp_path, "rb") as handle:
+            return handle.read()
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 def run_tests():
     print("=" * 60)
@@ -202,8 +232,24 @@ def run_tests():
         print(" -> 30.01 s rejected, 29.5 s accepted.")
         print(" [PASS] 30-second boundary behaves correctly.")
 
+        # 12. The browser uploads WebM/Opus, not WAV. Cover the real format.
+        print("\n[Test 12] Testing a browser-format WebM/Opus upload ...")
+        mild_wav = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "frontend", "public", "audio", "torgo_mild_sample.wav",
+        )
+        webm_files = {
+            "file": ("recording.webm", wav_file_to_webm(mild_wav), "audio/webm")
+        }
+        webm_resp = client.post("/api/v1/translate-audio", files=webm_files)
+        assert webm_resp.status_code == 200, f"Expected 200, got {webm_resp.status_code}"
+        webm_data = webm_resp.json()
+        assert "excellent" in webm_data["transcription"].lower(), webm_data
+        print(f" -> WebM transcription: {webm_data['transcription']!r}")
+        print(" [PASS] Browser WebM upload decoded and transcribed.")
+
     print("\n" + "=" * 60)
-    print("ALL 11 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
+    print("ALL 12 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
 
 if __name__ == "__main__":

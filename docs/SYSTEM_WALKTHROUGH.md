@@ -188,8 +188,8 @@ To verify the entire pipeline end-to-end on any machine:
    # Expected output: Compiled successfully. Linting and checking validity of types... Static pages generated (5/5).
    ```
 
-4. **Run Full Backend Verification Suite (11/11 Tests):**
+4. **Run Full Backend Verification Suite (12/12 Tests):**
    ```bash
    python backend/test_server.py
-   # Expected output: ALL 11 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.
+   # Expected output: ALL 12 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.
    ```

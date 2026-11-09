@@ -12,6 +12,14 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.13.0: Browser-Format Regression Test
+
+* **The suite only ever uploaded WAV; browsers send WebM/Opus.** Test 12 now repackages the mild TORGO clip as WebM/Opus with PyAV, uploads it through the endpoint, and asserts HTTP 200 plus the correct transcript. Suite is 12/12.
+* **Context, for the record:** a teammate's remote commit (`71a8e85`, Aaliya) replaced PyAV with `librosa` citing an audio-processing/metadata error, but did not add `librosa` to `requirements.txt`. On this checkout PyAV decodes a freshly encoded WebM/Opus clip sample-exactly (5.69 s) and the endpoint transcribes it correctly; `librosa` was not installed and no `ffmpeg` binary exists. The merge at `27e089b` therefore kept PyAV. Test 12 makes that browser path a permanent check, so a future decoder swap has to keep it working.
+* **No product code changed in this pass.** README and walkthrough test counts updated to 12/12; facts and docs are unchanged.
+
+---
+
 ## [2026-11-09] - v1.12.0: Final Sweep — Boundary Messaging, Health Ordering, Doc Drift
 
 * **30-second rejection message was self-contradictory.** It rounded 30.01 s to “30.0 s” while refusing the file, so it looked like a 30.0 s clip was rejected for being over 30 s. Now printed to two decimals, and test 11 asserts the message contains `30.01`.

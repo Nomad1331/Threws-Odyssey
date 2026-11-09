@@ -106,7 +106,7 @@ Threws-Odyssey/
 │   │   └── inference.py         # Whisper-Small LoRA clinical acoustic inference engine
 │   ├── requirements.txt         # Pinned production dependencies (FastAPI, PyTorch, Transformers, PEFT)
 │   ├── evaluate_samples.py      # Runs the three demo clips through the live engine
-│   └── test_server.py           # Automated TestClient verification suite (11/11 tests)
+│   └── test_server.py           # Automated TestClient verification suite (12/12 tests)
 │
 ├── frontend/
 │   ├── src/
@@ -179,7 +179,7 @@ python -m venv .venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Run backend verification suite (11/11 tests)
+# Run backend verification suite (12/12 tests)
 python test_server.py
 
 # Start the FastAPI server

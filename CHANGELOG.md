@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.14.0: Decoder Root Cause — PyAV 19 `metadata_errors`
+
+* **Aaliya's diagnosis was correct about the failing call.** `faster_whisper/audio.py` passes `metadata_errors="ignore"` to `av.open`; PyAV 19 removed that keyword, so every decode raises a `metadata_errors` TypeError. Our machine had PyAV **13.1.0**, which is why the suite and the WebM probe passed here; `requirements.txt` never pinned `av`, so a fresh install could pull PyAV 19 and break every request. That is the gap this missed.
+* **Fixed at the source, not by swapping libraries.** Added `decode_audio_pyav` in `inference.py` using only stable PyAV APIs (`av.open`, `AudioResampler`, `container.decode`); it is sample-identical to the old wrapper on all three WAV clips and on WebM/Opus (max absolute difference **0.0**). Pinned `av==13.1.0` as well, so installs are reproducible.
+* **Her `librosa` change is not adopted.** It bypasses the same call but adds a dependency that is absent from `requirements.txt`, and without `ffmpeg` it cannot decode the browser's WebM. Her commit remains in history as a merge parent; no revert was needed or done.
+* **Coverage:** test 12 (browser WebM/Opus upload) now runs through the new decoder; suite is 12/12.
+* **Regenerated:** `facts.json`, doc blocks and figures. WER unchanged (0 / 50 / 120). Claims + three-source provenance pass.
+
+---
+
 ## [2026-11-09] - v1.13.0: Browser-Format Regression Test
 
 * **The suite only ever uploaded WAV; browsers send WebM/Opus.** Test 12 now repackages the mild TORGO clip as WebM/Opus with PyAV, uploads it through the endpoint, and asserts HTTP 200 plus the correct transcript. Suite is 12/12.

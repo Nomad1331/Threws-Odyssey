@@ -53,9 +53,9 @@ if (
     os.environ["HF_HUB_OFFLINE"] = "1"
 
 import av  # noqa: E402
+import gc  # noqa: E402
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
-from faster_whisper.audio import decode_audio  # noqa: E402
 from peft import PeftModel  # noqa: E402
 from transformers import WhisperProcessor, WhisperForConditionalGeneration  # noqa: E402
 
@@ -140,6 +140,34 @@ def probe_duration_s(audio_path: str) -> Optional[float]:
     return None
 
 
+def decode_audio_pyav(audio_path: str, sampling_rate: int = 16000) -> np.ndarray:
+    """
+    Decode any container PyAV supports to mono float32 at `sampling_rate`.
+
+    This replaces faster_whisper.audio.decode_audio, which passes
+    `metadata_errors="ignore"` to av.open; PyAV 19 removed that keyword, so every
+    decode failed with a metadata_errors TypeError on a fresh install. Output is
+    sample-identical to the old wrapper on WAV and WebM/Opus (max diff 0.0).
+    """
+    resampler = av.AudioResampler(format="s16", layout="mono", rate=sampling_rate)
+    chunks: list[np.ndarray] = []
+    with av.open(audio_path, mode="r") as container:
+        for frame in container.decode(audio=0):
+            for resampled in resampler.resample(frame):
+                chunks.append(resampled.to_ndarray())
+        for resampled in resampler.resample(None):
+            chunks.append(resampled.to_ndarray())
+
+    # PyAV keeps resampler objects alive otherwise (faster-whisper #390).
+    del resampler
+    gc.collect()
+
+    if not chunks:
+        return np.zeros(0, dtype=np.float32)
+    raw = np.concatenate([chunk.reshape(-1) for chunk in chunks])
+    return raw.astype(np.float32) / 32768.0
+
+
 def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
     """
     Transcribes an audio file (.webm, .wav, .mp4, .aac, .ogg) using the fine-tuned
@@ -171,8 +199,8 @@ def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
             f"{MAX_AUDIO_SECONDS:.0f} s. Please record a shorter phrase."
         )
 
-    # High-performance PyAV audio decoding: decodes WebM, WAV, MP4, AAC, OGG to 16kHz mono float32
-    audio_array = decode_audio(audio_path, sampling_rate=16000)
+    # High-performance PyAV decoding: WebM, WAV, MP4, AAC, OGG to 16 kHz mono float32
+    audio_array = decode_audio_pyav(audio_path, sampling_rate=16000)
 
     # Fallback for containers that do not publish a duration: check after decode.
     duration_s = len(audio_array) / 16000.0

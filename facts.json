@@ -5,99 +5,191 @@
     "track": "Human-AI & Assistive Technology",
     "team": "Sleeper Cells",
     "institution": "SIES Graduate School of Technology",
-    "benchmarkDate": "2026-11-04",
-    "evaluatedBy": "Moulika Sanyal (Edge AI Lead)",
-    "benchmarkHardware": "13th Gen Intel(R) Core(TM) i5-1334U (x86_64, AVX2)",
-    "operatingSystem": "Ubuntu Linux x86_64",
-    "executionProvider": "ONNX Runtime CPUExecutionProvider",
-    "status": "Preliminary Research Baseline"
+    "generatedAt": "2026-11-09T04:44:35+00:00",
+    "generatedBy": "python benchmarks/benchmark_product.py",
+    "script": "benchmarks/benchmark_product.py",
+    "scriptSha256": "7d1e9a4914b0e053",
+    "host": {
+      "cpu": "Intel(R) Core(TM) i5-14400F",
+      "arch": "AMD64",
+      "logicalCpus": 16,
+      "physicalCpus": 10,
+      "cpuFreq": {
+        "maxMhz": 2500,
+        "currentMhz": 2500
+      },
+      "totalRamGb": 137.3,
+      "os": "Windows 11 (10.0.26300)",
+      "python": "3.12.9"
+    },
+    "versions": {
+      "torch": "2.15.0+cpu",
+      "transformers": "5.22.2",
+      "peft": "0.21.2",
+      "python": "3.12.9"
+    },
+    "note": "Every number here is produced by the command above. Nothing is hand-typed."
   },
-  "models": {
-    "clinicalAdaptedModel": "openai/whisper-small",
-    "clinicalAdaptedParameters": 243500000,
+  "product": {
+    "engineName": "whisper-small-lora",
+    "baseModel": "openai/whisper-small",
     "adapter": "Aaliya05/voicebridge",
-    "adapterType": "LoRA (r=16, alpha=32, target: q_proj, v_proj in encoder & decoder)",
-    "adapterWeightsMb": 7.1,
-    "trainableParameterPercent": 0.72,
-    "baselineModel": "openai/whisper-tiny",
-    "baselineParameters": 39000000,
-    "dataset": "University of Toronto TORGO Database (Cerebral Palsy, ALS, Traumatic Brain Injury)"
-  },
-  "quantization": {
-    "method": "Dynamic INT8 Quantization (Hugging Face Optimum / ONNX Runtime)",
-    "fp32StorageBytes": 424138000,
-    "fp32StorageMb": 404.49,
-    "int8StorageBytes": 108475000,
-    "int8StorageMb": 103.45,
-    "int8EncoderPlusSingleDecoderMb": 57.12,
-    "storageReductionPercent": 74.42,
-    "storageStatus": "PASS (target ~74%)"
-  },
-  "telemetry": {
-    "cpuInferenceLatencyAvgMs": 592.0,
-    "realTimeFactorAvg": 0.1013,
-    "speedupVsRealTime": "9.87x faster than real-time playback",
-    "sessionWorkingSetRssDeltaMb": 139.4,
-    "targetLatencyMs": 280,
-    "latencyStatus": "MISS (592ms vs <280ms target; acknowledged in report)"
-  },
-  "empiricalWer": {
-    "evaluationDataset": "Held-Out TORGO Dysarthric Speech Clips (3 samples, ~5.85s avg duration)",
-    "sampleCount": 3,
-    "fp32BaselineMeanWer": 82.2,
-    "int8QuantizedMeanWer": 80.0,
-    "breakdown": [
-      {
-        "clip": "torgo_mild_sample.wav",
-        "speaker": "TORGO-M05",
-        "condition": "Cerebral Palsy",
-        "durationSec": 5.69,
-        "reference": "We have an excellent team",
-        "fp32Output": "We have an 8th team",
-        "fp32Wer": 20.0,
-        "int8Output": "We have in 18th Team.",
-        "int8Wer": 40.0,
-        "int8LatencyMs": 660.0,
-        "loraOutput": "We have an excellent team",
-        "loraConfidence": 0.901,
-        "loraWer": 0.0
-      },
-      {
-        "clip": "torgo_moderate_sample.wav",
-        "speaker": "TORGO-M04",
-        "condition": "Post-Trauma (TBI, Moderate-to-Severe)",
-        "durationSec": 5.87,
-        "reference": "Their house is grey and white",
-        "fp32Output": "then down, great and white",
-        "fp32Wer": 66.7,
-        "int8Output": "Good night.",
-        "int8Wer": 100.0,
-        "int8LatencyMs": 518.7,
-        "loraOutput": "then there's the grey and white",
-        "loraConfidence": 0.607,
-        "loraWer": 50.0
-      },
-      {
-        "clip": "torgo_severe_sample.wav",
-        "speaker": "TORGO-M02",
-        "condition": "Amyotrophic Lateral Sclerosis (ALS)",
-        "durationSec": 6.00,
-        "reference": "The job provides many benefits",
-        "fp32Output": "I'm gonna put my nose in the bed",
-        "fp32Wer": 160.0,
-        "int8Output": "I will be very happy.",
-        "int8Wer": 100.0,
-        "int8LatencyMs": 597.2,
-        "loraOutput": "Get the apple by Fimasy Bezzi bit",
-        "loraConfidence": 0.266,
-        "loraWer": 140.0
-      }
-    ]
+    "device": "cpu",
+    "parameters": {
+      "total": 243504384,
+      "totalMillions": 243.5,
+      "base": 241734912,
+      "baseMillions": 241.7,
+      "adapter": 1769472,
+      "adapterMillions": 1.77,
+      "adapterPercentOfTotal": 0.73,
+      "trainableInThisRun": 0,
+      "trainableNote": "0 is expected: the server loads the adapter frozen for inference (peft is_trainable=False). adapterPercentOfTotal is the training-time figure the docs quote as '0.72% trainable'.",
+      "loraAdapters": 1
+    },
+    "storage": {
+      "baseBytes": 971367937,
+      "baseMb": 971.4,
+      "adapterBytes": 7099284,
+      "adapterMb": 7.1,
+      "totalMb": 978.5,
+      "definition": "megabytes = 10^6 bytes, as reported by the Hugging Face cache index"
+    },
+    "modelLoadMs": 1339.0,
+    "accuracy": {
+      "referenceSource": "backend/evaluate_samples.py:SAMPLES (same sentences the demo page shows)",
+      "metric": "word error rate after lowercasing and stripping punctuation; (S+D+I)/reference words",
+      "sampleCount": 3,
+      "meanClipWerPct": 56.7,
+      "corpusWerPct": 56.2,
+      "clips": [
+        {
+          "clip": "torgo_mild_sample.wav",
+          "speaker": "TORGO-M05",
+          "severity": "Mild",
+          "condition": "Cerebral Palsy",
+          "durationSec": 5.69,
+          "reference": "We have an excellent team",
+          "hypothesis": "We have an excellent team",
+          "confidence": 0.901,
+          "werPct": 0.0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "referenceWords": 5,
+          "hypothesisWords": 5,
+          "errors": 0,
+          "latencyMs": {
+            "runs": [
+              1586.2,
+              1562.5,
+              1575.1,
+              1526.5,
+              1580.7
+            ],
+            "mean": 1566.2,
+            "median": 1575.1,
+            "min": 1526.5,
+            "max": 1586.2
+          },
+          "outputsIdenticalAcrossRuns": true
+        },
+        {
+          "clip": "torgo_moderate_sample.wav",
+          "speaker": "TORGO-M04",
+          "severity": "Moderate-to-Severe",
+          "condition": "Post-Trauma (TBI)",
+          "durationSec": 5.87,
+          "reference": "Their house is grey and white",
+          "hypothesis": "then there's the grey and white",
+          "confidence": 0.607,
+          "werPct": 50.0,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "referenceWords": 6,
+          "hypothesisWords": 6,
+          "errors": 3,
+          "latencyMs": {
+            "runs": [
+              1725.4,
+              1755.0,
+              1769.3,
+              1697.4,
+              1719.8
+            ],
+            "mean": 1733.4,
+            "median": 1725.4,
+            "min": 1697.4,
+            "max": 1769.3
+          },
+          "outputsIdenticalAcrossRuns": true
+        },
+        {
+          "clip": "torgo_severe_sample.wav",
+          "speaker": "TORGO-M02",
+          "severity": "Severe",
+          "condition": "Amyotrophic Lateral Sclerosis (ALS)",
+          "durationSec": 6.0,
+          "reference": "The job provides many benefits",
+          "hypothesis": "Get the apple by Fimasy Bezzi bit",
+          "confidence": 0.266,
+          "werPct": 120.0,
+          "substitutions": 4,
+          "deletions": 0,
+          "insertions": 2,
+          "referenceWords": 5,
+          "hypothesisWords": 7,
+          "errors": 6,
+          "latencyMs": {
+            "runs": [
+              1865.7,
+              1805.0,
+              1840.1,
+              1884.9,
+              1908.2
+            ],
+            "mean": 1860.8,
+            "median": 1865.7,
+            "min": 1805.0,
+            "max": 1908.2
+          },
+          "outputsIdenticalAcrossRuns": true
+        }
+      ]
+    },
+    "latency": {
+      "warmupRunsPerClip": 2,
+      "timedRunsPerClip": 5,
+      "meanMs": 1720.1,
+      "medianMs": 1725.4,
+      "minMs": 1526.5,
+      "maxMs": 1908.2,
+      "realTimeFactor": 0.294,
+      "targetMs": 280,
+      "targetStatus": "MISS",
+      "targetSource": "project latency target carried in facts.json since 2026-11-04",
+      "measurement": "wall time around inference.transcribe_audio, including audio decode",
+      "torchThreads": 10,
+      "status": "MISS"
+    },
+    "memory": {
+      "rssBeforeLoadMb": 380.3,
+      "rssAfterLoadMb": 1401.6,
+      "rssDeltaMb": 1021.3,
+      "peakRssDuringRunMb": 1748.1,
+      "processPeakWorkingSetMb": 1767.9,
+      "totalSystemRamGb": 137.3,
+      "definition": "RSS delta = resident set after model load minus resident set after imports; peak = highest observed during the timed runs"
+    },
+    "determinism": {
+      "outputsIdenticalAcrossRuns": true
+    }
   },
   "claims": {
-    "offlineStatus": "Client-server architecture (browser frontend posts to local or hosted FastAPI microservice)",
+    "offlineStatus": "Client-server: browser posts to a local FastAPI service; model runs on the same machine",
     "raspberryPiValidated": false,
     "coralTpuValidated": false,
-    "medicalDeviceStatus": "Research prototype; not certified for clinical diagnosis"
+    "medicalDeviceStatus": "Research prototype; not certified for clinical use"
   }
 }

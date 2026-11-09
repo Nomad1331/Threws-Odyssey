@@ -8,9 +8,9 @@
 ## 1. Primary Dataset: University of Toronto TORGO Database
 
 ### 1.1 Dataset Provenance & Overview
-* **Principal Investigators:** Dr. Frank Rudzicz, A. Roeck, and E. Wang (Department of Computer Science & Department of Speech-Language Pathology, University of Toronto).
+* **Principal Investigators:** Dr. Frank Rudzicz, Aghileh Namasivayam, and Talya Wolff (Department of Computer Science & Department of Speech-Language Pathology, University of Toronto).
 * **Official Institutional Archive:** [https://www.cs.toronto.edu/~complingweb/data/TORGO/torgo.html](https://www.cs.toronto.edu/~complingweb/data/TORGO/torgo.html)
-* **Clinical Demographics:** Contains over 12,000 acoustic audio recordings from speakers with dysarthria caused by Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), and Traumatic Brain Injury (TBI / Post-Trauma), alongside matched non-dysarthric control subjects.
+* **Clinical Demographics:** Contains thousands of acoustic recordings from speakers with dysarthria caused by Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), and Traumatic Brain Injury (TBI / Post-Trauma), alongside matched non-dysarthric control subjects.
 * **Recording Specifications:** 16kHz uncompressed acoustic waveform data (`.wav`), time-aligned phonetic transcriptions, orthographic target sentences, and 3D electromagnetic articulography (EMA) tracking.
 
 ### 1.2 Severity Distribution & Acoustic Pathologies
@@ -21,7 +21,7 @@
   3. **Involuntary Prosodic Drift:** Unpredictable phoneme prolongation, spastic respiratory pauses, and sudden vocal intensity fluctuations.
 
 ### 1.3 Streaming Endpoints & Replication
-The dataset is streamed via Hugging Face Hub, removing the need for manual 50GB archive downloads:
+The dataset is streamed via Hugging Face Hub, avoiding a large manual archive download:
 * **Primary Streaming Endpoint:** `abnerh/TORGO-database`
 * **Pre-tokenized Mirrors:** `extraordinarylab/torgo`, `saeedzou/torgo-dysarthria`
 * **Python Streaming Integration:**
@@ -35,7 +35,7 @@ The dataset is streamed via Hugging Face Hub, removing the need for manual 50GB 
 ## 2. Baseline Model Performance & Foundation Model Breakdown
 
 ### 2.1 The Dysarthric Acoustic Failure Wall
-Foundation speech recognition models (OpenAI Whisper, Google Speech API, Apple Siri) are trained on massive datasets (680,000+ hours) of fluent, normative speech (podcasts, broadcast media, audiobooks). When presented with dysarthric speech, foundation encoders suffer catastrophic breakdown:
+Foundation speech recognition models (OpenAI Whisper, Google Speech API, Apple Siri) are trained on very large normative-speech corpora (podcasts, broadcast media, audiobooks). When presented with dysarthric speech, foundation encoders suffer catastrophic breakdown:
 
 * Normative speech is transcribed well by modern systems.
 * Disordered speech is not: foundation models produce unusable output, and severe cases collapse into hallucination loops.
@@ -51,7 +51,7 @@ From `facts.json`, written by `benchmarks/benchmark_product.py` (the shipped `wh
 | `torgo_severe_sample.wav` | TORGO-M02 (Amyotrophic Lateral Sclerosis (ALS)) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 26.6% |
 <!-- END:generated:datasets-accuracy -->
 
-*Key clinical insight:* the adapted model transcribes the mild clip exactly, partially reconstructs the moderate clip, and fails on the severe clip. The earlier unadapted `whisper-tiny` INT8 comparison is retained as a labelled historical side study in [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md); it is not a product result.
+*Key clinical insight:* the adapted model transcribes the mild clip exactly, partially reconstructs the moderate-to-severe clip, and fails on the severe clip. The earlier unadapted `whisper-tiny` INT8 comparison is retained as a labelled historical side study in [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md); it is not a product result.
 
 ---
 

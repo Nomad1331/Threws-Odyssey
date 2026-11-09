@@ -51,14 +51,21 @@ export default function Home() {
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [sampleBusy, setSampleBusy] = useState<boolean>(false);
 
-  // Check backend server health on mount
+  // Check backend server health on mount and keep it fresh: if the frontend is
+  // opened while uvicorn is still loading, a one-shot check would say "offline"
+  // forever until the first transcription.
   useEffect(() => {
     let active = true;
-    checkBackendHealth(2500).then((healthy) => {
-      if (active) setBackendConnected(healthy);
-    });
+    const check = () => {
+      checkBackendHealth(2500).then((healthy) => {
+        if (active) setBackendConnected(healthy);
+      });
+    };
+    check();
+    const interval = setInterval(check, 5000);
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, []);
 
@@ -118,15 +125,16 @@ export default function Home() {
   }, [clearRecordedAudio]);
 
   // Set transcript from QuickAssist presets. A preset is not a model result, so
-  // clear the previous recording's confidence/latency/source instead of letting
-  // them describe a sentence the model never transcribed.
+  // clear the previous recording's confidence/latency/source and its audio replay;
+  // otherwise a preset sentence sits next to an unrelated recording.
   const handleSpeakPhrase = useCallback((phrase: string) => {
     setTranscript(phrase);
     setLatencyMs(null);
     setConfidenceScore(null);
     setSource(undefined);
     setStatusNotice(undefined);
-  }, []);
+    clearRecordedAudio();
+  }, [clearRecordedAudio]);
 
   // Transcribe pre-recorded clinical sample audio
   const handleRunSampleAudio = useCallback(async (audioUrl: string) => {

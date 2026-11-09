@@ -97,7 +97,7 @@ def render_readme_performance(facts: dict) -> str:
             f"{_num(latency['minMs'])}–{_num(latency['maxMs'])} ms range) | "
             f"{latency['targetMs']} ms | **{status}, {ratio:.1f}× over** |",
             f"| Real-time factor | {latency['realTimeFactor']} | below 1.0 | "
-            "processes faster than playback |",
+            "processing beats playback; the response still takes seconds |",
             "",
             "“Memory added” is resident memory after loading the model minus resident memory "
             "after imports; “peak” is the highest observed during the timed runs. Latency is "
@@ -195,7 +195,7 @@ def render_edge_product(facts: dict) -> str:
             "### Interpretation",
             "",
             "* Mild dysarthric speech is transcribed correctly on the demo clip.",
-            "* Moderate speech is only partially usable: half the words are wrong.",
+            "* Moderate-to-severe speech is only partially usable: half the words are wrong.",
             "* Severe speech is **not** usable; it is reported as a known limit, not hidden.",
             "* The latency target is missed by a wide margin. This is a CPU-only PyTorch "
             f"implementation of a {params['totalMillions']}M-parameter model; it is not a "
@@ -279,11 +279,13 @@ def render_limits(facts: dict) -> str:
     memory = product["memory"]
     storage = product["storage"]
     speakers = len({clip["speaker"] for clip in product["accuracy"]["clips"]})
+    clips = product["accuracy"]["clips"]
+    accuracy = ", ".join(
+        f"{clip['severity'].lower()} **{_pct(clip['werPct'])}**" for clip in clips
+    )
     return "\n".join(
         [
-            f"- **Accuracy:** mild **{_pct(product['accuracy']['clips'][0]['werPct'])}**, "
-            f"moderate **{_pct(product['accuracy']['clips'][1]['werPct'])}**, "
-            f"severe **{_pct(product['accuracy']['clips'][2]['werPct'])}** word error rate "
+            f"- **Accuracy:** {accuracy} word error rate "
             f"on the {product['accuracy']['sampleCount']} demo clips "
             f"({speakers} speakers). Mean of clips "
             f"{_pct(product['accuracy']['meanClipWerPct'])}; corpus WER "

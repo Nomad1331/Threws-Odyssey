@@ -25,16 +25,16 @@ Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the onl
 * **PyTorch:** 2.15.0+cpu · **Transformers:** 5.22.2 · **PEFT:** 0.21.2 · **Python:** 3.12.9
 * **Model:** openai/whisper-small (243.5M parameters) + Aaliya05/voicebridge LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB total (971.4 MB base + 7.1 MB adapter)
-* **Model load time:** 998.8 ms
+* **Model load time:** 1,146.1 ms
 
 ### Accuracy (word error rate)
 
 | Clip | Severity | Condition | Duration | Reference | Model output | WER | S / D / I | Latency |
 | :--- | :--- | :--- | ---: | :--- | :--- | ---: | :---: | ---: |
-| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,584 ms |
-| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 3 / 0 / 0 | 1,641.9 ms |
-| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 4 / 0 / 2 | 1,796.4 ms |
-| **Totals** | **3 clips** |  |  |  |  | **mean 56.7%** |  | **1,674.1 ms** |
+| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,695.4 ms |
+| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 3 / 0 / 0 | 1,743.6 ms |
+| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 4 / 0 / 2 | 1,900.9 ms |
+| **Totals** | **3 clips** |  |  |  |  | **mean 56.7%** |  | **1,780 ms** |
 
 * **Mean of clip WERs:** 56.7%
 * **Corpus WER (all edits ÷ all reference words):** 56.2%
@@ -43,23 +43,23 @@ Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the onl
 ### Latency
 
 * **Protocol:** 2 warm-up runs per clip, then 5 timed runs.
-* **Mean:** 1,674.1 ms · **median:** 1,631.7 ms · **range:** 1,556.6–1,835.6 ms
-* **Real-time factor:** 0.286
-* **Target:** 280 ms → **MISS** (6.0× the target)
+* **Mean:** 1,780 ms · **median:** 1,756.4 ms · **range:** 1,637.4–1,936.4 ms
+* **Real-time factor:** 0.304
+* **Target:** 280 ms → **MISS** (6.4× the target)
 * **Measurement point:** wall time around inference.transcribe_audio, including audio decode
 
 ### Memory
 
-* **RSS before model load:** 380.8 MB
-* **RSS after model load:** 1,401.3 MB
+* **RSS before model load:** 380.7 MB
+* **RSS after model load:** 1,401.2 MB
 * **RSS delta:** **1,020.5 MB**
-* **Peak RSS during timed runs:** 1,753.8 MB
-* **Peak working set (OS counter):** 1,767.3 MB
+* **Peak RSS during timed runs:** 1,749.1 MB
+* **Peak working set (OS counter):** 1,767.8 MB
 
 ### Interpretation
 
 * Mild dysarthric speech is transcribed correctly on the demo clip.
-* Moderate speech is only partially usable: half the words are wrong.
+* Moderate-to-severe speech is only partially usable: half the words are wrong.
 * Severe speech is **not** usable; it is reported as a known limit, not hidden.
 * The latency target is missed by a wide margin. This is a CPU-only PyTorch implementation of a 243.5M-parameter model; it is not a real-time system.
 * Only 3 clips from 3 speakers were measured. These results are preliminary and are not a clinical claim.

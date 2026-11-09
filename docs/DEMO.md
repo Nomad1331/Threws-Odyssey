@@ -2,8 +2,8 @@
 
 Four minutes of setup, or two if the dependencies are already installed. The point of
 the demo is not that it works on every voice; it is that it works on mild dysarthria,
-partially on moderate, and fails visibly on severe — and that every number on screen is
-reproducible.
+partially on the moderate-to-severe clip, and fails visibly on severe — and that every
+number on screen is reproducible.
 
 ## Before the audience
 
@@ -58,7 +58,7 @@ reproducible.
 
 ## Answers for judges
 
-- **"What is the accuracy?"** Mild is exact on the demo clip, moderate is about half
+- **"What is the accuracy?"** Mild is exact on the demo clip, the moderate-to-severe clip is about half wrong
   wrong, severe is worse than useless. The table in `README.md` is generated from
   `facts.json`; quote that, not memory.
 - **"Why is it slow?"** It is a 243.5M-parameter model running on CPU in PyTorch, with no

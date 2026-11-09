@@ -5,8 +5,8 @@
 > **Branch:** `voicebridge-clean`
 
 > **Status: research prototype.** It transcribes **mild** dysarthric speech correctly and
-> **moderate** speech partially; **severe** speech is not supported and is reported as a
-> known limit. It is not a medical device and has no clinical validation. Read
+> the **moderate-to-severe** demo clip partially; **severe** speech is not supported and is
+> reported as a known limit. It is not a medical device and has no clinical validation. Read
 > **[LIMITS.md](LIMITS.md)** before quoting anything here. Five-minute walkthrough:
 > **[docs/DEMO.md](docs/DEMO.md)**.
 
@@ -83,14 +83,14 @@ Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 | Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
 | Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
 | Memory added when the model loads (RSS) | 1,020.5 MB | — | — |
-| Peak process memory | 1,753.8 MB | — | — |
-| Latency per sentence | 1,674.1 ms mean (1,631.7 ms median, 1,556.6–1,835.6 ms range) | 280 ms | **MISS, 6.0× over** |
-| Real-time factor | 0.286 | below 1.0 | processes faster than playback |
+| Peak process memory | 1,749.1 MB | — | — |
+| Latency per sentence | 1,780 ms mean (1,756.4 ms median, 1,637.4–1,936.4 ms range) | 280 ms | **MISS, 6.4× over** |
+| Real-time factor | 0.304 | below 1.0 | processing beats playback; the response still takes seconds |
 
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
 
-**Where it stops:** mild dysarthric speech is transcribed correctly; moderate speech is partially usable; severe speech is not usable and is reported here as a known limit. The system runs on a CPU without a GPU, but it is not a real-time system. Full, honest scope in [LIMITS.md](LIMITS.md).
+**Where it stops:** mild dysarthric speech is transcribed correctly; the moderate-to-severe demo clip is partially usable; severe speech is not usable and is reported here as a known limit. The system runs on a CPU without a GPU, but it is not a real-time system. Full, honest scope in [LIMITS.md](LIMITS.md).
 
 *Reference: University of Toronto TORGO Database (Rudzicz et al., 2012).*
 

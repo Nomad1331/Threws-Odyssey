@@ -4,9 +4,9 @@ This file exists so nobody has to discover the limits the hard way. Every number
 here is rendered from `facts.json` by `benchmarks/render_docs.py`; nothing is typed.
 
 <!-- BEGIN:generated:limits-summary -->
-- **Accuracy:** mild **0.0%**, moderate **50.0%**, severe **120.0%** word error rate on the 3 demo clips (3 speakers). Mean of clips 56.7%; corpus WER 56.2%.
-- **Latency:** 1,674.1 ms mean per sentence against a 280 ms target — **MISS**.
-- **Memory:** 1,020.5 MB RSS delta at load; 1,753.8 MB peak. **Disk:** 978.5 MB.
+- **Accuracy:** mild **0.0%**, moderate-to-severe **50.0%**, severe **120.0%** word error rate on the 3 demo clips (3 speakers). Mean of clips 56.7%; corpus WER 56.2%.
+- **Latency:** 1,780 ms mean per sentence against a 280 ms target — **MISS**.
+- **Memory:** 1,020.5 MB RSS delta at load; 1,749.1 MB peak. **Disk:** 978.5 MB.
 - **Model:** openai/whisper-small + LoRA, cpu only; no GPU, Raspberry Pi or Coral Edge TPU validation.
 - **Sample size:** 3 clips from 3 speakers. Preliminary; not a clinical result.
 <!-- END:generated:limits-summary -->

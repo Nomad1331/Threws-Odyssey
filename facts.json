@@ -5,13 +5,13 @@
     "track": "Human-AI & Assistive Technology",
     "team": "Sleeper Cells",
     "institution": "SIES Graduate School of Technology",
-    "generatedAt": "2026-11-09T14:25:20+00:00",
+    "generatedAt": "2026-11-09T14:47:37+00:00",
     "generatedBy": "python benchmarks/benchmark_product.py",
     "script": "benchmarks/benchmark_product.py",
     "scriptSha256": "6c8c3fc59e1972a0",
     "sourceHashes": {
       "benchmarks/benchmark_product.py": "6c8c3fc59e1972a0",
-      "backend/app/inference.py": "18ccead1755141bb",
+      "backend/app/inference.py": "d49a6036f6c44460",
       "backend/evaluate_samples.py": "a662a25e585e5056"
     },
     "host": {
@@ -60,7 +60,7 @@
       "totalMb": 978.5,
       "definition": "megabytes = 10^6 bytes, as reported by the Hugging Face cache index"
     },
-    "modelLoadMs": 998.8,
+    "modelLoadMs": 1146.1,
     "accuracy": {
       "referenceSource": "backend/evaluate_samples.py:SAMPLES (same sentences the demo page shows)",
       "metric": "word error rate after lowercasing and stripping punctuation; (S+D+I)/reference words",
@@ -86,16 +86,16 @@
           "errors": 0,
           "latencyMs": {
             "runs": [
-              1614.5,
-              1599.6,
-              1556.6,
-              1566.5,
-              1582.7
+              1685.3,
+              1737.4,
+              1756.4,
+              1637.4,
+              1660.4
             ],
-            "mean": 1584.0,
-            "median": 1582.7,
-            "min": 1556.6,
-            "max": 1614.5
+            "mean": 1695.4,
+            "median": 1685.3,
+            "min": 1637.4,
+            "max": 1756.4
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -117,16 +117,16 @@
           "errors": 3,
           "latencyMs": {
             "runs": [
-              1607.9,
-              1631.7,
-              1697.2,
-              1643.1,
-              1629.8
+              1771.1,
+              1709.2,
+              1742.8,
+              1704.3,
+              1790.6
             ],
-            "mean": 1641.9,
-            "median": 1631.7,
-            "min": 1607.9,
-            "max": 1697.2
+            "mean": 1743.6,
+            "median": 1742.8,
+            "min": 1704.3,
+            "max": 1790.6
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -148,16 +148,16 @@
           "errors": 6,
           "latencyMs": {
             "runs": [
-              1835.6,
-              1800.4,
-              1790.8,
-              1773.1,
-              1782.3
+              1931.9,
+              1916.1,
+              1936.4,
+              1855.8,
+              1864.5
             ],
-            "mean": 1796.4,
-            "median": 1790.8,
-            "min": 1773.1,
-            "max": 1835.6
+            "mean": 1900.9,
+            "median": 1916.1,
+            "min": 1855.8,
+            "max": 1936.4
           },
           "outputsIdenticalAcrossRuns": true
         }
@@ -166,11 +166,11 @@
     "latency": {
       "warmupRunsPerClip": 2,
       "timedRunsPerClip": 5,
-      "meanMs": 1674.1,
-      "medianMs": 1631.7,
-      "minMs": 1556.6,
-      "maxMs": 1835.6,
-      "realTimeFactor": 0.286,
+      "meanMs": 1780.0,
+      "medianMs": 1756.4,
+      "minMs": 1637.4,
+      "maxMs": 1936.4,
+      "realTimeFactor": 0.304,
       "targetMs": 280,
       "targetStatus": "MISS",
       "targetSource": "project latency target carried in facts.json since 2026-11-04",
@@ -179,11 +179,11 @@
       "status": "MISS"
     },
     "memory": {
-      "rssBeforeLoadMb": 380.8,
-      "rssAfterLoadMb": 1401.3,
+      "rssBeforeLoadMb": 380.7,
+      "rssAfterLoadMb": 1401.2,
       "rssDeltaMb": 1020.5,
-      "peakRssDuringRunMb": 1753.8,
-      "processPeakWorkingSetMb": 1767.3,
+      "peakRssDuringRunMb": 1749.1,
+      "processPeakWorkingSetMb": 1767.8,
       "totalSystemRamGb": 137.3,
       "peakSampling": "background sampler every 50 ms during the timed runs",
       "definition": "RSS delta = resident set after model load minus resident set after imports; peak = highest value sampled during the timed runs"

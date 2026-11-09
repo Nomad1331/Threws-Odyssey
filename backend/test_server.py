@@ -192,6 +192,9 @@ def run_tests():
         over_files = {"file": ("over.wav", generate_test_wav(30.01), "audio/wav")}
         over_resp = client.post("/api/v1/translate-audio", files=over_files)
         assert over_resp.status_code == 422, f"Expected 422, got {over_resp.status_code}"
+        assert "30.01" in over_resp.json().get("detail", ""), (
+            "the rejection message must show the actual duration, not a rounded 30.0"
+        )
 
         under_files = {"file": ("under.wav", generate_test_wav(29.5), "audio/wav")}
         under_resp = client.post("/api/v1/translate-audio", files=under_files)

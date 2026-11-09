@@ -12,6 +12,21 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.12.0: Final Sweep — Boundary Messaging, Health Ordering, Doc Drift
+
+* **30-second rejection message was self-contradictory.** It rounded 30.01 s to “30.0 s” while refusing the file, so it looked like a 30.0 s clip was rejected for being over 30 s. Now printed to two decimals, and test 11 asserts the message contains `30.01`.
+* **Health badge could stay wrong forever.** It checked once on mount, so opening the frontend while uvicorn was still loading showed “Backend offline” until the first transcription. It now polls every 5 s.
+* **A preset phrase kept the previous recording’s audio.** Tapping an AAC phrase replaced the text but left an unrelated audio player below it. Preset selection now clears the recorded clip as well as confidence/latency/source.
+* **Truthiness of “real-time” was inconsistent.** The table said “processes faster than playback” while the prose said “not a real-time system”. Both are true of different things; the row now says processing beats playback but the response still takes seconds.
+* **Severity labels disagreed with the data.** Prose called the middle speaker “moderate” while the generated table and facts say “moderate-to-severe”. Prose now matches the data; the claim scope stays mild-to-moderate.
+* **`DATASETS_AND_PROOF.md` still credited the wrong TORGO authors** (A. Roeck, E. Wang), contradicting the corrected citation in the README. Fixed to Rudzicz, Namasivayam & Wolff. Removed unsourced counts (12,000 recordings, 50 GB archive, 680,000 training hours) from the same page.
+* **Bloat:** removed the unused `--panel` CSS variable.
+* **The provenance gate caught my own edit.** Changing two error strings in `inference.py` failed `claims_check` with “source changed since the benchmark”, forcing a re-measurement. That is the gate working, not a false positive.
+* **Regenerated:** `facts.json`, doc blocks and figures. Verification: 11/11 tests, build, lint, claims + 3-source provenance, served build HTTP 200.
+* **Convergence:** after these fixes, the full sweep — compile, unused imports, doc references, tests, build, lint, claims, runtime edge cases, served build — produced **zero new verified defects**. Residual risks are unchanged and listed in `LIMITS.md`.
+
+---
+
 ## [2026-11-09] - v1.11.0: Fourth Pass — Convergence Sweep
 
 * **Provenance now covers three sources.** `facts.json` records hashes of `benchmark_product.py`, `backend/app/inference.py` and `backend/evaluate_samples.py`; `claims_check.py` verifies all of them. Demonstrated failing on a doctored inference hash and passing on the real file.

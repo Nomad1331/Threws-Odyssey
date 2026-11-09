@@ -167,7 +167,7 @@ def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
     known_duration = probe_duration_s(audio_path)
     if known_duration is not None and known_duration > MAX_AUDIO_SECONDS:
         raise AudioTooLongError(
-            f"Recording is {known_duration:.1f} s; the model accepts at most "
+            f"Recording is {known_duration:.2f} s; the model accepts at most "
             f"{MAX_AUDIO_SECONDS:.0f} s. Please record a shorter phrase."
         )
 
@@ -178,7 +178,7 @@ def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
     duration_s = len(audio_array) / 16000.0
     if duration_s > MAX_AUDIO_SECONDS:
         raise AudioTooLongError(
-            f"Recording is {duration_s:.1f} s; the model accepts at most "
+            f"Recording is {duration_s:.2f} s; the model accepts at most "
             f"{MAX_AUDIO_SECONDS:.0f} s. Please record a shorter phrase."
         )
 

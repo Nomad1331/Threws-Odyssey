@@ -12,6 +12,15 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.16.0: PyAV 19 and Browser Format Verification
+
+* **PyAV 19 tested directly.** Installed `av==19.0.0` in an isolated venv. It rejects `av.open(..., metadata_errors="ignore")` with `TypeError: open() got an unexpected keyword argument 'metadata_errors'` — the exact failure Aaliya reported. The new product decoder has no such argument and decoded both the WAV and WebM/Opus probes under PyAV 19 with identical sample counts (91,040 and 91,024) to PyAV 13.
+* **Safari and resampling paths exercised.** An AAC-in-MP4 (`.m4a`) upload returned 200 with “We have an excellent team”; a 2-channel WAV returned 200 with the same transcript. Both were previously untested.
+* **Repository integrity:** `git fsck` clean.
+* **No product code changed in this pass** — verification only. The installed product still pins `av==13.1.0`; the decoder is version-tolerant.
+
+---
+
 ## [2026-11-09] - v1.15.0: Remove the Old Decoder Dependency Entirely
 
 * **Aaliya's follow-up was accurate:** `inference.py` had kept the `decode_audio` import from the earlier faster-whisper backend even after the transformers + LoRA engine replaced it. That import was removed in v1.14.0; this pass removes the last references in the repo.

@@ -20,6 +20,8 @@ Exit codes: 0 = clean, 1 = a document disagrees with facts.json.
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import re
 import sys
@@ -88,7 +90,23 @@ def normalise(body: str) -> list[str]:
     return [line.rstrip() for line in body.strip("\n").splitlines()]
 
 
+def script_hash() -> str:
+    """Hash of the benchmark script that is supposed to have written facts.json."""
+    return hashlib.sha256(
+        (REPO_ROOT / "benchmarks" / "benchmark_product.py").read_bytes()
+    ).hexdigest()[:16]
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Check documented numbers against facts.json")
+    parser.add_argument("--facts", default=str(FACTS), help="facts file to validate")
+    parser.add_argument(
+        "--provenance-only",
+        action="store_true",
+        help="only verify that facts.json was written by the current benchmark script",
+    )
+    args = parser.parse_args()
+
     # Windows consoles default to cp1252, which cannot print the quotes and
     # arrows that appear in rendered blocks.
     for stream in (sys.stdout, sys.stderr):
@@ -97,8 +115,24 @@ def main() -> int:
         except Exception:
             pass
 
-    facts = json.loads(FACTS.read_text(encoding="utf-8"))
+    facts = json.loads(Path(args.facts).read_text(encoding="utf-8"))
     failures: list[str] = []
+
+    recorded = facts.get("_meta", {}).get("scriptSha256")
+    actual = script_hash()
+    if recorded != actual:
+        failures.append(
+            f"facts.json provenance: scriptSha256 {recorded!r} does not match the current "
+            f"benchmarks/benchmark_product.py ({actual!r}). Rerun the benchmark."
+        )
+
+    if args.provenance_only:
+        if failures:
+            for failure in failures:
+                print("  FAIL " + failure)
+            return 1
+        print(f"provenance: facts.json was written by benchmark_product.py ({actual})")
+        return 0
 
     # 1. Generated blocks must equal a fresh render.
     for path, names in render_docs.TARGETS.items():

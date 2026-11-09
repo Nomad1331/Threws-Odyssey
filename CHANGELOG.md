@@ -12,6 +12,17 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.10.0: Third Pass — Provenance, Dependencies, Served Build
+
+* **`facts.json` provenance is now enforced.** `claims_check.py` hashes `benchmarks/benchmark_product.py` and compares it with `_meta.scriptSha256`, so numbers produced by a different version of the script fail the check. Added `--facts` and `--provenance-only` for testing; the gate was demonstrated failing on a doctored hash (`deadbeef…`) and passing on the real file.
+* **Starlette pinned (`1.10.0`).** Removing `httpx` relied on Starlette's newer `TestClient`; pinning prevents a future resolver from installing a Starlette that needs `httpx` and breaks `test_server.py`.
+* **Confidence calculation audited, not changed.** For the mild clip: 6 score steps map to the last 6 of 10 sequence tokens (4 prompt + 6 generated including EOS), and the decoded ids equal the transcript. The average includes the EOS probability, which is why confidence sits slightly high; documented here rather than silently “fixed”, because changing it would change a published number.
+* **Dependency and tooling checks:** `pip check` reports no broken requirements, `npm ls --depth=0` resolves cleanly, ESLint reports no warnings.
+* **Served build smoke test:** `next start` on port 3000 returned HTTP 200 (14,655 bytes) with the VoiceBridge title present.
+* **No new product defect found in this pass.** The remaining limits are the same ones listed in `LIMITS.md`; none were contradicted by the code.
+
+---
+
 ## [2026-11-09] - v1.9.0: Second Adversarial Pass — Silence, Licensing, Dead Tokens
 
 * **Found and fixed: the model invents a word on silence.** A 3-second digital-silence WAV decoded to “you”. Added a near-silence energy gate before inference (peak below 0.002; the demo clips peak at 0.49–0.74) that returns an empty transcript instead. `no_speech_threshold` was tried first and crashes this Transformers build with `UnboundLocalError: logprobs`, so it is not used. New test 10 asserts silence produces no words; suite is 10/10.

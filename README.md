@@ -4,6 +4,12 @@
 > **Institution:** SIES Graduate School of Technology, Navi Mumbai  
 > **Branch:** `voicebridge-clean`
 
+> **Status: research prototype.** It transcribes **mild** dysarthric speech correctly and
+> **moderate** speech partially; **severe** speech is not supported and is reported as a
+> known limit. It is not a medical device and has no clinical validation. Read
+> **[LIMITS.md](LIMITS.md)** before quoting anything here. Five-minute walkthrough:
+> **[docs/DEMO.md](docs/DEMO.md)**.
+
 ---
 
 ## 📌 Problem & Motivation
@@ -84,7 +90,7 @@ Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
 
-**Where it stops:** mild dysarthric speech is transcribed correctly; moderate speech is partially usable; severe speech is not usable and is reported here as a known limit. The system runs on a CPU without a GPU, but it is not a real-time system: latency is roughly six times the original target, and the model needs about a gigabyte of RAM.
+**Where it stops:** mild dysarthric speech is transcribed correctly; moderate speech is partially usable; severe speech is not usable and is reported here as a known limit. The system runs on a CPU without a GPU, but it is not a real-time system. Full, honest scope in [LIMITS.md](LIMITS.md).
 
 *Reference: University of Toronto TORGO Database (Rudzicz et al., 2012).*
 
@@ -132,6 +138,7 @@ Threws-Odyssey/
 │   ├── EDGE_AI_BENCHMARK_RESULTS.md # Product benchmark + whisper-tiny INT8 side study
 │   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
 │   ├── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
+│   ├── DEMO.md                      # Five-minute judge walkthrough
 │   └── archive/                     # Internal planning/audit ledgers, superseded, not judge-facing
 │
 ├── model_training/
@@ -140,6 +147,8 @@ Threws-Odyssey/
 │   └── export_and_quantize_onnx.py     # Standalone ONNX export & INT8 quantization script
 │
 ├── facts.json                       # Single source of truth for all verified numbers
+├── LIMITS.md                        # What it cannot do, in plain language
+├── LICENSE                          # MIT (code)
 ├── CHANGELOG.md                     # Dated engineering ledger, including corrections
 └── README.md
 ```
@@ -207,8 +216,8 @@ It fails if any benchmark figure in the docs no longer matches `facts.json`.
 ## ♿ Motor & Physical Accessibility Features
 
 VoiceBridge was built specifically with physical accessibility considerations:
-1. **Large Motor Targets:** The primary record button and AAC cards meet WCAG 2.1 AAA touch target recommendations (minimum 44x44px, up to 112px).
-2. **Keyboard Assistive Hotkey:** Tap <kbd>SPACE</kbd> anywhere on the page to start or stop recording.
+1. **Large Motor Targets:** The primary record button and AAC cards are sized above the WCAG 2.2 AA minimum target size (44x44 px, up to 112 px).
+2. **Keyboard Assistive Hotkey:** Press <kbd>SPACE</kbd> to start or stop recording when no other control has focus.
 3. **Accidental Press Protection:** Critical phrases (such as "Pain Alert") require a two-stage confirmation within a 3-second window to prevent unintended triggers caused by motor spasticity or tremors.
 4. **Haptic & Visual Feedback:** Device vibration on mobile touch and a live 60 FPS waveform canvas confirm microphone responsiveness.
 5. **Speech Synthesis:** Tap "Say it" to read out the reconstructed transcription through the browser's native text-to-speech engine.
@@ -227,6 +236,7 @@ VoiceBridge was built specifically with physical accessibility considerations:
 
 ## 📜 Dataset Attribution & License
 
-- **Dataset:** University of Toronto TORGO Database for Dysarthric Articulation (*Frank Rudzicz, A. Roeck, E. Wang, 2012*).
+- **Dataset:** University of Toronto TORGO Database for Dysarthric Articulation (Rudzicz, Namasivayam & Wolff, 2012). It is distributed under the Linguistic Data Consortium's user agreement. The three demo clips are TORGO recordings included for evaluation; redistribution may require LDC permission.
+- **Code:** MIT — see [LICENSE](LICENSE).
 - **Target Event:** THREWS Odyssey 2026.
-- **License:** Open source under the MIT License.
+- **Scope and limits:** [LIMITS.md](LIMITS.md).

@@ -36,6 +36,7 @@ HISTORICAL_END = "<!-- /claims-check:historical -->"
 
 JUDGE_FACING = [
     REPO_ROOT / "README.md",
+    REPO_ROOT / "LIMITS.md",
     REPO_ROOT / "docs" / "EDGE_AI_BENCHMARK_RESULTS.md",
     REPO_ROOT / "docs" / "COMPETITIVE_ANALYSIS.md",
     REPO_ROOT / "docs" / "SYSTEM_WALKTHROUGH.md",
@@ -64,6 +65,7 @@ MEASURE = re.compile(r"(?<![\w.])\d[\d,]*(?:\.\d+)?\s?(?:%|ms|MB|GB)\b")
 # Files where every measured value must be inside a generated block.
 STRICT = {
     REPO_ROOT / "README.md",
+    REPO_ROOT / "LIMITS.md",
     REPO_ROOT / "docs" / "EDGE_AI_BENCHMARK_RESULTS.md",
 }
 

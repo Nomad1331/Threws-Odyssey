@@ -273,12 +273,41 @@ def render_datasets_accuracy(facts: dict) -> str:
     )
 
 
+def render_limits(facts: dict) -> str:
+    product = facts["product"]
+    latency = product["latency"]
+    memory = product["memory"]
+    storage = product["storage"]
+    speakers = len({clip["speaker"] for clip in product["accuracy"]["clips"]})
+    return "\n".join(
+        [
+            f"- **Accuracy:** mild **{_pct(product['accuracy']['clips'][0]['werPct'])}**, "
+            f"moderate **{_pct(product['accuracy']['clips'][1]['werPct'])}**, "
+            f"severe **{_pct(product['accuracy']['clips'][2]['werPct'])}** word error rate "
+            f"on the {product['accuracy']['sampleCount']} demo clips "
+            f"({speakers} speakers). Mean of clips "
+            f"{_pct(product['accuracy']['meanClipWerPct'])}; corpus WER "
+            f"{_pct(product['accuracy']['corpusWerPct'])}.",
+            f"- **Latency:** {_num(latency['meanMs'])} ms mean per sentence against a "
+            f"{latency['targetMs']} ms target — **{latency['targetStatus']}**.",
+            f"- **Memory:** {_num(memory['rssDeltaMb'])} MB RSS delta at load; "
+            f"{_num(memory['peakRssDuringRunMb'])} MB peak. **Disk:** "
+            f"{storage['totalMb']} MB.",
+            f"- **Model:** {product['baseModel']} + LoRA, {product['device']} only; "
+            "no GPU, Raspberry Pi or Coral Edge TPU validation.",
+            f"- **Sample size:** {product['accuracy']['sampleCount']} clips from "
+            f"{speakers} speakers. Preliminary; not a clinical result.",
+        ]
+    )
+
+
 RENDERERS = {
     "readme-accuracy": render_readme_accuracy,
     "readme-performance": render_readme_performance,
     "edge-product": render_edge_product,
     "competitive-telemetry": render_competitive_telemetry,
     "datasets-accuracy": render_datasets_accuracy,
+    "limits-summary": render_limits,
 }
 
 # Which files hold which generated blocks.
@@ -287,6 +316,7 @@ TARGETS = {
     REPO_ROOT / "docs" / "EDGE_AI_BENCHMARK_RESULTS.md": ["edge-product"],
     REPO_ROOT / "docs" / "COMPETITIVE_ANALYSIS.md": ["competitive-telemetry"],
     REPO_ROOT / "docs" / "DATASETS_AND_PROOF.md": ["datasets-accuracy"],
+    REPO_ROOT / "LIMITS.md": ["limits-summary"],
 }
 
 

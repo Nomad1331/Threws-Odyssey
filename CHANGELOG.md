@@ -7,6 +7,19 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.7.0: Phase 6 — Ship Package
+
+* **`LIMITS.md`:** plain-language scope — severe speech fails, no clinical validation, not real-time, three clips, no speaker-independence proof, no VAD, no Pi/GPU validation, accessibility designed but not audited, TORGO/LDC redistribution caveat. Its summary block is generated from `facts.json`, and the file is inside the claims check.
+* **`LICENSE`:** MIT text for the code. README now separates code licence (MIT) from TORGO data terms (LDC agreement; demo clips included for evaluation only) and corrects the citation to Rudzicz, Namasivayam & Wolff (2012).
+* **README:** adds a status callout at the top (mild correct, moderate partial, severe unsupported, not a medical device), links `LIMITS.md` and the demo, and replaces the WCAG "AAA" claim with the actual target size and "designed, not audited".
+* **`docs/DEMO.md`:** five-minute walkthrough including the severe-clip failure, preset-vs-model telemetry, two-step Pain Alert, and an offline-backend check; includes the answers to the four questions judges ask.
+* **Live demo run (2026-11-09):** real uvicorn server on `127.0.0.1:8000`; `/health` returned the engine name; `torgo_mild_sample.wav` → “We have an excellent team” (confidence 0.901, 1,591 ms); `torgo_severe_sample.wav` → “Get the apple by Fimasy Bezzi bit” (confidence 0.266, 1,779 ms) — the documented failure, not a fabricated success.
+* **Fresh-clone check:** committed tree cloned locally; `claims_check.py` passes from the clone.
+* **Tag:** `v1.7.0`.
+* **Not done:** nothing was pushed to a remote. Push requires explicit approval because it publishes to the team repository.
+
+---
+
 ## [2026-11-09] - v1.6.0: Phase 5 — Surgical Fixes for the Verified Highs
 
 * **Backend**
@@ -25,7 +38,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
   - `export_and_quantize_onnx.py`: storage reduction and completion messages are computed from the measured statuses; on Windows/macOS x86_64 it now selects the AVX2 config instead of silently building an ARM64 graph.
   - `benchmark_product.py`: the WER negative control now uses a deliberately wrong transcript (the old one re-ran an identical pair and could not fail); `--baseline` requires equal clip lists and matching transcripts/parameter counts, with zero guards.
   - `render_docs.py`: model size and speaker count are derived from `facts.json` instead of hardcoded/reused values.
-* **Regenerated:** `facts.json`, all generated doc blocks, and both figures. Latency moved within tolerance (1,720.1 → 1,671.6 ms mean) after the code changes; WER unchanged.
+* **Regenerated:** `facts.json`, all generated doc blocks, and both figures. Latency moved within tolerance (1,720.1 → 1,683.5 ms mean) after the code changes; WER unchanged.
 * **Verification:** backend 8/8, `npm run build` exit 0, `claims_check.py` exit 0, two benchmark runs reproduce, Figure 1 inspected and matches the table.
 * **Still open (medium, deliberately not fixed now):** claims-check does not scan `SYSTEM_WALKTHROUGH.md` and does not validate `facts.json` provenance; `useAudioRecorder` state guard is still before its first `await`; abort timer ends before the response body is read; `extract_torgo_audio.py` selects rows by index without asserting labels; `QuickAssistGrid` has no minimum gap between the two urgent taps; border contrast is 1.49:1.
 

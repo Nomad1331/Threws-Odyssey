@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.15.0: Remove the Old Decoder Dependency Entirely
+
+* **Aaliya's follow-up was accurate:** `inference.py` had kept the `decode_audio` import from the earlier faster-whisper backend even after the transformers + LoRA engine replaced it. That import was removed in v1.14.0; this pass removes the last references in the repo.
+* **Found one more leftover:** `benchmark_product.py`'s duration fallback also imported `faster_whisper.audio.decode_audio`, which would hit the same PyAV 19 `metadata_errors` trap. It now uses the product decoder.
+* **`faster-whisper` removed from the product requirements.** The app no longer imports it at all; only the optional TORGO extraction script does, and its docstring now lists it as an extra. Product installs no longer pull `ctranslate2`/`onnxruntime` for an unused decoder.
+* **Proof:** the full 12-test suite ran with `sys.modules["faster_whisper"] = None` (any import would raise) and passed 12/12.
+* **Regenerated:** `facts.json`, doc blocks and figures. WER unchanged (0 / 50 / 120).
+
+---
+
 ## [2026-11-09] - v1.14.0: Decoder Root Cause — PyAV 19 `metadata_errors`
 
 * **Aaliya's diagnosis was correct about the failing call.** `faster_whisper/audio.py` passes `metadata_errors="ignore"` to `av.open`; PyAV 19 removed that keyword, so every decode raises a `metadata_errors` TypeError. Our machine had PyAV **13.1.0**, which is why the suite and the WebM probe passed here; `requirements.txt` never pinned `av`, so a fresh install could pull PyAV 19 and break every request. That is the gap this missed.

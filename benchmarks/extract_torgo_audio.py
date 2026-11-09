@@ -2,7 +2,7 @@
 One-off extraction of the three demo clips from the TORGO parquet shard.
 
 Requires the optional research extras (not part of the product install):
-    pip install datasets pyarrow
+    pip install datasets pyarrow faster-whisper
 
 Row indices are fixed to the shard this project used (train-00002-of-00004).
 The expected transcript is asserted before each file is written, so a reordered

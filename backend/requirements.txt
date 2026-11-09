@@ -9,11 +9,12 @@ fastapi==0.162.0
 starlette==1.10.0
 uvicorn[standard]==0.54.0
 python-multipart==0.0.33
-faster-whisper==1.2.1
-# PyAV: decode + duration probe. Pinned because PyAV 19 removed the
-# `metadata_errors` keyword that faster-whisper 1.2.1 still passes; the product
-# no longer uses that wrapper, but a pinned decoder keeps installs reproducible.
+# PyAV: the only audio decoder the product uses. Pinned for reproducible resampling;
+# the decoder itself uses stable APIs and does not depend on the removed PyAV 19
+# `metadata_errors` keyword.
 av==13.1.0
+# faster-whisper is NOT a product dependency. It is only needed by the optional
+# TORGO extraction script: pip install faster-whisper
 torch==2.15.0
 transformers==5.22.2
 peft==0.21.2

@@ -258,9 +258,11 @@ def audio_duration_sec(path: Path) -> float:
         info = soundfile.info(str(path))
         return round(info.frames / info.samplerate, 2)
     except Exception:
-        from faster_whisper.audio import decode_audio
+        # Use the product's own PyAV decoder, not faster-whisper's wrapper, which
+        # breaks on PyAV 19 (removed metadata_errors keyword).
+        from app import inference
 
-        return round(len(decode_audio(str(path), sampling_rate=16000)) / 16000, 2)
+        return round(len(inference.decode_audio_pyav(str(path))) / 16000, 2)
 
 
 def run(args) -> dict:

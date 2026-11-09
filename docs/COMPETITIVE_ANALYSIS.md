@@ -84,8 +84,8 @@ All metrics below come from `facts.json`, written by `benchmarks/benchmark_produ
 * **Host:** Intel(R) Core(TM) i5-14400F (10 cores), Windows 11 (10.0.26300), CPU-only
 * **Model:** openai/whisper-small (243.5M parameters) + LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB (971.4 MB base + 7.1 MB adapter)
-* **Memory:** 1,020.6 MB RSS delta at load; 1,747.8 MB peak
-* **Latency:** 1,706.3 ms mean per sentence (RTF 0.292); target 280 ms → **MISS**
+* **Memory:** 1,020.8 MB RSS delta at load; 1,760.6 MB peak
+* **Latency:** 1,770.5 ms mean per sentence (RTF 0.302); target 280 ms → **MISS**
 * **Accuracy:**
   * TORGO-M05 (Cerebral Palsy): **0.0% WER** — “We have an excellent team” → “We have an excellent team”
   * TORGO-M04 (Post-Trauma (TBI)): **50.0% WER** — “Their house is grey and white” → “then there's the grey and white”

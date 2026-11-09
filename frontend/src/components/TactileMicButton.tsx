@@ -56,9 +56,13 @@ export const TactileMicButton: React.FC<TactileMicButtonProps> = ({
         // Enforce repeat check to eliminate rapid spastic trigger loops from held switch buttons
         if (e.repeat) return;
         const activeEl = document.activeElement as HTMLElement | null;
-        if (activeEl?.isContentEditable) return;
-        const activeTag = (activeEl?.tagName || "").toLowerCase();
-        if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
+        // Let a focused control handle Space itself (buttons, links, fields).
+        // Without this, Space on "Clear"/"Say it"/a preset activates the mic instead.
+        if (
+          activeEl?.closest(
+            'button, a, input, select, textarea, [role="button"], [contenteditable="true"]'
+          )
+        ) {
           return;
         }
         e.preventDefault();

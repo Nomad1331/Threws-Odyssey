@@ -77,16 +77,18 @@ export default function Home() {
 
         // Send audio to FastAPI backend
         const result = await transcribeAudio(audioBlob);
+        setStatusNotice(result.statusNotice);
+        if (result.isError) {
+          // Keep the previous transcript and its measured telemetry intact;
+          // only the notice changes. A server error still means the backend is up.
+          setBackendConnected(result.errorKind === "server");
+          return;
+        }
         setTranscript(result.text);
         setLatencyMs(result.latencyMs);
         setConfidenceScore(result.confidence);
-        setStatusNotice(result.statusNotice);
         setSource(result.source);
-        if (result.source === "voicebridge-backend") {
-          setBackendConnected(true);
-        } else {
-          setBackendConnected(false);
-        }
+        setBackendConnected(result.source === "voicebridge-backend");
       } catch (err) {
         console.error("Transcription error:", err);
         setStatusNotice("Failed to transcribe audio. Please try again.");
@@ -114,9 +116,15 @@ export default function Home() {
     clearRecordedAudio();
   }, [clearRecordedAudio]);
 
-  // Set transcript from QuickAssist presets
+  // Set transcript from QuickAssist presets. A preset is not a model result, so
+  // clear the previous recording's confidence/latency/source instead of letting
+  // them describe a sentence the model never transcribed.
   const handleSpeakPhrase = useCallback((phrase: string) => {
     setTranscript(phrase);
+    setLatencyMs(null);
+    setConfidenceScore(null);
+    setSource(undefined);
+    setStatusNotice(undefined);
   }, []);
 
   // Transcribe pre-recorded clinical sample audio
@@ -124,17 +132,29 @@ export default function Home() {
     setStatusNotice("Transcribing clinical sample audio...");
     try {
       const res = await fetch(audioUrl);
+      if (!res.ok) {
+        throw new Error(`Sample unavailable (HTTP ${res.status})`);
+      }
       const blob = await res.blob();
+      if (!blob.type.startsWith("audio/")) {
+        throw new Error("Sample is not an audio file.");
+      }
       const result = await transcribeAudio(blob);
+      setStatusNotice(result.statusNotice);
+      if (result.isError) {
+        setBackendConnected(result.errorKind === "server");
+        return;
+      }
       setTranscript(result.text);
       setLatencyMs(result.latencyMs);
       setConfidenceScore(result.confidence);
-      setStatusNotice(result.statusNotice);
       setSource(result.source);
       setBackendConnected(result.source === "voicebridge-backend");
     } catch (err) {
       console.error("Clinical sample transcription error:", err);
-      setStatusNotice("Failed to transcribe sample.");
+      setStatusNotice(
+        err instanceof Error ? err.message : "Failed to transcribe sample."
+      );
     }
   }, []);
 

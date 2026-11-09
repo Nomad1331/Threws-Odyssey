@@ -19,6 +19,7 @@ export interface TranscriptionResult {
   source: "voicebridge-backend" | "unavailable";
   statusNotice?: string;
   isError: boolean;
+  errorKind?: "network" | "server" | "timeout";
 }
 
 /**
@@ -151,6 +152,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
       source: "unavailable",
       statusNotice: errorMessage,
       isError: true,
+      errorKind: "server",
     };
   } catch (err: unknown) {
     const elapsed = Math.round(performance.now() - startTime);
@@ -178,6 +180,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
       source: "unavailable",
       statusNotice,
       isError: true,
+      errorKind: isAbort ? "timeout" : "network",
     };
   }
 }

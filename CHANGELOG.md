@@ -12,6 +12,19 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.9.0: Second Adversarial Pass — Silence, Licensing, Dead Tokens
+
+* **Found and fixed: the model invents a word on silence.** A 3-second digital-silence WAV decoded to “you”. Added a near-silence energy gate before inference (peak below 0.002; the demo clips peak at 0.49–0.74) that returns an empty transcript instead. `no_speech_threshold` was tried first and crashes this Transformers build with `UnboundLocalError: logprobs`, so it is not used. New test 10 asserts silence produces no words; suite is 10/10.
+* **Found and fixed: a YouTube clip was shipped as clinical audio.** `frontend/public/audio/yt_nihss_sample.wav` (a NIHSS video excerpt) was listed in the TORGO-titled drawer — a licensing risk and a mislabel. Removed from the UI and archived outside the repository; the drawer now contains only the three TORGO clips.
+* **Found and fixed: the training notebook is broken on current Transformers.** `evaluation_strategy` was renamed; now `eval_strategy`.
+* **Found and fixed: startup required huggingface.co even with cached weights.** Every launch made four Hub requests (visible in the server log), so a machine without internet could stall before serving. When both the base model and adapter are present in the local cache, the engine now forces `HF_HUB_OFFLINE=1` before importing Transformers. Verified: startup makes no Hub requests and loads in 1.25 s from cache.
+* **Found and removed: unused Tailwind tokens** (`surface.card/muted`, `border.subtle/focus`, the whole `studio` palette, `clinical.muted/teal-light/amber/rose`). `npm run lint` is clean.
+* **Regenerated:** `facts.json`, doc blocks and figures after the inference change. Latency **1,751.7 ms**; WER unchanged.
+* **Verification:** 10/10 backend tests, `npm run lint` and `npm run build` exit 0, `claims_check.py` exit 0, two benchmark runs reproduce.
+* **Still true and stated:** a tone or background noise can still produce a word (no speech detector); long outputs are capped by the generation limit.
+
+---
+
 ## [2026-11-09] - v1.8.0: Adversarial Pass — Contradictions, Bloat, One Decompression Path
 
 * **Method:** mechanical scans (Python syntax compile, grep for retired or overstated claims, cross-file metadata) followed by line-by-line reads. Every item below was confirmed at the cited source; nothing here is a speculative finding, and one earlier frontend finding remains rejected as false.

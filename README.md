@@ -82,10 +82,10 @@ Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 | :--- | ---: | ---: | :--- |
 | Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
 | Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
-| Memory added when the model loads (RSS) | 1,020.6 MB | — | — |
-| Peak process memory | 1,748.7 MB | — | — |
-| Latency per sentence | 1,826.1 ms mean (1,854.3 ms median, 1,609.3–2,104.9 ms range) | 280 ms | **MISS, 6.5× over** |
-| Real-time factor | 0.312 | below 1.0 | processes faster than playback |
+| Memory added when the model loads (RSS) | 1,020.2 MB | — | — |
+| Peak process memory | 1,747.1 MB | — | — |
+| Latency per sentence | 1,751.7 ms mean (1,681.9 ms median, 1,583.7–2,423.6 ms range) | 280 ms | **MISS, 6.3× over** |
+| Real-time factor | 0.299 | below 1.0 | processes faster than playback |
 
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
@@ -106,7 +106,7 @@ Threws-Odyssey/
 │   │   └── inference.py         # Whisper-Small LoRA clinical acoustic inference engine
 │   ├── requirements.txt         # Pinned production dependencies (FastAPI, PyTorch, Transformers, PEFT)
 │   ├── evaluate_samples.py      # Runs the three demo clips through the live engine
-│   └── test_server.py           # Automated TestClient verification suite (9/9 tests)
+│   └── test_server.py           # Automated TestClient verification suite (10/10 tests)
 │
 ├── frontend/
 │   ├── src/
@@ -179,7 +179,7 @@ python -m venv .venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Run backend verification suite (9/9 tests)
+# Run backend verification suite (10/10 tests)
 python test_server.py
 
 # Start the FastAPI server

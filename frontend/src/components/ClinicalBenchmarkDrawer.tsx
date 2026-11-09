@@ -37,14 +37,6 @@ const TORGO_TRIALS: BenchmarkTrial[] = [
     targetText: "The job provides many benefits",
     audioUrl: "/audio/torgo_severe_sample.wav",
   },
-  {
-    id: "trial-4",
-    sampleLabel: "Sample 04",
-    speakerId: "NIHSS",
-    condition: "NIHSS Dysarthria Test (0:50–1:09)",
-    targetText: "Mama, Tip-Top, Fifty-Fifty, Thanks, Huckleberry, Baseball Player",
-    audioUrl: "/audio/yt_nihss_sample.wav",
-  },
 ];
 
 interface ClinicalBenchmarkDrawerProps {

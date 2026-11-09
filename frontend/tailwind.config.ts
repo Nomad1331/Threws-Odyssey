@@ -10,17 +10,8 @@ const config: Config = {
     extend: {
       colors: {
         canvas: "var(--canvas)",
-        surface: {
-          DEFAULT: "var(--surface)",
-          panel: "var(--panel)",
-          card: "var(--surface)",
-          muted: "var(--border)",
-        },
-        border: {
-          DEFAULT: "var(--border)",
-          subtle: "var(--border)",
-          focus: "var(--accent)",
-        },
+        surface: "var(--surface)",
+        border: "var(--border)",
         accent: "var(--accent)",
         "text-primary": "var(--text-primary)",
         "text-secondary": "var(--text-secondary)",
@@ -29,22 +20,9 @@ const config: Config = {
         "pain-background": "var(--pain-background)",
         "pain-hover": "var(--pain-hover)",
         "speak-background": "var(--speak-background)",
-        studio: {
-          text: "var(--text-primary)",
-          muted: "var(--text-secondary)",
-          dim: "var(--text-secondary)",
-          red: "var(--pain-border)",
-          amber: "var(--accent)",
-          green: "var(--accent)",
-          cyan: "var(--accent)",
-        },
         clinical: {
           text: "var(--text-primary)",
-          muted: "var(--text-secondary)",
           teal: "var(--accent)",
-          "teal-light": "var(--surface)",
-          amber: "var(--accent)",
-          rose: "var(--pain-border)",
         },
       },
     },

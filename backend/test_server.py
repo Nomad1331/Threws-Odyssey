@@ -32,6 +32,17 @@ def generate_test_wav(duration: float = 1.0) -> bytes:
     
     return buf.getvalue()
 
+def generate_silent_wav(duration: float = 2.0) -> bytes:
+    """Generates a 16kHz mono silent WAV (digital zeros)."""
+    buf = io.BytesIO()
+    sample_rate = 16000
+    with wave.open(buf, 'wb') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(b'\x00\x00' * int(sample_rate * duration))
+    return buf.getvalue()
+
 def run_tests():
     print("=" * 60)
     print("VOICEBRIDGE FASTAPI BACKEND: FULL TEST SUITE VERIFICATION")
@@ -165,8 +176,19 @@ def run_tests():
         print(f" -> Model failure mapped correctly: {fail_resp.json()}")
         print(" [PASS] Server failure returns 500 without internal details.")
 
+        # 10. Near-silent audio must not be hallucinated into words
+        print("\n[Test 10] Testing silence rejection ...")
+        silent_files = {"file": ("silence.wav", generate_silent_wav(2.0), "audio/wav")}
+        silent_resp = client.post("/api/v1/translate-audio", files=silent_files)
+        assert silent_resp.status_code == 200, f"Expected 200, got {silent_resp.status_code}"
+        silent_data = silent_resp.json()
+        assert silent_data["transcription"] == "", f"Expected empty transcript, got {silent_data!r}"
+        assert silent_data["confidence_score"] is None
+        print(" -> Silence returned an empty transcript, not invented words.")
+        print(" [PASS] Near-silent audio is not hallucinated.")
+
     print("\n" + "=" * 60)
-    print("ALL 9 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
+    print("ALL 10 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
 
 if __name__ == "__main__":

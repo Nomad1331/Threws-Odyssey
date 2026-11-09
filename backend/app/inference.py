@@ -15,27 +15,51 @@ No inferior fallback modes: VoiceBridge runs strictly on the fine-tuned clinical
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 import threading
-from typing import Tuple, Optional
-
-import torch
-import av
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
-from peft import PeftModel
-from faster_whisper.audio import decode_audio
-
-logger = logging.getLogger("voicebridge-inference")
+from typing import Optional, Tuple
 
 ENGINE_NAME = "whisper-small-lora"
 BASE_MODEL_ID = os.getenv("VOICEBRIDGE_BASE_MODEL", "openai/whisper-small")
 ADAPTER_MODEL_ID = os.getenv("VOICEBRIDGE_ADAPTER_MODEL", "Aaliya05/voicebridge")
+
+
+def _hf_cache_has(repo_id: str) -> bool:
+    base = os.getenv("HF_HOME") or os.path.join(
+        os.path.expanduser("~"), ".cache", "huggingface"
+    )
+    return os.path.isdir(os.path.join(base, "hub", "models--" + repo_id.replace("/", "--")))
+
+
+# If both models are already cached, no download is needed. Force offline mode so
+# startup does not depend on reaching huggingface.co (observed: four Hub requests
+# per launch, and a stall on a machine without internet).
+if (
+    os.getenv("HF_HUB_OFFLINE") is None
+    and _hf_cache_has(BASE_MODEL_ID)
+    and _hf_cache_has(ADAPTER_MODEL_ID)
+):
+    os.environ["HF_HUB_OFFLINE"] = "1"
+
+import av  # noqa: E402
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
+from faster_whisper.audio import decode_audio  # noqa: E402
+from peft import PeftModel  # noqa: E402
+from transformers import WhisperProcessor, WhisperForConditionalGeneration  # noqa: E402
+
+logger = logging.getLogger("voicebridge-inference")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 # Whisper processes 30-second windows and silently truncates anything longer.
 # The product rejects longer recordings instead of returning a partial transcript.
 MAX_AUDIO_SECONDS = 30.0
+
+# Whisper invents words on silence (a 3 s silent clip decodes to "you"). Near-digital
+# silence is rejected before inference instead of being presented as speech.
+# Calibration on the demo clips: peaks 0.49-0.74; digital silence is 0.0.
+SILENCE_PEAK_THRESHOLD = 0.002
 
 
 class AudioTooLongError(ValueError):
@@ -147,6 +171,11 @@ def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
             f"Recording is {duration_s:.1f} s; the model accepts at most "
             f"{MAX_AUDIO_SECONDS:.0f} s. Please record a shorter phrase."
         )
+
+    peak = float(np.abs(audio_array).max()) if len(audio_array) else 0.0
+    if peak < SILENCE_PEAK_THRESHOLD:
+        logger.info("Near-silent recording rejected before inference (peak %.5f).", peak)
+        return "", None
 
     inputs = processor(audio_array, sampling_rate=16000, return_tensors="pt")
     input_features = inputs.input_features.to(_device)

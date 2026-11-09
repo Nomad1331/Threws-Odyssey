@@ -19,6 +19,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Confidence calculation audited, not changed.** For the mild clip: 6 score steps map to the last 6 of 10 sequence tokens (4 prompt + 6 generated including EOS), and the decoded ids equal the transcript. The average includes the EOS probability, which is why confidence sits slightly high; documented here rather than silently “fixed”, because changing it would change a published number.
 * **Dependency and tooling checks:** `pip check` reports no broken requirements, `npm ls --depth=0` resolves cleanly, ESLint reports no warnings.
 * **Served build smoke test:** `next start` on port 3000 returned HTTP 200 (14,655 bytes) with the VoiceBridge title present.
+* **Merged `origin/voicebridge-clean` and kept PyAV.** The remote commit swapped decoding to `librosa` for stated performance gains. On this machine `librosa` is not installed and not in `requirements.txt` (the branch fails at import), `ffmpeg` is absent (librosa cannot decode the browser's WebM without it), and PyAV decodes the demo clips in 9–10 ms with no external binary. The merge keeps PyAV and accepts only the unrelated `package-lock.json` update.
 * **No new product defect found in this pass.** The remaining limits are the same ones listed in `LIMITS.md`; none were contradicted by the code.
 
 ---

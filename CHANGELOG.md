@@ -7,6 +7,22 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.4.0: Phase 3 — Code Audit (verified findings)
+
+* **Method:** three independent read-only readers on disjoint slices (backend + training scripts / frontend UI / hooks + lib + scripts). **Control:** the backend reader had to find, unaided, at least three of the four defects already known before the audit (400-mapping, load race, permissive CORS, double `_device`). It found **2 of 4** (missed CORS and `_device`), so the control gate **failed**; its output was treated as leads only and every item below was re-checked against the source by the lead. The other two readers were verified line by line.
+* **Rejected as false:** "Clinical drawer never runs model inference — it does (`ClinicalBenchmarkDrawer.tsx:205-213`), and the output appears in the main transcript panel."
+* **High severity (must be fixed in Phase 5):**
+  - `backend/app/main.py:177` — every inference failure returns HTTP 400 with raw exception text; model failures must be 500 with a constant message.
+  - `backend/app/inference.py:89` — audio over 30 s is silently truncated by the feature extractor. Measured: 45 s input → 30.0 s represented, still HTTP 200; the recorder has no duration cap.
+  - `benchmarks/generate_figures.py:46` — all plotted values are hardcoded; Figure 1 shows the retired whisper-tiny WERs, Figure 3 shows 151.7/38.9 MB and 1,480/592 ms labelled "VoiceBridge INT8". Contradicts `facts.json`.
+  - `model_training/export_and_quantize_onnx.py:581,594` — storage reduction prints `[PASS]` unconditionally and the script prints "verified and ready for edge deployment" even when its own latency/RTF statuses are MISS.
+  - `frontend/src/app/page.tsx:118-120` — a phrase-card tap sets only the text, leaving the previous recording's confidence, latency and "Clinical LoRA" badge on screen.
+  - `frontend/src/components/TactileMicButton.tsx:58-64` — the global Space handler ignores focused buttons/links (only input/textarea/select/contenteditable are excluded), so Space on "Clear", "Say it", a preset or the archive toggle fires the microphone instead.
+* **Medium severity (recorded, not all fixed — see Phase 5 scope):** model-load race and double `_device` (`inference.py:36,49-60`); permissive CORS with credentials (`main.py:71`); full transcript written to logs (`main.py:157`); `claims-check` does not scan `SYSTEM_WALKTHROUGH.md` (which still shows `processing_time_ms: 409` and "1560 ms / sub-second on warm execution") and does not validate `facts.json` provenance; `compare_to_baseline` zips clip lists and can divide by zero; peak RSS sampled only after each call; WER "negative control" reruns the identical pair (cannot fail); `useAudioRecorder` checks its state guard before an `await`, so two rapid starts can double-acquire the mic; abort timer cleared before the response body is read; TORGO extraction selects rows by hardcoded indices with no label assertion; rendered prose reuses the clip count as the speaker count; `trainableNote` says 0.72% while the measured adapter share is 0.73%.
+* **Consequences:** no separate audit document was produced (per project instruction); this section is the finding ledger, and Phase 5 closes the highs plus the measurement-integrity mediums.
+
+---
+
 ## [2026-11-09] - v1.3.0: Phase 2 — Documents Rendered From `facts.json`
 
 * **Branch / commit:** `voicebridge-clean`, see this commit

@@ -7,6 +7,14 @@ number on screen is reproducible.
 
 ## Before the audience
 
+0. **Make sure you are running today's code, not an old server.** A leftover
+   `uvicorn` on port 8000 will keep serving the old behaviour even after you pull.
+   Check and restart:
+   ```powershell
+   Get-NetTCPConnection -LocalPort 8000 -State Listen | Select-Object OwningProcess
+   # stop that PID, then start the backend below
+   ```
+
 1. **Backend** (one terminal):
    ```bash
    cd backend

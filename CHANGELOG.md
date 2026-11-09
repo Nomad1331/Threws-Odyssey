@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.18.0: Real-Browser End-to-End Verification
+
+* **Ran the actual stack, not just TestClient.** Current backend on `127.0.0.1:8010`, production frontend build served on `127.0.0.1:3100`, and headless Edge driven over the DevTools protocol with a fake microphone.
+* **Verified interactively:** the header showed “Backend connected”; the mic button entered recording state, stopped, and the browser's WebM upload was transcribed by the real server; the UI rendered confidence (77%) and latency (1,684 ms); a page reload served the built app; preset phrases showed confidence/latency as `N/A`; Pain Alert armed on the first tap and fired on the second. Screenshot inspected. Zero backend errors/tracebacks.
+* **Caveat:** the fake microphone replays a file segment, so its transcript (“We have an accident here”) is not the TORGO reference. That run verifies the pipeline, not accuracy; accuracy is measured separately by `benchmark_product.py`.
+* **Operational finding:** port 8000 was held by a **stale uvicorn started Nov 8** (system Python) and port 3000 by leftover Next processes. They were not killed. `docs/DEMO.md` now starts with a “make sure you are running today's code” restart step. A judge demo against a stale server would exhibit old behaviour.
+* No product code changed.
+
+---
+
 ## [2026-11-09] - v1.17.0: Documentation Claims and Comment Coverage
 
 * **Removed the last overstated doc lines:**

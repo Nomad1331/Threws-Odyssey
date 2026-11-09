@@ -264,6 +264,8 @@ export default function Home() {
 
         <div className="pt-5 text-center font-mono text-[10px] text-text-secondary">
           Research prototype • SIES Graduate School of Technology • THREWS Odyssey 2026
+          <br />
+          Measured accuracy refers to the TORGO demo clips; live microphone results vary.
         </div>
       </footer>
     </main>

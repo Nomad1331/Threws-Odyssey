@@ -29,6 +29,12 @@ THREWS Odyssey 2026 and has not been used by any patient outside the team.
   intervals. TORGO also repeats sentences across speakers, so some sentence text may
   overlap between the adapter's training data and these clips; we have not measured that
   overlap.
+- **Live microphone accuracy is not what we measured.** The WER figures come from the
+  three provided clips, recorded with the TORGO head-mounted microphone. A laptop or phone
+  microphone, distance, background noise and take-to-take variation change the output; the
+  same sentence can come out right on one take and wrong on the next.
+- **Confidence is not accuracy.** The percentage shown under a transcript is the model's
+  average token probability, not the share of words that are correct.
 - **Speaker independence is unproven.** The adapter was trained on TORGO speakers and
   evaluated on TORGO speakers. The demo clips may come from speakers who appear in the
   training portion; we have not measured or ruled that out.

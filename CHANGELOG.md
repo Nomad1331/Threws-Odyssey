@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-10] - v1.19.0: Live-Test Findings — TTS Failure and Confidence Semantics
+
+* **Real-user test exposed a confusing UI failure.** The same mild sentence produced “We have an incident beam” on one live take and the correct sentence on the next. The model is deterministic for identical audio, so the difference is the recording (mic, distance, level, timing), not run-to-run randomness. The documented 0% WER applies to the provided TORGO clip, not to arbitrary live microphone input. README and `LIMITS.md` now say this explicitly.
+* **“Confidence” was being read as accuracy.** 62% and 82% are average token probabilities, not the share of correct words. The transcript card now says so under the telemetry bar, and `LIMITS.md` adds “Confidence is not accuracy.”
+* **Speech synthesis failure fixed as far as the browser allows.** `SpeechSynthesisUtterance.lang` was hard-coded to `en-US`, which causes `synthesis-failed` when no en-US voice is installed. The UI now picks an installed English voice (or none), resumes a paused synthesiser, and maps raw errors to plain messages. A TTS failure is shown as a neutral status, not a red error, because it does not affect the transcript.
+* **Latency varied from 1.7 s (benchmark host) to 4.4–6.1 s on a teammate’s machine.** That is CPU/hardware and load, not a second model; the published figure names its host. No change made.
+* **Docs/UI:** the page footer states that measured accuracy refers to the TORGO clips and live microphone results vary. No product code changed in the inference path.
+
+---
+
 ## [2026-11-09] - v1.18.0: Real-Browser End-to-End Verification
 
 * **Ran the actual stack, not just TestClient.** Current backend on `127.0.0.1:8010`, production frontend build served on `127.0.0.1:3100`, and headless Edge driven over the DevTools protocol with a fake microphone.

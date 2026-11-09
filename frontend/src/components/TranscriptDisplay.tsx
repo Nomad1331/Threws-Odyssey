@@ -86,11 +86,23 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     }
 
     window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
 
     const utterance = new SpeechSynthesisUtterance(transcript);
     utterance.rate = 0.95;
     utterance.pitch = 1.0;
-    utterance.lang = "en-US";
+    // Use an installed English voice when there is one. Hard-coding "en-US"
+    // makes some browsers fail with "synthesis-failed" when no en-US voice exists.
+    const voices = window.speechSynthesis.getVoices();
+    const voice =
+      voices.find((candidate) => candidate.lang?.toLowerCase().startsWith("en")) ??
+      voices[0];
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      utterance.lang = "";
+    }
     utteranceRef.current = utterance;
 
     utterance.onstart = () => setIsSpeaking(true);
@@ -101,9 +113,17 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     utterance.onerror = (event) => {
       setIsSpeaking(false);
       utteranceRef.current = null;
-      if (event.error !== "canceled" && event.error !== "interrupted") {
-        setSpeechError(`Speech synthesis error: ${event.error}`);
-      }
+      if (event.error === "canceled" || event.error === "interrupted") return;
+      // Browser text-to-speech is optional; a failure here does not affect the
+      // transcript. Translate the raw event into something a user can act on.
+      const messages: Record<string, string> = {
+        "synthesis-failed": "Speech playback is unavailable in this browser.",
+        "not-allowed": "Speech playback was blocked by the browser.",
+        "audio-busy": "The audio device is busy, so speech playback failed.",
+        "language-unavailable": "No voice is installed for this language.",
+        "voice-unavailable": "The selected voice is unavailable.",
+      };
+      setSpeechError(messages[event.error] ?? `Speech playback failed: ${event.error}`);
     };
 
     window.speechSynthesis.speak(utterance);
@@ -214,6 +234,10 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         </div>
       </div>
 
+      <p className="mt-2 text-[10px] leading-relaxed text-text-secondary">
+        Confidence is the model&rsquo;s average token probability, not word accuracy.
+      </p>
+
       {recordedAudioUrl && (
         <audio
           controls
@@ -224,7 +248,9 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       )}
 
       {speechError && (
-        <p className="pt-3 text-xs text-pain-text">{speechError}</p>
+        <p role="status" className="pt-3 text-xs text-text-secondary">
+          {speechError}
+        </p>
       )}
 
       {statusNotice && (

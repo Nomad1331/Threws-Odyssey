@@ -33,8 +33,8 @@ interface QuickAssistGridProps {
  * Spasticity & Involuntary Movement Protection:
  * Individuals with spastic Cerebral Palsy or ALS frequently experience involuntary
  * motor spasms. For high-urgency actions ("Pain Alert"), a 2-step confirmation window is
- * enforced: the user must tap a second time within a 3000ms window before the alert
- * triggers, eliminating false alarms.
+ * enforced: the user must tap a second time, at least a moment after the first,
+ * within a 3000ms window before the alert triggers, reducing false alarms.
  */
 
 export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
@@ -43,6 +43,7 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
 }) => {
   const [armedId, setArmedId] = useState<string | null>(null);
   const armTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const armedAtRef = useRef<number>(0);
 
   useEffect(() => {
     return () => {
@@ -67,8 +68,14 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
     if (preset.isUrgent) {
       if (armedId !== preset.id) {
         setArmedId(preset.id);
+        armedAtRef.current = Date.now();
         if (armTimeoutRef.current) clearTimeout(armTimeoutRef.current);
         armTimeoutRef.current = setTimeout(() => setArmedId(null), 3000);
+        return;
+      }
+      // A spastic double-tap lands within a few dozen milliseconds. Require a
+      // deliberate gap so one physical tap cannot fire the alert twice.
+      if (Date.now() - armedAtRef.current < 400) {
         return;
       }
       if (armTimeoutRef.current) {
@@ -121,7 +128,7 @@ export const QuickAssistGrid: React.FC<QuickAssistGridProps> = ({
       </div>
 
       <p className="pt-3 text-center font-mono text-[10px] text-text-secondary">
-        Pain Alert requires two taps within 3 seconds to prevent accidental triggers.
+        Pain Alert requires two taps, at least a moment apart, within 3 seconds.
       </p>
     </div>
   );

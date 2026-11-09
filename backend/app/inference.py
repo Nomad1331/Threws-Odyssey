@@ -21,6 +21,7 @@ import threading
 from typing import Tuple, Optional
 
 import torch
+import av
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from peft import PeftModel
 from faster_whisper.audio import decode_audio
@@ -88,6 +89,23 @@ def load_model() -> None:
     logger.info(f"VoiceBridge Clinical LoRA engine successfully initialized on {_device}.")
 
 
+def probe_duration_s(audio_path: str) -> Optional[float]:
+    """
+    Read the container duration without decoding the whole file.
+
+    Decoding first would let a small, highly compressed upload expand into a very
+    long PCM buffer before the 30-second check runs. When the container does not
+    report a duration, transcribe_audio falls back to checking after decode.
+    """
+    try:
+        with av.open(audio_path) as container:
+            if container.duration:
+                return container.duration / av.time_base
+    except Exception:
+        return None
+    return None
+
+
 def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
     """
     Transcribes an audio file (.webm, .wav, .mp4, .aac, .ogg) using the fine-tuned
@@ -111,9 +129,18 @@ def transcribe_audio(audio_path: str) -> Tuple[str, Optional[float]]:
     if model is None or processor is None:
         raise RuntimeError("Clinical LoRA engine could not be initialized.")
 
+    # Reject over-long audio before decoding when the container reports its length.
+    known_duration = probe_duration_s(audio_path)
+    if known_duration is not None and known_duration > MAX_AUDIO_SECONDS:
+        raise AudioTooLongError(
+            f"Recording is {known_duration:.1f} s; the model accepts at most "
+            f"{MAX_AUDIO_SECONDS:.0f} s. Please record a shorter phrase."
+        )
+
     # High-performance PyAV audio decoding: decodes WebM, WAV, MP4, AAC, OGG to 16kHz mono float32
     audio_array = decode_audio(audio_path, sampling_rate=16000)
 
+    # Fallback for containers that do not publish a duration: check after decode.
     duration_s = len(audio_array) / 16000.0
     if duration_s > MAX_AUDIO_SECONDS:
         raise AudioTooLongError(

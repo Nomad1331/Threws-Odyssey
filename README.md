@@ -47,7 +47,7 @@ Current commercial solutions also face accessibility hurdles:
                   │
                   ▼  (JSON Response)
    [ Next.js Accessible Frontend (:3000) ]
-     • Instant Transcription Display
+     • Transcript display with confidence and latency
      • Text-to-Speech playback ("Say it")
      • AAC Quick-Assist confirmation cards
 ```
@@ -82,10 +82,10 @@ Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 | :--- | ---: | ---: | :--- |
 | Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
 | Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
-| Memory added when the model loads (RSS) | 1,020.8 MB | — | — |
-| Peak process memory | 1,744.1 MB | — | — |
-| Latency per sentence | 1,683.5 ms mean (1,645.9 ms median, 1,547.5–1,853.5 ms range) | 280 ms | **MISS, 6.0× over** |
-| Real-time factor | 0.288 | below 1.0 | processes faster than playback |
+| Memory added when the model loads (RSS) | 1,020.6 MB | — | — |
+| Peak process memory | 1,748.7 MB | — | — |
+| Latency per sentence | 1,826.1 ms mean (1,854.3 ms median, 1,609.3–2,104.9 ms range) | 280 ms | **MISS, 6.5× over** |
+| Real-time factor | 0.312 | below 1.0 | processes faster than playback |
 
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
@@ -104,19 +104,20 @@ Threws-Odyssey/
 │   ├── app/
 │   │   ├── main.py              # FastAPI microservice endpoints (/health, /api/v1/translate-audio)
 │   │   └── inference.py         # Whisper-Small LoRA clinical acoustic inference engine
-│   ├── requirements.txt         # Production dependencies (FastAPI, PyTorch, Transformers, PEFT)
-│   └── test_server.py           # Automated TestClient verification suite (8/8 tests)
+│   ├── requirements.txt         # Pinned production dependencies (FastAPI, PyTorch, Transformers, PEFT)
+│   ├── evaluate_samples.py      # Runs the three demo clips through the live engine
+│   └── test_server.py           # Automated TestClient verification suite (9/9 tests)
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── page.tsx         # Main 2-column accessible interface
-│   │   │   └── layout.tsx       # Root layout & WCAG typography
+│   │   │   └── layout.tsx       # Root layout & accessible typography
 │   │   ├── components/
-│   │   │   ├── TactileMicButton.tsx       # Large touch-target button with spacebar trigger
-│   │   │   ├── TranscriptDisplay.tsx      # Real-time text display & Web Speech TTS playback
+│   │   │   ├── TactileMicButton.tsx       # Large touch-target button with keyboard trigger
+│   │   │   ├── TranscriptDisplay.tsx      # Live transcript, replay & Web Speech TTS playback
 │   │   │   ├── QuickAssistGrid.tsx        # High-contrast AAC cards with 2-step confirmation
-│   │   │   ├── AudioWaveformCanvas.tsx    # Live 60FPS audio level visualizer
+│   │   │   ├── AudioWaveformCanvas.tsx    # Live audio level visualizer
 │   │   │   └── ClinicalBenchmarkDrawer.tsx# TORGO reference sample evaluation player
 │   │   ├── hooks/
 │   │   │   └── useAudioRecorder.ts        # Clean MediaRecorder & Web Audio RMS hook
@@ -158,7 +159,7 @@ Threws-Odyssey/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.12 (the version the benchmark was measured with)
 - Node.js 18+ and npm
 
 ### 1. Start the Backend API
@@ -178,7 +179,7 @@ python -m venv .venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Run backend verification suite (8/8 tests)
+# Run backend verification suite (9/9 tests)
 python test_server.py
 
 # Start the FastAPI server
@@ -216,10 +217,10 @@ It fails if any benchmark figure in the docs no longer matches `facts.json`.
 ## ♿ Motor & Physical Accessibility Features
 
 VoiceBridge was built specifically with physical accessibility considerations:
-1. **Large Motor Targets:** The primary record button and AAC cards are sized above the WCAG 2.2 AA minimum target size (44x44 px, up to 112 px).
+1. **Large Motor Targets:** The primary record button and AAC cards are at least 44x44 px, up to 112 px.
 2. **Keyboard Assistive Hotkey:** Press <kbd>SPACE</kbd> to start or stop recording when no other control has focus.
 3. **Accidental Press Protection:** Critical phrases (such as "Pain Alert") require a two-stage confirmation within a 3-second window to prevent unintended triggers caused by motor spasticity or tremors.
-4. **Haptic & Visual Feedback:** Device vibration on mobile touch and a live 60 FPS waveform canvas confirm microphone responsiveness.
+4. **Haptic & Visual Feedback:** Device vibration on mobile touch and a live waveform canvas confirm microphone responsiveness.
 5. **Speech Synthesis:** Tap "Say it" to read out the reconstructed transcription through the browser's native text-to-speech engine.
 
 ---

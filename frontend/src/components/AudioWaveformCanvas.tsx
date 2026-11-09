@@ -39,6 +39,10 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
 
     const barCount = 48; // Number of vertical waveform bars
 
+    // Read the theme token once per effect; the hardcoded hex ignored theme changes.
+    const themedBarColor =
+      getComputedStyle(canvas).getPropertyValue("--waveform").trim() || "#c4c4bf";
+
     // Measure and configure high-DPI canvas coordinates
     const setupCanvas = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -69,7 +73,7 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
         const x = i * barSpacing + (barSpacing - barWidth) / 2;
         const amplitude = getAmplitude(i);
         const barHeight = Math.max(4, dims.height * 0.85 * amplitude);
-        ctx.fillStyle = "#c4c4bf";
+        ctx.fillStyle = themedBarColor;
 
         const y = dims.centerY - barHeight / 2;
         ctx.beginPath();

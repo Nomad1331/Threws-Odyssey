@@ -1,9 +1,8 @@
 /**
  * VoiceBridge Root Layout Shell
  * =============================
- * Configures global typography, viewport metadata, and high-contrast WCAG styling.
- * Uses local Geist Variable fonts to eliminate external Google Fonts network dependencies,
- * ensuring zero-latency rendering and offline demo capability.
+ * Configures global typography, viewport metadata, and high-contrast styling.
+ * Uses local Geist Variable fonts, so rendering makes no external font requests.
  */
 
 import type { Metadata, Viewport } from "next";
@@ -24,7 +23,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "VoiceBridge | Assistive Speech Transcription",
   description:
-    "Real-time assistive speech transcription for dysarthric speech (Cerebral Palsy, TBI, ALS). SIES GST • THREWS Odyssey 2026.",
+    "Assistive speech transcription for dysarthric speech (Cerebral Palsy, TBI, ALS). SIES GST • THREWS Odyssey 2026.",
 };
 
 export const viewport: Viewport = {

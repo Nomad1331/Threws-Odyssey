@@ -37,6 +37,9 @@ export function useAudioRecorder(): AudioRecorderHook {
 
   // Synchronous state ref guarantees deterministic FSM transitions without React closure lag
   const stateRef = useRef<RecordingState>("idle");
+  // Set before the first await: a second start click during getUserMedia must not
+  // acquire a second microphone stream and overwrite the first one.
+  const startingRef = useRef<boolean>(false);
   const selectedMimeRef = useRef<string>("");
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -113,7 +116,7 @@ export function useAudioRecorder(): AudioRecorderHook {
 
   const startRecording = useCallback(async () => {
     // Strictly prevent starting a recording unless state is idle
-    if (stateRef.current !== "idle") {
+    if (stateRef.current !== "idle" || startingRef.current) {
       return;
     }
 
@@ -122,6 +125,7 @@ export function useAudioRecorder(): AudioRecorderHook {
       return;
     }
 
+    startingRef.current = true;
     audioChunksRef.current = [];
 
     try {
@@ -194,9 +198,11 @@ export function useAudioRecorder(): AudioRecorderHook {
       };
 
       recorder.start(250);
+      startingRef.current = false;
       stateRef.current = "listening";
       setState("listening");
     } catch (err) {
+      startingRef.current = false;
       console.error("Failed to start audio recording:", err);
       // Guarantee hardware microphone track release if initialization fails midway
       if (mediaStreamRef.current) {

@@ -25,16 +25,16 @@ Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the onl
 * **PyTorch:** 2.15.0+cpu · **Transformers:** 5.22.2 · **PEFT:** 0.21.2 · **Python:** 3.12.9
 * **Model:** openai/whisper-small (243.5M parameters) + Aaliya05/voicebridge LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB total (971.4 MB base + 7.1 MB adapter)
-* **Model load time:** 1,189.3 ms
+* **Model load time:** 1,363.3 ms
 
 ### Accuracy (word error rate)
 
 | Clip | Severity | Condition | Duration | Reference | Model output | WER | S / D / I | Latency |
 | :--- | :--- | :--- | ---: | :--- | :--- | ---: | :---: | ---: |
-| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,591.6 ms |
-| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 3 / 0 / 0 | 1,649.6 ms |
-| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 4 / 0 / 2 | 1,809.2 ms |
-| **Totals** | **3 clips** |  |  |  |  | **mean 56.7%** |  | **1,683.5 ms** |
+| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,885.9 ms |
+| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 3 / 0 / 0 | 1,701.8 ms |
+| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 4 / 0 / 2 | 1,890.7 ms |
+| **Totals** | **3 clips** |  |  |  |  | **mean 56.7%** |  | **1,826.1 ms** |
 
 * **Mean of clip WERs:** 56.7%
 * **Corpus WER (all edits ÷ all reference words):** 56.2%
@@ -43,18 +43,18 @@ Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the onl
 ### Latency
 
 * **Protocol:** 2 warm-up runs per clip, then 5 timed runs.
-* **Mean:** 1,683.5 ms · **median:** 1,645.9 ms · **range:** 1,547.5–1,853.5 ms
-* **Real-time factor:** 0.288
-* **Target:** 280 ms → **MISS** (6.0× the target)
+* **Mean:** 1,826.1 ms · **median:** 1,854.3 ms · **range:** 1,609.3–2,104.9 ms
+* **Real-time factor:** 0.312
+* **Target:** 280 ms → **MISS** (6.5× the target)
 * **Measurement point:** wall time around inference.transcribe_audio, including audio decode
 
 ### Memory
 
-* **RSS before model load:** 380.1 MB
-* **RSS after model load:** 1,400.9 MB
-* **RSS delta:** **1,020.8 MB**
-* **Peak RSS during timed runs:** 1,744.1 MB
-* **Peak working set (OS counter):** 1,767.4 MB
+* **RSS before model load:** 380.4 MB
+* **RSS after model load:** 1,401 MB
+* **RSS delta:** **1,020.6 MB**
+* **Peak RSS during timed runs:** 1,748.7 MB
+* **Peak working set (OS counter):** 1,762.9 MB
 
 ### Interpretation
 
@@ -112,7 +112,7 @@ They are retained so the work is not lost, and they are excluded from every prod
   * `peft_type`: `LORA`
   * `r`: `16`, `lora_alpha`: `32`, `lora_dropout`: `0.05`
   * `target_modules`: `{'q_proj', 'v_proj'}` (attention projections in encoder and decoder)
-* **Merge Output:** Standalone merged model and `WhisperProcessor` verified in `model_training/voicebridge_merged/`.
+* **Merge Output:** the standalone merged model and `WhisperProcessor` were written to `model_training/voicebridge_merged/` during that experiment. Those files are large, gitignored, and not shipped with this repository.
 
 ### 2.3 Per-Component ONNX Export & Dynamic INT8 Quantization
 

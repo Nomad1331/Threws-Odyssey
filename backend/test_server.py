@@ -143,8 +143,30 @@ def run_tests():
         print(f" -> Rejected 31s recording as expected: {long_resp.json()}")
         print(" [PASS] 30-second input window enforced.")
 
+        # 9. Server-side failures must be 500 with a constant message, not 400 with internals
+        print("\n[Test 9] Testing server-failure status mapping ...")
+        import app.main as main_module
+
+        original_transcribe = main_module.transcribe_audio
+
+        def failing_transcribe(_path):
+            raise RuntimeError("simulated failure at C:\\secret\\model.bin")
+
+        main_module.transcribe_audio = failing_transcribe
+        try:
+            fail_files = {"file": ("test_tone.wav", wav_bytes, "audio/wav")}
+            fail_resp = client.post("/api/v1/translate-audio", files=fail_files)
+        finally:
+            main_module.transcribe_audio = original_transcribe
+
+        assert fail_resp.status_code == 500, f"Expected 500, got {fail_resp.status_code}"
+        fail_detail = fail_resp.json().get("detail", "")
+        assert "secret" not in fail_detail and "RuntimeError" not in fail_detail
+        print(f" -> Model failure mapped correctly: {fail_resp.json()}")
+        print(" [PASS] Server failure returns 500 without internal details.")
+
     print("\n" + "=" * 60)
-    print("ALL 8 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
+    print("ALL 9 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
 
 if __name__ == "__main__":

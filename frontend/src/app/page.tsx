@@ -16,7 +16,7 @@ import { ChevronDown, ChevronUp, Mic } from "lucide-react";
  *
  * Left Column:
  * - TranscriptDisplay: Shows reconstructed speech, confidence score, wall-clock latency,
- *   live 60FPS waveform visualizer, and "Say it" browser Text-to-Speech playback.
+ *   live waveform visualizer, and "Say it" browser Text-to-Speech playback.
  *
  * Right Column:
  * - TactileMicButton: Large 112px motor-accessible button with live RMS volume pulsing,
@@ -49,6 +49,7 @@ export default function Home() {
   // UI state
   const [showJudgeConsole, setShowJudgeConsole] = useState<boolean>(false);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
+  const [sampleBusy, setSampleBusy] = useState<boolean>(false);
 
   // Check backend server health on mount
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function Home() {
 
   // Handle microphone start / stop toggle
   const handleToggleMic = useCallback(async () => {
-    if (micState === "processing") return;
+    if (micState === "processing" || sampleBusy) return;
 
     if (micState === "listening") {
       setStatusNotice("Processing audio...");
@@ -104,7 +105,7 @@ export default function Home() {
         setStatusNotice("Microphone permission denied. Enable microphone access in browser.");
       }
     }
-  }, [micState, startRecording, stopRecording, setIdle]);
+  }, [micState, sampleBusy, startRecording, stopRecording, setIdle]);
 
   // Reset transcript and audio buffer
   const handleClear = useCallback(() => {
@@ -129,6 +130,7 @@ export default function Home() {
 
   // Transcribe pre-recorded clinical sample audio
   const handleRunSampleAudio = useCallback(async (audioUrl: string) => {
+    setSampleBusy(true);
     setStatusNotice("Transcribing clinical sample audio...");
     try {
       const res = await fetch(audioUrl);
@@ -155,6 +157,8 @@ export default function Home() {
       setStatusNotice(
         err instanceof Error ? err.message : "Failed to transcribe sample."
       );
+    } finally {
+      setSampleBusy(false);
     }
   }, []);
 
@@ -211,8 +215,12 @@ export default function Home() {
           <TactileMicButton
             state={micState}
             onToggle={handleToggleMic}
+            disabled={sampleBusy}
             audioLevel={audioLevel}
           />
+          <p className="text-center font-mono text-[10px] text-text-secondary">
+            Recordings are limited to 30 seconds.
+          </p>
           <QuickAssistGrid onSpeakPhrase={handleSpeakPhrase} />
         </section>
       </div>
@@ -241,7 +249,7 @@ export default function Home() {
             </div>
             <ClinicalBenchmarkDrawer
               onRunInference={handleRunSampleAudio}
-              isProcessing={statusNotice?.includes("Transcribing")}
+              isProcessing={sampleBusy}
             />
           </div>
         )}

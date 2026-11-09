@@ -5,7 +5,8 @@ FastAPI microservice providing assistive speech-to-text endpoints.
 
 Flow:
 1. Receives audio recordings (.webm / .wav) from the Next.js frontend.
-2. Validates in-memory boundaries (<=10MB, non-empty, safe audio extension) with zero disk I/O on invalid requests.
+2. Validates size and non-emptiness in memory before any disk I/O, and normalises the
+   filename extension to the audio whitelist (unknown suffixes fall back to .webm).
 3. Temporarily writes valid audio bytes to disk for PyAV audio decoding and inference.
 4. Offloads clinical LoRA acoustic inference to a worker thread (`asyncio.to_thread`) to keep the main event loop non-blocking.
 5. Returns the transcribed text along with telemetry (confidence score and latency in ms).
@@ -134,7 +135,7 @@ async def translate_audio(file: UploadFile = File(...)):
     1. Ingests multipart/form-data audio file (.webm from browser or .wav).
     2. Validates payload boundaries (maximum 10MB, non-empty) BEFORE disk I/O to prevent memory DOS.
     3. Writes audio bytes safely to an OS temporary file for PyAV audio decoding.
-    4. Runs fine-tuned Whisper-Small LoRA clinical acoustic inference with dysarthria-adapted decoding.
+    4. Runs fine-tuned Whisper-Small LoRA inference with greedy decoding.
     5. Returns transcription text, normalized confidence score, and processing latency.
     6. Guaranteed cleanup of both OS temporary file and Starlette spool handle in finally block.
     """

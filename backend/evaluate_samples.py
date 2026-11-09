@@ -57,11 +57,13 @@ def run_evaluation():
     load_time = round((time.perf_counter() - t0), 2)
     print(f"Model ready (loaded in {load_time}s).\n")
 
+    evaluated = 0
     for i, s in enumerate(SAMPLES, 1):
         path = os.path.join(AUDIO_DIR, s["file"])
         if not os.path.exists(path):
             print(f"[{i}/3] Skipping {s['file']} (file not found)")
             continue
+        evaluated += 1
 
         start = time.perf_counter()
         text, confidence = transcribe_audio(path)
@@ -77,8 +79,14 @@ def run_evaluation():
         print(f"Confidence:   {conf_str} (token-level softmax probability)")
         print(f"Latency:      {latency_ms} ms")
 
+    if evaluated == 0:
+        print("=" * 70)
+        print(f"NO SAMPLES EVALUATED: none of the {len(SAMPLES)} clips exist in {AUDIO_DIR}.")
+        print("=" * 70)
+        raise SystemExit(1)
+
     print("=" * 70)
-    print("EVALUATION COMPLETE - All scores reflect real model inference.")
+    print(f"EVALUATION COMPLETE - {evaluated}/{len(SAMPLES)} clips transcribed by real model inference.")
     print("=" * 70)
 
 

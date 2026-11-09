@@ -1,3 +1,7 @@
+> **ARCHIVED — internal planning document, not current documentation.** Numbers and
+> statuses below were superseded by the measured benchmark. Use `facts.json`, `README.md`
+> and `LIMITS.md`.
+
 # VoiceBridge: Brick-by-Brick Engineering Roadmap
 ## Real-Time Dysarthric Speech Reconstruction Engine — THREWS Odyssey 2026
 **Team:** Sleeper Cells (SIES GST)  

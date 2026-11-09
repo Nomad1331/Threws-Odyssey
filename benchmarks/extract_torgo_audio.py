@@ -1,7 +1,23 @@
+"""
+One-off extraction of the three demo clips from the TORGO parquet shard.
+
+Requires the optional research extras (not part of the product install):
+    pip install datasets pyarrow
+
+Row indices are fixed to the shard this project used (train-00002-of-00004).
+The expected transcript is asserted before each file is written, so a reordered
+shard fails loudly instead of silently mislabelling the demo audio.
+"""
+
 import os
 import glob
+import re
 import pyarrow.parquet as pq
 from faster_whisper import WhisperModel
+
+
+def words(text: str) -> list[str]:
+    return re.sub(r"[^a-z0-9\s]", "", text.lower()).split()
 
 cache_pattern = os.path.expanduser(
     r"~/.cache/huggingface/hub/datasets--abnerh--TORGO-database/snapshots/*/data/train-00002-of-00004.parquet"
@@ -31,6 +47,7 @@ trials = [
         "severity": "Mild",
         "speaker": "TORGO-M05",
         "condition": "Cerebral Palsy",
+        "expect": "We have an excellent team",
     },
     {
         "filename": "torgo_moderate_sample.wav",
@@ -38,6 +55,7 @@ trials = [
         "severity": "Moderate-to-Severe",
         "speaker": "TORGO-M04",
         "condition": "Post-Trauma (TBI)",
+        "expect": "Their house is grey and white",
     },
     {
         "filename": "torgo_severe_sample.wav",
@@ -45,6 +63,7 @@ trials = [
         "severity": "Severe",
         "speaker": "TORGO-M02",
         "condition": "Amyotrophic Lateral Sclerosis (ALS)",
+        "expect": "The job provides many benefits",
     },
 ]
 
@@ -54,10 +73,16 @@ for t in trials:
     idx = t["index"]
     item = audio_col[idx].as_py()
     raw_bytes = item["bytes"]
+    actual = transcriptions[idx]
+    if words(actual) != words(t["expect"]):
+        raise SystemExit(
+            f"Row {idx} is '{actual}', expected '{t['expect']}'. "
+            "The parquet shard changed; update the indices before extracting."
+        )
     out_path = os.path.join(OUTPUT_DIR, t["filename"])
     with open(out_path, "wb") as f:
         f.write(raw_bytes)
-    t["target"] = transcriptions[idx]
+    t["target"] = actual
     t["duration"] = durations[idx]
     t["path"] = out_path
     saved_paths.append(out_path)

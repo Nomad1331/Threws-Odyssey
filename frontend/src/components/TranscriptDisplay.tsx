@@ -40,6 +40,7 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   isProcessing = false,
   statusNotice,
   source,
+  recordedAudioUrl,
   onClear,
   audioAnalyser,
   isRecording = false,
@@ -212,6 +213,15 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
           </p>
         </div>
       </div>
+
+      {recordedAudioUrl && (
+        <audio
+          controls
+          src={recordedAudioUrl}
+          aria-label="Replay your recording"
+          className="mt-4 w-full"
+        />
+      )}
 
       {speechError && (
         <p className="pt-3 text-xs text-pain-text">{speechError}</p>

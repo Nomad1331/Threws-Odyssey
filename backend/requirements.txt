@@ -1,12 +1,15 @@
 # VoiceBridge Backend Dependencies
-# Dedicated Clinical LoRA Engine (PyTorch/PEFT) & Native Audio Ingestion (faster-whisper PyAV)
-
-fastapi>=0.115.0
-uvicorn[standard]>=0.30.0
-python-multipart>=0.0.12
-faster-whisper>=1.0.0
-httpx>=0.27.0
-torch>=2.1.0
-transformers>=4.40.0
-peft>=0.10.0
-accelerate>=0.28.0
+# Pinned to the versions the product benchmark was measured with
+# (facts.json -> _meta.versions). Do not loosen without re-running
+# benchmarks/benchmark_product.py and regenerating the docs.
+#
+# PyTorch CPU wheel (smaller than the CUDA default on Linux):
+#   pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.33
+faster-whisper==1.2.1
+torch==2.15.0
+transformers==5.22.2
+peft==0.21.2
+accelerate==1.15.0

@@ -1,9 +1,7 @@
 # 📊 VoiceBridge: Branch Comparison, LoRA Architecture & Integration Roadmap
 
-> **OUTDATED — historical branch comparison (2026-11-07).** It compares `origin/main` and
-> `voicebridge-clean` at commit `79996f0`. Every benchmark figure quoted below was
-> superseded by the 2026-11-09 product benchmark in `facts.json`. Kept only as an audit
-> trail; do not quote it as current.
+> **ARCHIVED — internal comparison of old commits, not current documentation.** Use
+> `facts.json`, `README.md` and `LIMITS.md` for current numbers and scope.
 
 <!-- claims-check:historical -->
 

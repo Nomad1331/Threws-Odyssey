@@ -12,7 +12,7 @@ Automatic Speech Recognition (ASR) systems (OpenAI Whisper, Google Speech API, A
 
 **VoiceBridge** is an open-source assistive speech transcription prototype built on two principles:
 1. **CPU-only inference on commodity hardware:** no discrete GPU and no cloud API. The shipped engine is `whisper-small` + LoRA in PyTorch; measured latency and memory are in `facts.json` and the README.
-2. **Physical Accessibility:** Designed specifically for motor-impaired individuals with WCAG 2.1 AAA touch targets, physical keyboard shortcuts (<kbd>SPACE</kbd>), tactile haptic feedback, and accidental-trigger protection.
+2. **Physical Accessibility:** Designed for motor-impaired individuals with 44x44 px minimum touch targets, keyboard shortcuts that yield to focused controls, tactile haptic feedback, and accidental-trigger protection. Designed to accessible practice; not formally audited.
 
 ---
 
@@ -24,7 +24,7 @@ Automatic Speech Recognition (ASR) systems (OpenAI Whisper, Google Speech API, A
                      ▼
   [ 1. Web Audio API & MediaRecorder ]  <--- (frontend/src/hooks/useAudioRecorder.ts)
   • Captures 16kHz microphone stream
-  • Computes live RMS volume for 60FPS waveform
+  • Computes live RMS volume for the waveform
   • Packages audio into a WebM / WAV Blob
                      │
                      ▼
@@ -41,12 +41,12 @@ Automatic Speech Recognition (ASR) systems (OpenAI Whisper, Google Speech API, A
   [ 4. Clinical Acoustic LoRA Engine ] <--- (backend/app/inference.py)
   • Model: openai/whisper-small + Aaliya05/voicebridge LoRA adapter
   • PyTorch + PEFT runtime with token softmax confidence scoring
-  • Native PyAV audio decoding (.webm, .wav, .mp4 in ~2ms)
+  • Native PyAV audio decoding (.webm, .wav, .mp4, .aac, .ogg)
   • Generates transcript string + normalized confidence score
                      │
                      ▼
   [ 5. JSON Response to Browser ]
-  • {"transcription": "...", "confidence_score": 0.85, "processing_time_ms": 409}
+  • {"transcription": str, "confidence_score": float|null, "processing_time_ms": int}
                      │
                      ▼
   [ 6. Accessible UI Rendering ]        <--- (frontend/src/components/TranscriptDisplay.tsx)
@@ -92,23 +92,16 @@ Here is exactly what happens in memory and across the network from the moment th
 * In `backend/app/main.py`, FastAPI receives the upload as an `UploadFile`.
 * It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so PyAV can stream the audio cleanly without memory leaks.
 * It calls `transcribe_audio(temp_path)` in `backend/app/inference.py`:
-  * Native PyAV audio decoding converts `.webm`, `.wav`, `.mp4`, `.aac`, `.ogg` directly to 16,000 Hz mono float32 in ~2ms.
+  * Native PyAV audio decoding converts `.webm`, `.wav`, `.mp4`, `.aac`, `.ogg` directly to 16,000 Hz mono float32. Decoding time is included in the end-to-end latency published in `facts.json`.
   * The fine-tuned Clinical LoRA model (`openai/whisper-small` + `Aaliya05/voicebridge`) performs acoustic reconstruction.
   * Token-level softmax probabilities are calculated across step logits to generate authentic confidence scores.
-* The backend computes elapsed time and returns a validated Pydantic JSON response:
-  ```json
-  {
-    "transcription": "We have an excellent team",
-    "confidence_score": 0.901,
-    "processing_time_ms": 1560
-  }
-  ```
+* The backend computes elapsed time and returns a validated Pydantic JSON response with `transcription` (string), `confidence_score` (float in [0, 1] or null) and `processing_time_ms` (int).
 * In the `finally` block, `os.unlink(temp_path)` guarantees the temporary file is deleted from disk.
 
 ### Step 6: UI Display & Text-to-Speech Playback
 * `page.tsx` receives the JSON payload and updates React state:
   * `transcript`: The reconstructed sentence ("We have an excellent team").
-  * `latencyMs`: 1560 ms (or sub-second on warm execution).
+  * `latencyMs`: server-measured wall time (the published value is in `facts.json`).
   * `confidenceScore`: 90.1%.
 * `TranscriptDisplay.tsx` updates immediately with the text.
 * The user can click **"Say it"** (`Volume2` icon) to have the browser's native `SpeechSynthesis` read the reconstructed sentence aloud at a comfortable conversational pace (0.95x rate).
@@ -128,7 +121,7 @@ Here is exactly what happens in memory and across the network from the moment th
 | File | Responsibility |
 | :--- | :--- |
 | **`app/page.tsx`** | Main 2-column page layout. Manages global transcription state, backend health polling, and coordinates child components. |
-| **`app/layout.tsx`** | Root HTML document shell, Geist font variables, and WCAG AAA high-contrast clinical slate styling. |
+| **`app/layout.tsx`** | Root HTML document shell, Geist font variables, and high-contrast styling (designed, not formally audited). |
 | **`hooks/useAudioRecorder.ts`** | Isolated custom React hook handling microphone permission, `MediaRecorder` lifecycle, Web Audio API `AnalyserNode`, and real-time RMS volume. |
 | **`lib/transcriptionService.ts`** | Fetch client for the FastAPI backend. Builds multipart form data, manages timeouts, and normalizes API errors. |
 | **`components/TactileMicButton.tsx`** | Large circular record button with haptic vibration (`navigator.vibrate`), live volume pulse animation, and global <kbd>SPACE</kbd> hotkey. |
@@ -195,8 +188,8 @@ To verify the entire pipeline end-to-end on any machine:
    # Expected output: Compiled successfully. Linting and checking validity of types... Static pages generated (5/5).
    ```
 
-4. **Run Full Backend Verification Suite (7/7 Tests):**
+4. **Run Full Backend Verification Suite (9/9 Tests):**
    ```bash
    python backend/test_server.py
-   # Expected output: ALL 7 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.
+   # Expected output: ALL 9 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.
    ```

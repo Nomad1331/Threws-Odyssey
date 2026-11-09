@@ -5,6 +5,43 @@
 
 All notable engineering changes, architectural milestones, and codebase updates for VoiceBridge are documented here.
 
+> **Reading this file:** it is a dated ledger, not current documentation. Entries before
+> v1.2.0 describe earlier states of the project and contain claims that were later
+> corrected (see the v1.2.0 "Corrections" note). For current numbers use `facts.json`
+> and `README.md`; for scope use `LIMITS.md`.
+
+---
+
+## [2026-11-09] - v1.8.0: Adversarial Pass — Contradictions, Bloat, One Decompression Path
+
+* **Method:** mechanical scans (Python syntax compile, grep for retired or overstated claims, cross-file metadata) followed by line-by-line reads. Every item below was confirmed at the cited source; nothing here is a speculative finding, and one earlier frontend finding remains rejected as false.
+* **Documentation contradictions fixed**
+  - README called the transcript “Instant”; it is not. Architecture diagram now says transcript with confidence/latency.
+  - `frontend/README.md` claimed “real-time speech transcription” and “WCAG 2.1 AAA”; both replaced with assistive wording and measurable sizes.
+  - `layout.tsx` metadata advertised “Real-time” and “zero-latency rendering”; both removed.
+  - `COMPETITIVE_ANALYSIS.md` claimed “112px, WCAG AAA compliant”; now states the actual minimum size.
+  - `SYSTEM_WALKTHROUGH.md` claimed ~2 ms decoding, showed 409 ms and 1560 ms responses, said “sub-second on warm execution”, claimed WCAG AAA and 7/7 tests. It now references `facts.json` for latency, and says 9/9.
+  - WCAG 2.2 AA’s target-size minimum is 24x24 px, not 44x44; the 44x44 figure is the AAA guideline. All four places that conflated them now state sizes without claiming a conformance level.
+  - `EDGE_AI_BENCHMARK_RESULTS.md` claimed the merged model was “verified in `model_training/voicebridge_merged/`”; the directory is gitignored and absent. It now says it was written there and is not shipped.
+  - `main.py` docstrings claimed unknown extensions are rejected and that decoding is “dysarthria-adapted”; neither was true. Corrected.
+  - `ISSUE.md`, `ROADMAP.md` and the branch comparison now carry explicit “archived, not current” banners; the CHANGELOG now says it is a dated ledger whose pre-v1.2.0 claims were superseded.
+* **Code fixes**
+  - Over-long audio is now rejected from the container duration **before** decoding; previously a small compressed upload could expand to a large PCM buffer before the 30-second check. Falls back to post-decode checking when the container reports no duration.
+  - `useAudioRecorder`: a second start during the first `getUserMedia` await is now refused (guard set before the await), so two recorders can no longer share the stream refs.
+  - `transcriptionService`: the 30-second abort timer now lives until the response body is read, instead of being cleared when headers arrive.
+  - `test_server.py`: test 9 proves a model failure returns 500 with a constant message and no internal path. Suite is 9/9.
+  - Recorded audio can now be replayed (`<audio>` in the transcript card); the previously dead `recordedAudioUrl` prop is used.
+  - Pain Alert requires the second tap at least 400 ms after the first, so a spastic double-tap cannot fire it.
+  - Status and speech errors are announced (`role="status"` / `role="alert"`); sample transcription disables the mic and drawer so requests cannot overlap.
+  - Waveform bars read the `--waveform` theme token instead of a hardcoded hex.
+  - Interactive border contrast raised from 1.49:1 to above 3:1 against the surface colour.
+* **Bloat and reproducibility**
+  - `requirements.txt` pinned to the measured versions; unused `httpx` removed (Starlette’s TestClient no longer needs it).
+  - `evaluate_samples.py` exits 1 when no clips exist instead of printing success; `torgo_streaming_test.py` refuses placeholder references and computes no verdict; `extract_torgo_audio.py` asserts the expected transcript before writing each clip.
+  - `facts.json`, doc blocks and figures regenerated after the decode change: latency **1,826.1 ms**, WER unchanged.
+* **Verification:** backend 9/9, `npm run build` exit 0, `claims_check.py` exit 0, two benchmark runs reproduce within tolerance.
+* **Known and stated, not fixed:** containers that publish no duration still decode before the check (fallback path); the per-run peak RSS field is sampled between calls while the OS peak is reported separately; `claims-check` does not verify `facts.json` provenance; speaker overlap between training and demo clips remains unmeasured; no clinical validation exists.
+
 ---
 
 ## [2026-11-09] - v1.7.0: Phase 6 — Ship Package

@@ -15,7 +15,7 @@ Automated Speech Recognition (ASR) foundation models achieve exceptional accurac
 * **VoiceBridge's Focus:** VoiceBridge does not claim to have magically solved severe dysarthria zero-shot across unseen speakers without calibration. Rather, VoiceBridge presents an **open-source, parameter-efficient edge engineering architecture**:
   1. Parameter-Efficient Fine-Tuning: Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on `whisper-small` (243.5M parameters) to recover collapsed phoneme contrasts without catastrophic forgetting.
   2. Edge Quantization Feasibility: a **separate side study** quantized `whisper-tiny` to dynamic INT8 ONNX and measured footprint and latency. The shipped product does **not** use that path; it runs `whisper-small` + LoRA in PyTorch, and its measured latency, memory and accuracy are in §5. The tiny study is labelled historical in [`EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md).
-  3. Physical accessibility engineering: a large tactile touch button (112px, WCAG AAA compliant), spacebar keyboard hotkey, live visual waveform feedback, and explicit two-stage confirmation before vocalizing urgent phrases.
+  3. Physical accessibility engineering: a large tactile touch button (at least 44x44 px), a keyboard shortcut that yields to focused controls, live visual waveform feedback, and explicit two-stage confirmation before vocalizing urgent phrases.
 
 ---
 
@@ -84,8 +84,8 @@ All metrics below come from `facts.json`, written by `benchmarks/benchmark_produ
 * **Host:** Intel(R) Core(TM) i5-14400F (10 cores), Windows 11 (10.0.26300), CPU-only
 * **Model:** openai/whisper-small (243.5M parameters) + LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB (971.4 MB base + 7.1 MB adapter)
-* **Memory:** 1,020.8 MB RSS delta at load; 1,744.1 MB peak
-* **Latency:** 1,683.5 ms mean per sentence (RTF 0.288); target 280 ms → **MISS**
+* **Memory:** 1,020.6 MB RSS delta at load; 1,748.7 MB peak
+* **Latency:** 1,826.1 ms mean per sentence (RTF 0.312); target 280 ms → **MISS**
 * **Accuracy:**
   * TORGO-M05 (Cerebral Palsy): **0.0% WER** — “We have an excellent team” → “We have an excellent team”
   * TORGO-M04 (Post-Trauma (TBI)): **50.0% WER** — “Their house is grey and white” → “then there's the grey and white”

@@ -1,3 +1,7 @@
+> **ARCHIVED — internal ledger, not current documentation.** Some "FIXED" entries here
+> were later found to be documentation changes only. Current numbers are in `facts.json`
+> and `README.md`; current scope is in `LIMITS.md`.
+
 # 📋 VoiceBridge: Comprehensive Audit Issues & Resolution Ledger
 
 **Event:** THREWS Odyssey 2026 — Track: Human-AI & Assistive Technology  

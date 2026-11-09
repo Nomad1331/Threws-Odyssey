@@ -2,6 +2,12 @@
 TORGO Dysarthria Dataset: Streaming Verification & Baseline Benchmark
 VoiceBridge — THREWS Odyssey 2026
 Track: Human-AI & Assistive Technology
+
+Requires the optional research extras (not part of the product install):
+    pip install datasets evaluate
+
+This measures the zero-shot whisper-tiny baseline. It is NOT the shipped
+whisper-small + LoRA engine, and it computes no pass/fail verdict.
 """
 
 from datasets import load_dataset
@@ -37,7 +43,11 @@ def run_torgo_baseline():
     for i, item in enumerate(dataset.take(3)):
         audio_array = item["audio"]["array"]
         sampling_rate = item["audio"]["sampling_rate"]
-        ground_truth = item.get("text", item.get("transcription", "Sample text"))
+        ground_truth = item.get("text") or item.get("transcription")
+        if not ground_truth:
+            raise ValueError(
+                f"Sample {i + 1} has no reference transcript; refusing to score against a placeholder."
+            )
 
         # Run standard Whisper inference
         result = asr_pipeline({"array": audio_array, "sampling_rate": sampling_rate})
@@ -54,7 +64,7 @@ def run_torgo_baseline():
     baseline_wer = wer_metric.compute(predictions=predictions, references=references)
     print("\n" + "=" * 60)
     print(f"[!] Baseline Whisper Word Error Rate (WER) on Dysarthria: {baseline_wer * 100:.1f}%")
-    print("[*] Benchmark complete. Zero-shot baseline confirms significant degradation on dysarthric speech.")
+    print("[*] Measured only: no verdict is computed from this number.")
     print("=" * 60)
 
 

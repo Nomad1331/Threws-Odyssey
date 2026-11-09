@@ -5,7 +5,7 @@
     "track": "Human-AI & Assistive Technology",
     "team": "Sleeper Cells",
     "institution": "SIES Graduate School of Technology",
-    "generatedAt": "2026-11-09T06:31:48+00:00",
+    "generatedAt": "2026-11-09T09:41:34+00:00",
     "generatedBy": "python benchmarks/benchmark_product.py",
     "script": "benchmarks/benchmark_product.py",
     "scriptSha256": "5e581a5d5c3eba05",
@@ -55,7 +55,7 @@
       "totalMb": 978.5,
       "definition": "megabytes = 10^6 bytes, as reported by the Hugging Face cache index"
     },
-    "modelLoadMs": 1189.3,
+    "modelLoadMs": 1363.3,
     "accuracy": {
       "referenceSource": "backend/evaluate_samples.py:SAMPLES (same sentences the demo page shows)",
       "metric": "word error rate after lowercasing and stripping punctuation; (S+D+I)/reference words",
@@ -81,16 +81,16 @@
           "errors": 0,
           "latencyMs": {
             "runs": [
-              1574.7,
-              1570.1,
-              1633.4,
-              1632.2,
-              1547.5
+              2104.9,
+              1787.5,
+              1893.6,
+              2022.6,
+              1621.0
             ],
-            "mean": 1591.6,
-            "median": 1574.7,
-            "min": 1547.5,
-            "max": 1633.4
+            "mean": 1885.9,
+            "median": 1893.6,
+            "min": 1621.0,
+            "max": 2104.9
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -112,16 +112,16 @@
           "errors": 3,
           "latencyMs": {
             "runs": [
-              1645.9,
-              1648.0,
-              1672.2,
-              1640.3,
-              1641.4
+              1707.0,
+              1666.0,
+              1677.3,
+              1849.2,
+              1609.3
             ],
-            "mean": 1649.6,
-            "median": 1645.9,
-            "min": 1640.3,
-            "max": 1672.2
+            "mean": 1701.8,
+            "median": 1677.3,
+            "min": 1609.3,
+            "max": 1849.2
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -143,16 +143,16 @@
           "errors": 6,
           "latencyMs": {
             "runs": [
-              1805.8,
-              1781.5,
-              1810.4,
-              1853.5,
-              1795.0
+              1956.1,
+              1876.7,
+              1910.7,
+              1854.3,
+              1855.8
             ],
-            "mean": 1809.2,
-            "median": 1805.8,
-            "min": 1781.5,
-            "max": 1853.5
+            "mean": 1890.7,
+            "median": 1876.7,
+            "min": 1854.3,
+            "max": 1956.1
           },
           "outputsIdenticalAcrossRuns": true
         }
@@ -161,11 +161,11 @@
     "latency": {
       "warmupRunsPerClip": 2,
       "timedRunsPerClip": 5,
-      "meanMs": 1683.5,
-      "medianMs": 1645.9,
-      "minMs": 1547.5,
-      "maxMs": 1853.5,
-      "realTimeFactor": 0.288,
+      "meanMs": 1826.1,
+      "medianMs": 1854.3,
+      "minMs": 1609.3,
+      "maxMs": 2104.9,
+      "realTimeFactor": 0.312,
       "targetMs": 280,
       "targetStatus": "MISS",
       "targetSource": "project latency target carried in facts.json since 2026-11-04",
@@ -174,11 +174,11 @@
       "status": "MISS"
     },
     "memory": {
-      "rssBeforeLoadMb": 380.1,
-      "rssAfterLoadMb": 1400.9,
-      "rssDeltaMb": 1020.8,
-      "peakRssDuringRunMb": 1744.1,
-      "processPeakWorkingSetMb": 1767.4,
+      "rssBeforeLoadMb": 380.4,
+      "rssAfterLoadMb": 1401.0,
+      "rssDeltaMb": 1020.6,
+      "peakRssDuringRunMb": 1748.7,
+      "processPeakWorkingSetMb": 1762.9,
       "totalSystemRamGb": 137.3,
       "definition": "RSS delta = resident set after model load minus resident set after imports; peak = highest observed during the timed runs"
     },

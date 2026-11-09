@@ -63,6 +63,9 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
 
   const startTime = performance.now();
   const backendUrl = `${getBackendBaseUrl()}/api/v1/translate-audio`;
+  // Kept alive until the response body has been read: clearing it when the
+  // headers arrive would let a stalled body hang the UI past the timeout.
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   try {
     const formData = new FormData();
@@ -83,18 +86,13 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
     formData.append("file", audioBlob, fileName);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30_000);
+    timeoutId = setTimeout(() => controller.abort(), 30_000);
 
-    let response: Response;
-    try {
-      response = await fetch(backendUrl, {
-        method: "POST",
-        body: formData,
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
 
     const elapsed = Math.round(performance.now() - startTime);
 
@@ -182,5 +180,9 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
       isError: true,
       errorKind: isAbort ? "timeout" : "network",
     };
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
   }
 }

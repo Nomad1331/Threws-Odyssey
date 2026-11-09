@@ -1,5 +1,12 @@
 # 📊 VoiceBridge: Branch Comparison, LoRA Architecture & Integration Roadmap
 
+> **OUTDATED — historical branch comparison (2026-11-07).** It compares `origin/main` and
+> `voicebridge-clean` at commit `79996f0`. Every benchmark figure quoted below was
+> superseded by the 2026-11-09 product benchmark in `facts.json`. Kept only as an audit
+> trail; do not quote it as current.
+
+<!-- claims-check:historical -->
+
 **Project:** VoiceBridge — Assistive Speech Transcription for Dysarthric Speech  
 **Event:** THREWS Odyssey 2026 — Track: Human-AI & Assistive Technology  
 **Evaluation Scope:** Codebase divergence between `origin/main` (`2563e50`) and `voicebridge-clean` (`79996f0`)  
@@ -172,4 +179,6 @@ To avoid breaking either subsystem and to resolve divergence without manual conf
 3. **Step 2:** Bring over `backend/check_model.py` from `main`.
 4. **Step 3:** Update `backend/app/inference.py` to support the fine-tuned `whisper-small` LoRA model (`Aaliya05/voicebridge`) via a runtime engine toggle (Clinical LoRA vs CTranslate2 INT8).
 5. **Step 4:** Run `python backend/test_server.py` to guarantee all 7 automated verification tests pass.
+
+<!-- /claims-check:historical -->
 6. **Step 5:** Present the unified system: Clinical dysarthric speech accuracy powered by the fine-tuned LoRA model, delivered on enterprise-grade, sub-second Edge AI infrastructure.

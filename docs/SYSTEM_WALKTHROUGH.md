@@ -11,7 +11,7 @@
 Automatic Speech Recognition (ASR) systems (OpenAI Whisper, Google Speech API, Apple Siri) are trained on fluent, normative speech. For individuals with **dysarthria**—neuromotor speech impairments resulting from Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), or Traumatic Brain Injury (TBI)—these models collapse, yielding **65% to 80% Word Error Rates (WER)**.
 
 **VoiceBridge** is an open-source assistive speech transcription prototype built on two principles:
-1. **Edge AI Optimization:** Executes a quantized **INT8 Whisper model on standard consumer CPUs** (Intel Core i5) without requiring discrete GPUs or cloud APIs (103MB memory footprint, 592ms average latency on TORGO clips, ~400ms on short speech).
+1. **CPU-only inference on commodity hardware:** no discrete GPU and no cloud API. The shipped engine is `whisper-small` + LoRA in PyTorch; measured latency and memory are in `facts.json` and the README.
 2. **Physical Accessibility:** Designed specifically for motor-impaired individuals with WCAG 2.1 AAA touch targets, physical keyboard shortcuts (<kbd>SPACE</kbd>), tactile haptic feedback, and accidental-trigger protection.
 
 ---
@@ -141,8 +141,8 @@ Here is exactly what happens in memory and across the network from the moment th
 | File | Responsibility |
 | :--- | :--- |
 | **`README.md`** | Public repository landing page with project motivation, verified benchmarks, and 60-second quickstart guides. |
-| **`facts.json`** | Single source of truth anchoring all benchmarked numbers (74.4% size cut, 103MB RAM, 592ms latency) to prevent contradictory claims. |
-| **`docs/EDGE_AI_BENCHMARK_RESULTS.md`** | Comprehensive hardware benchmark log comparing FP32 baseline Whisper vs VoiceBridge INT8 CPU execution. |
+| **`facts.json`** | Single source of truth: every benchmark number is rendered from it by `benchmarks/render_docs.py`, and `benchmarks/claims_check.py` fails on a hand-edited figure. |
+| **`docs/EDGE_AI_BENCHMARK_RESULTS.md`** | Product benchmark (`whisper-small` + LoRA) plus a labelled historical side study on `whisper-tiny` INT8. |
 | **`docs/DATASETS_AND_PROOF.md`** | Clinical citation and provenance documentation for the University of Toronto TORGO corpus. |
 | **`docs/COMPETITIVE_ANALYSIS.md`** | Market and technical comparison against Google Project Euphonia, Project Relate, UIUC Speech Accessibility Project, and Voiceitt. |
 
@@ -150,10 +150,10 @@ Here is exactly what happens in memory and across the network from the moment th
 
 ## 💡 5. Key Engineering Decisions & Trade-Offs
 
-### 1. Why `faster-whisper` INT8 on CPU instead of standard PyTorch?
-* **Problem:** Standard PyTorch Whisper requires downloading a 2GB+ CUDA runtime, takes 1,480ms on CPU, and consumes over 380MB of RAM.
-* **Solution:** faster-whisper compiles the model down to C++ via CTranslate2. By applying dynamic 8-bit quantization (INT8), model weights drop from **151.7 MB to 38.9 MB (74.4% reduction)** and active RAM drops to **103 MB**.
-* **Impact:** The system runs at a **0.10 Real-Time Factor (RTF)** on standard laptop CPUs with zero GPU requirements.
+### 1. Why PyTorch + PEFT instead of a quantized CTranslate2 model?
+* **Context:** an earlier build used `faster-whisper` (CTranslate2, INT8) with `whisper-tiny`. That path cannot load the LoRA adapter, so it was replaced.
+* **Current:** the server runs `whisper-small` + LoRA in PyTorch on CPU, trading speed and memory for adapter support and accuracy.
+* **Trade-off:** a sentence takes seconds, not milliseconds, and the model needs roughly a gigabyte of RAM. The accuracy gain on dysarthric speech is the reason it is kept. Measured values are in `facts.json`.
 
 ### 2. Why browser-native `MediaRecorder` instead of custom PCM buffers?
 * **Problem:** Custom `ScriptProcessorNode` buffers (like the deleted `wavRecorder.ts`) run on the browser's main JavaScript thread, causing audio glitches and high CPU overhead on mobile devices.

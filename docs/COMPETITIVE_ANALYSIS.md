@@ -10,11 +10,11 @@
 
 Automated Speech Recognition (ASR) foundation models achieve exceptional accuracy (<4% Word Error Rate) on fluent, normative speech. However, for individuals living with neuromotor speech disorders (dysarthria arising from Cerebral Palsy, ALS, Parkinson’s, or Traumatic Brain Injury), standard acoustic models collapse:
 
-* **The Acoustic Failure Wall:** Zero-shot foundation models (such as `openai/whisper-tiny`) suffer catastrophic breakdown on moderate-to-severe dysarthria (measured at **82.2% Word Error Rate** on held-out TORGO clinical clips). Vowel formant centralization collapses vowel contrast toward a neutral schwa (`/ə/`), while attenuated stop-consonant burst releases are discarded as background noise.
+* **The Acoustic Failure Wall:** Zero-shot foundation models (such as `openai/whisper-tiny`) break down on moderate-to-severe dysarthria. Vowel formant centralization collapses vowel contrast toward a neutral schwa (`/ə/`), while attenuated stop-consonant burst releases are discarded as background noise.
 * **The Research Reality:** Uncontrolled, real-world dysarthric speech across diverse speakers remains one of the hardest open problems in speech science. Even in controlled laboratory settings (such as the University of Toronto TORGO archive, recorded with head-mounted directional microphones), speaker-independent generalization is a steep hurdle.
 * **VoiceBridge's Focus:** VoiceBridge does not claim to have magically solved severe dysarthria zero-shot across unseen speakers without calibration. Rather, VoiceBridge presents an **open-source, parameter-efficient edge engineering architecture**:
   1. Parameter-Efficient Fine-Tuning: Low-Rank Adaptation (LoRA, $r=16, \alpha=32$) on `whisper-small` (243.5M parameters) to recover collapsed phoneme contrasts without catastrophic forgetting.
-  2. Edge Quantization Feasibility: Computational graph decomposition and **dynamic ONNX INT8 quantization** benchmarked on `whisper-tiny` achieving a verified **74.42% storage reduction** (103.45 MB across 3 graphs) and **592.0 ms CPU inference** (Real-Time Factor 0.1013, 10× faster than real-time) on standard consumer laptop CPUs without GPU requirements.
+  2. Edge Quantization Feasibility: a **separate side study** quantized `whisper-tiny` to dynamic INT8 ONNX and measured footprint and latency. The shipped product does **not** use that path; it runs `whisper-small` + LoRA in PyTorch, and its measured latency, memory and accuracy are in §5. The tiny study is labelled historical in [`EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md).
   3. Physical accessibility engineering: a large tactile touch button (112px, WCAG AAA compliant), spacebar keyboard hotkey, live visual waveform feedback, and explicit two-stage confirmation before vocalizing urgent phrases.
 
 ---
@@ -55,14 +55,14 @@ Unlike generic voice assistants, several dedicated academic and industry researc
 | :--- | :--- | :--- | :--- |
 | **System Approach** | Closed-source, personalized commercial apps | Open-weights general-purpose foundation model | **Open-source parameter-efficient assistive pipeline** |
 | **Atypical Adaptation** | Extensive personalized training on user voice | Zero (Trained only on 680k hrs normative speech) | **Trained on TORGO clinical dysarthria archive (r=16, a=32)** |
-| **Baseline Severe WER** | Highly variable depending on user calibration | **80%–82.2% (Collapses into hallucination loops)** | **Empirical recovery: 0.0% WER on mild (90.1% conf), key phonemes on mod-severe (60.7% conf)** |
-| **Model Quantization** | Proprietary on-device / cloud engines | Uncompressed FP32 PyTorch (~404 MB ONNX / 151 MB PyTorch) | **Dynamic INT8 ONNX (103.45 MB total, 74.42% reduction)** |
-| **Tested Hardware** | Device-specific (Pixel / iPhone / Cloud) | High-end CPU / GPU | **13th Gen Intel Core i5-1334U (x86_64 CPU with AVX2)** |
-| **CPU Latency (~5.85s clip)** | Cloud or mobile neural engine dependent | ~638.1 ms (FP32 ONNX CPU) | **592.0 ms (INT8 ONNX CPU, RTF = 0.1013)** |
+| **Baseline Severe WER** | Highly variable depending on user calibration | Collapses into hallucination loops on severe speech | **Measured per severity in `facts.json`: mild correct, moderate partial, severe fails** |
+| **Model Quantization** | Proprietary on-device / cloud engines | Untouched FP32 weights | **No quantization shipped — FP32 PyTorch** |
+| **Tested Hardware** | Device-specific (Pixel / iPhone / Cloud) | High-end CPU / GPU | **CPU-only x86_64 (see §5)** |
+| **CPU Latency (~5.85s clip)** | Cloud or mobile neural engine dependent | Varies by model size | **Measured in §5** |
 | **Software License** | Proprietary / Commercial Subscription | MIT License (Open-weights) | **MIT License (Open-source research prototype)** |
 
 > [!NOTE]
-> **Hardware Validation Clarification:** All benchmarks reported in this project were executed on an `x86_64` CPU (Intel Core i5-1334U with AVX2 support). VoiceBridge has **not** been tested on Raspberry Pi or ARM hardware, nor on Google Coral Edge TPU (which cannot execute Whisper architectures). Raspberry Pi deployment remains a theoretical hardware target for future work.
+> **Hardware Validation Clarification:** The product benchmark in §5 ran on a CPU-only `x86_64` machine with no GPU. VoiceBridge has **not** been tested on Raspberry Pi or ARM hardware, nor on Google Coral Edge TPU (which cannot execute Whisper architectures). Raspberry Pi deployment remains a theoretical hardware target for future work.
 
 ---
 
@@ -78,22 +78,20 @@ Several high-quality Indian-language speech tools exist, notably **IndicWhisper*
 
 ## 5. Verified Empirical Telemetry (Single Source of Truth)
 
-All metrics below are drawn directly from the verified execution log recorded by Moulika on November 4, 2026 ([`docs/EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md)):
+<!-- BEGIN:generated:competitive-telemetry -->
+All metrics below come from `facts.json`, written by `benchmarks/benchmark_product.py`.
 
-* **Host Hardware:** Intel(R) Core(TM) i5-1334U (10 cores, x86_64, AVX2)
-* **Execution Provider:** ONNX Runtime `CPUExecutionProvider`
-* **Storage Footprint:**
-  * FP32 ONNX Baseline: **404.49 MB** (all 3 graphs) / 220.18 MB (Encoder + 1 Decoder)
-  * INT8 Quantized Package: **103.45 MB** (all 3 graphs) / 57.12 MB (Encoder + 1 Decoder)
-  * **Storage Reduction:** **74.42%** (Target: ~74% → **PASS**)
-* **Inference Speed & Throughput:**
-  * Average CPU Inference Latency (TORGO ~5.85s clips): **592.0 ms**
-  * Real-Time Factor (RTF): **0.1013** (~10× faster than real-time playback)
-* **Clinical Speech Evaluation (Held-Out Audio Clips):**
-  * Clip 1 (`TORGO-M05`, Cerebral Palsy): Baseline FP32 WER **20.0%** → INT8 WER **40.0%**
-  * Clip 2 (`TORGO-M04`, Post-Trauma TBI): Baseline FP32 WER **66.7%** → INT8 WER **100.0%**
-  * Clip 3 (`TORGO-M02`, ALS): Baseline FP32 WER **160.0%** → INT8 WER **100.0%**
-  * **Overall Mean WER:** FP32 Baseline **82.2%** → INT8 Quantized **80.0%**
+* **Host:** Intel(R) Core(TM) i5-14400F (10 cores), Windows 11 (10.0.26300), CPU-only
+* **Model:** openai/whisper-small (243.5M parameters) + LoRA (1.77M, 0.73%)
+* **Disk:** 978.5 MB (971.4 MB base + 7.1 MB adapter)
+* **Memory:** 1,021.3 MB RSS delta at load; 1,748.1 MB peak
+* **Latency:** 1,720.1 ms mean per sentence (RTF 0.294); target 280 ms → **MISS**
+* **Accuracy:**
+  * TORGO-M05 (Cerebral Palsy): **0.0% WER** — “We have an excellent team” → “We have an excellent team”
+  * TORGO-M04 (Post-Trauma (TBI)): **50.0% WER** — “Their house is grey and white” → “then there's the grey and white”
+  * TORGO-M02 (Amyotrophic Lateral Sclerosis (ALS)): **120.0% WER** — “The job provides many benefits” → “Get the apple by Fimasy Bezzi bit”
+  * **Mean of clips:** 56.7% · **corpus WER:** 56.2%
+<!-- END:generated:competitive-telemetry -->
 
 ---
 
@@ -101,7 +99,7 @@ All metrics below are drawn directly from the verified execution log recorded by
 
 | Juror Question | Verified Academic Answer |
 | :--- | :--- |
-| **"Why is your Word Error Rate 80% on held-out clips? Isn't that high?"** | *"Yes, 80% WER is high, and that is the honest scientific reality of severe dysarthria. Foundation Whisper collapses with 82.2% error, outputting total hallucinations on severe pauses. Research from Google Euphonia shows that speaker-independent dysarthric speech cannot be solved zero-shot; it requires personalized calibration. Our contribution is the **edge engineering pipeline**: we compressed the model by 74.4% and proved it can run in real-time on consumer CPUs (0.10 RTF), creating the baseline for edge-based personalization."* |
+| **"Why is your Word Error Rate 50% on moderate speech? Isn't that high?"** | *"Yes, and the severe clip is worse still. That is the honest result: the system fixes mild dysarthric speech and only partially handles moderate speech. We report per-severity WER in `facts.json` instead of hiding it behind a blended average. Our contribution is a working CPU-only open pipeline plus the measurement that shows exactly where it stops working; we do not claim that speaker-independent severe dysarthria is solved."* |
 | **"Why did you compare with Sarvam AI earlier?"** | *"That was an early conceptual mistake in our drafts. Sarvam AI and AI4Bharat's IndicWhisper are excellent platforms for normative Indian languages, but they do not focus on clinical dysarthria, and our current evaluation is English-only on TORGO. We have removed that comparison. Our real comparative context is atypical speech research like Google Project Euphonia and the Speech Accessibility Project."* |
-| **"Did you deploy this on a Raspberry Pi?"** | *"No. All benchmarks were run on a standard 13th Gen Intel Core i5 laptop CPU. Raspberry Pi and embedded ARM targets are part of our future roadmap once ARM-specific INT8 execution kernels are validated."* |
+| **"Did you deploy this on a Raspberry Pi?"** | *"No. Benchmarks ran on a desktop x86_64 CPU with no GPU. Raspberry Pi and embedded ARM targets are future work, not a validated deployment."* |
 | **"TORGO was recorded in a sound booth with head-mounted mics. How will this work in the real world?"** | *"That is a critical clinical limitation. In the real world, ambient noise, microphone distance, and acoustic reverberation further degrade the signal. That is why we capture 16kHz mono audio directly via modern browser audio APIs, and why we designed the physical interface with a large tactile touch button (112px), live visual volume feedback, and mandatory confirmation before vocalizing emergency alerts."* |

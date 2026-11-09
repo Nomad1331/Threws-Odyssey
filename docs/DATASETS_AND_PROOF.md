@@ -37,20 +37,21 @@ The dataset is streamed via Hugging Face Hub, removing the need for manual 50GB 
 ### 2.1 The Dysarthric Acoustic Failure Wall
 Foundation speech recognition models (OpenAI Whisper, Google Speech API, Apple Siri) are trained on massive datasets (680,000+ hours) of fluent, normative speech (podcasts, broadcast media, audiobooks). When presented with dysarthric speech, foundation encoders suffer catastrophic breakdown:
 
-* Normative speech achieves `<4% Word Error Rate (WER)`.
-* Disordered speech in clinical datasets yields **65% to 80%+ Word Error Rate**, with severe cases collapsing into total hallucination loops.
+* Normative speech is transcribed well by modern systems.
+* Disordered speech is not: foundation models produce unusable output, and severe cases collapse into hallucination loops.
 
-### 2.2 Verified Empirical Baseline Telemetry
-Evaluated on authentic TORGO clinical audio clips using the verified benchmark pipeline ([`docs/EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md)):
+### 2.2 Measured product accuracy on the TORGO demo clips
+From `facts.json`, written by `benchmarks/benchmark_product.py` (the shipped `whisper-small` + LoRA engine):
 
-| Sample File | Speaker & Condition | Duration | Reference Transcript | Unadapted Whisper FP32 | Unadapted Whisper INT8 | VoiceBridge LoRA Adapted (`whisper-small-lora`) |
-| :--- | :--- | :---: | :--- | :--- | :--- | :--- |
-| `torgo_mild_sample.wav` | `TORGO-M05` (Mild, CP) | 5.69 s | *"We have an excellent team"* | *"We have an 8th team"* (20.0% WER) | *"We have in 18th Team."* (40.0% WER) | **"We have an excellent team"** (0.0% WER, 90.1% conf) |
-| `torgo_moderate_sample.wav` | `TORGO-M04` (Moderate-to-Severe, Post-Trauma TBI) | 5.87 s | *"Their house is grey and white"* | *"then down, great and white"* (66.7% WER) | *"Good night."* (100.0% WER) | **"then there's the grey and white"** (60.7% conf) |
-| `torgo_severe_sample.wav` | `TORGO-M02` (Severe, ALS) | 6.00 s | *"The job provides many benefits"* | *"I'm gonna put my nose in the bed"* (160.0% WER) | *"I will be very happy."* (100.0% WER) | **"Get the apple by Fimasy Bezzi bit"** (26.6% conf) |
-| **Mean** | **Held-Out Clinical Audio** | **5.85 s** | — | **82.2% Mean WER** | **80.0% Mean WER** | **Significant clinical phoneme recovery** |
+<!-- BEGIN:generated:datasets-accuracy -->
+| Sample file | Speaker (condition) | Duration | Reference | Model output | WER | Confidence |
+| :--- | :--- | ---: | :--- | :--- | ---: | ---: |
+| `torgo_mild_sample.wav` | TORGO-M05 (Cerebral Palsy) | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 90.1% |
+| `torgo_moderate_sample.wav` | TORGO-M04 (Post-Trauma (TBI)) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 60.7% |
+| `torgo_severe_sample.wav` | TORGO-M02 (Amyotrophic Lateral Sclerosis (ALS)) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 26.6% |
+<!-- END:generated:datasets-accuracy -->
 
-*Key Clinical Insight:* Standard unadapted zero-shot models completely collapse on dysarthric speech (80%–82% average WER, hallucinating phrases like "Good night." on silence). The fine-tuned VoiceBridge clinical LoRA model recovers the distorted phonemes, achieving exact 0.0% WER on mild dysarthria (90.1% confidence) and successfully reconstructing key articulatory targets on moderate-to-severe TBI speech.
+*Key clinical insight:* the adapted model transcribes the mild clip exactly, partially reconstructs the moderate clip, and fails on the severe clip. The earlier unadapted `whisper-tiny` INT8 comparison is retained as a labelled historical side study in [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md); it is not a product result.
 
 ---
 
@@ -58,13 +59,13 @@ Evaluated on authentic TORGO clinical audio clips using the verified benchmark p
 
 * **Clinical Adapted Architecture:** `openai/whisper-small` (243.5 million parameters).
 * **Baseline Comparison Model:** `openai/whisper-tiny` (39 million parameters, evaluated for edge quantization footprint).
-* **Weight Freezing:** ~99.28% of base model weights are frozen (preserving generalized English vocabulary, phonetics, and syntax).
-* **Trainable Projections:** Low-rank decomposition matrices ($r=16, \alpha=32$) are injected into the Query (`q_proj`) and Value (`v_proj`) attention projection layers across both the acoustic encoder and autoregressive decoder blocks (~1.77M trainable parameters, ~0.72% of model weights).
-* **Footprint:** Produces a compact adapter file (~7.1MB safetensors) hosted on Hugging Face Hub (`Aaliya05/voicebridge`), enabling zero-GPU local execution with authentic token softmax confidence scoring.
+* **Weight Freezing:** more than 99% of base model weights are frozen (preserving generalized English vocabulary, phonetics, and syntax).
+* **Trainable Projections:** Low-rank decomposition matrices ($r=16, \alpha=32$) are injected into the Query (`q_proj`) and Value (`v_proj`) attention projection layers across both the acoustic encoder and autoregressive decoder blocks (1.77M adapter parameters, 0.73% of total weights; see `facts.json`).
+* **Footprint:** Produces a 7.1 MB adapter file hosted on Hugging Face Hub (`Aaliya05/voicebridge`), enabling CPU-only execution with authentic token softmax confidence scoring.
 
 ---
 
 ## 4. Multilingual & Regional Transfer Roadmap
 
-* **Phase 1 Benchmark:** Establish verified baseline and edge INT8 execution on the English TORGO benchmark.
+* **Phase 1 Benchmark:** Measure the shipped CPU-only baseline on the English TORGO clips; the INT8 study is retained as a labelled side result only.
 * **Phase 2 Indic Transfer:** Acoustic adaptation techniques will be extended to regional Indian languages (Hindi, Marathi) using phonetically aligned corpora from the IIT Madras Speech Lab, validating that the underlying acoustic normalization is language-agnostic.

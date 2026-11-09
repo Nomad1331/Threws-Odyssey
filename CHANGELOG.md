@@ -7,6 +7,25 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-09] - v1.3.0: Phase 2 — Documents Rendered From `facts.json`
+
+* **Branch / commit:** `voicebridge-clean`, see this commit
+* **Why:** the README presented the whisper-tiny INT8 table as the product, and four documents repeated five different retired latency/size figures. Fixing the numbers once by hand would let them drift again, so the numbers are now generated and guarded.
+* **What changed:**
+  - `benchmarks/render_docs.py` renders benchmark blocks from `facts.json` into marked regions (`<!-- BEGIN:generated:... -->`) in README, `EDGE_AI_BENCHMARK_RESULTS.md`, `COMPETITIVE_ANALYSIS.md` and `DATASETS_AND_PROOF.md`.
+  - `benchmarks/claims_check.py` runs three independent gates: (1) each generated block must equal a fresh render from `facts.json`; (2) retired whisper-tiny figures are banned outside a region marked historical; (3) any `%` / `ms` / `MB` / `GB` value outside a generated or historical block fails in README and the product benchmark doc.
+  - README: replaced the tiny-model table with per-severity accuracy (mild 0.0%, moderate 50.0%, severe 120.0%; mean 56.7%, corpus 56.2%), measured performance (latency 1,720.1 ms vs 280 ms target → MISS, RSS delta 1,021.3 MB, disk 978.5 MB), honest hardware line, and a "where it stops" paragraph. Removed the unsourced 65–80% WER claim and the "Real-Time" title.
+  - `EDGE_AI_BENCHMARK_RESULTS.md`: now §1 product benchmark and §2 **historical** whisper-tiny side study, with Moulika's authorship and data preserved behind an explicit banner and historical markers.
+  - `COMPETITIVE_ANALYSIS.md`: product telemetry block replaces tiny numbers; jury FAQ answer rewritten from "80% is the reality" to per-severity honesty; Raspberry Pi answer corrected.
+  - `DATASETS_AND_PROOF.md`: product accuracy block replaces the mixed tiny/LoRA table; adapter share corrected 0.72% → 0.73%; unsourced <4% and 65–80% claims removed.
+  - `SYSTEM_WALKTHROUGH.md`: "why faster-whisper INT8" replaced with the actual PyTorch + PEFT rationale; stale facts.json description updated.
+  - `BRANCH_COMPARISON_AND_LORA_ANALYSIS.md`: marked outdated/historical (it compares old commits).
+  - README quickstart gains a "Verify the numbers" step running `claims_check.py`.
+* **Verification:** `claims_check.py` exits 0. Sabotage run — one WER changed 0.0% → 0.5% plus a stray "592 ms" line — produced 3 failures and exit 1, then passed again after restore. Roadmap acceptance grep (`151.7`, `38.9`, `1,480`, `74.42`) now matches only inside the labelled historical section.
+* **Next:** Phase 3 — code audit of all backend/frontend files, every finding verified by the lead.
+
+---
+
 ## [2026-11-09] - v1.2.0: Phase 1 — Product Re-Benchmark (real whisper-small + LoRA)
 
 * **Branch / commit:** `voicebridge-clean`, `a9a16ab`

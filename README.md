@@ -1,5 +1,5 @@
 # 🎙️ VoiceBridge
-### Real-Time Assistive Speech Transcription for Dysarthric Speech
+### Assistive Speech Transcription for Dysarthric Speech
 > **THREWS Odyssey 2026** — *Track: Human-AI & Assistive Technology*  
 > **Institution:** SIES Graduate School of Technology, Navi Mumbai  
 > **Branch:** `voicebridge-clean`
@@ -8,14 +8,14 @@
 
 ## 📌 Problem & Motivation
 
-Commercial automatic speech recognition (ASR) foundation models achieve high accuracy on normative speech. However, for individuals with **dysarthria**—neuromotor speech impairments caused by Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), or Traumatic Brain Injury (TBI)—standard speech recognition collapses, frequently producing **65% to 80% Word Error Rates (WER)**.
+Commercial automatic speech recognition (ASR) foundation models achieve high accuracy on normative speech. However, for individuals with **dysarthria**—neuromotor speech impairments caused by Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), or Traumatic Brain Injury (TBI)—standard speech recognition frequently produces unusable output.
 
 Current commercial solutions also face accessibility hurdles:
 - **Cloud Dependency:** Many assistive tools require cloud streaming, posing privacy concerns and failing in offline environments.
 - **Hardware Barrier:** Running large speech models locally typically demands expensive, power-hungry discrete GPUs.
 - **Physical Usability:** Standard voice apps lack physical accommodations for users with accompanying motor spasticity or tremors.
 
-**VoiceBridge** addresses these challenges through a lightweight, CPU-optimized transcription pipeline coupled with an accessible assistive interface.
+**VoiceBridge** addresses these challenges with a CPU-only transcription pipeline (no discrete GPU, no cloud API) coupled with an accessible assistive interface. It is a research prototype, not a medical device.
 
 ---
 
@@ -48,17 +48,43 @@ Current commercial solutions also face accessibility hurdles:
 
 ---
 
-## 📊 Verified Edge AI Benchmarks
+## 📊 Measured Results
 
-All metrics benchmarked on consumer laptop hardware (Intel Core i5 CPU, no GPU acceleration):
+Every number below comes from `facts.json`, produced by one command: `benchmarks/benchmark_product.py`, which loads the same engine the server runs. No figure is typed by hand, and `benchmarks/claims_check.py` fails if this file ever disagrees with `facts.json`.
 
-| Metric | Baseline (FP32) | VoiceBridge (INT8 CPU) | Improvement |
-| :--- | :---: | :---: | :---: |
-| **Model Size** | 151.7 MB | **38.9 MB** | **74.42% reduction** |
-| **Active Memory Footprint** | ~380 MB | **103 MB** | **72.9% reduction** |
-| **CPU Processing Latency** | 1,480 ms | **592 ms** | **2.50x faster** |
-| **Real-Time Factor (RTF)** | 0.25 | **0.10** | **Real-time capable** |
-| **Hardware Requirement** | GPU / Heavy CPU | **Standard Multi-Core CPU** | **Zero GPU required** |
+<!-- BEGIN:generated:readme-accuracy -->
+### Accuracy on the three TORGO demo clips
+
+Word error rate on the exact clips the demo page plays, measured 2026-11-09.
+
+| Severity | Speaker | Condition | WER | Demo reference → model output |
+| :--- | :--- | :--- | ---: | :--- |
+| Mild | TORGO-M05 | Cerebral Palsy | **0.0%** | “We have an excellent team” → “We have an excellent team” |
+| Moderate-to-Severe | TORGO-M04 | Post-Trauma (TBI) | **50.0%** | “Their house is grey and white” → “then there's the grey and white” |
+| Severe | TORGO-M02 | Amyotrophic Lateral Sclerosis (ALS) | **120.0%** | “The job provides many benefits” → “Get the apple by Fimasy Bezzi bit” |
+| **Mean of clips** | | | **56.7%** | corpus WER **56.2%** across 3 clips |
+
+“Mean of clips” averages the three percentages; “corpus WER” counts every edit over every reference word. Both are reported because they answer different questions.
+<!-- END:generated:readme-accuracy -->
+
+<!-- BEGIN:generated:readme-performance -->
+### Speed, memory and size
+
+Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3 GB RAM), Windows 11 (10.0.26300), CPU-only, PyTorch 2.15.0+cpu.
+
+| Metric | Measured | Target | Verdict |
+| :--- | ---: | ---: | :--- |
+| Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
+| Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
+| Memory added when the model loads (RSS) | 1,021.3 MB | — | — |
+| Peak process memory | 1,748.1 MB | — | — |
+| Latency per sentence | 1,720.1 ms mean (1,725.4 ms median, 1,526.5–1,908.2 ms range) | 280 ms | **MISS, 6.1× over** |
+| Real-time factor | 0.294 | below 1.0 | processes faster than playback |
+
+“Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
+<!-- END:generated:readme-performance -->
+
+**Where it stops:** mild dysarthric speech is transcribed correctly; moderate speech is partially usable; severe speech is not usable and is reported here as a known limit. The system runs on a CPU without a GPU, but it is not a real-time system: latency is roughly six times the original target, and the model needs about a gigabyte of RAM.
 
 *Reference: University of Toronto TORGO Database (Rudzicz et al., 2012).*
 
@@ -93,6 +119,9 @@ Threws-Odyssey/
 │   └── package.json
 │
 ├── benchmarks/
+│   ├── benchmark_product.py     # Measures the shipped model, writes facts.json
+│   ├── render_docs.py           # Renders the benchmark blocks below from facts.json
+│   ├── claims_check.py          # Fails if a document number disagrees with facts.json
 │   ├── generate_figures.py      # 300 DPI publication chart generator
 │   └── extract_torgo_audio.py   # TORGO parquet sample extraction script
 │
@@ -100,7 +129,7 @@ Threws-Odyssey/
 │
 ├── docs/
 │   ├── SYSTEM_WALKTHROUGH.md        # Complete end-to-end architecture & code tour
-│   ├── EDGE_AI_BENCHMARK_RESULTS.md # Detailed CPU quantization telemetry and memory benchmarks
+│   ├── EDGE_AI_BENCHMARK_RESULTS.md # Product benchmark + whisper-tiny INT8 side study
 │   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
 │   └── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
 │
@@ -160,6 +189,16 @@ npm install
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 3. Verify the numbers
+
+From the repository root, with the backend virtualenv active:
+
+```bash
+python benchmarks/claims_check.py
+```
+
+It fails if any benchmark figure in the docs no longer matches `facts.json`.
 
 ---
 

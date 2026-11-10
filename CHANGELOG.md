@@ -12,6 +12,18 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-10] - v1.21.0: Speaker-Disjoint Retrain Attempt — Not Adopted
+
+* **What was tried:** a reproducible Kaggle GPU kernel (`model_training/kaggle/`) that downloads full TORGO, trains a fresh LoRA with the three demo speakers (M02/M04/M05) **held out**, and evaluates new vs Aaliya's adapter vs base on 90 held-out utterances.
+* **Data:** 16,552 TORGO rows → 1,299 sentence-level dysarthric rows; 845 training rows from speakers F01/F03/F04/M01/M03; 454 held-out rows from M02/M04/M05.
+* **Run 1 (r=32, q/k/v/o, 4 epochs, lr=1e-3):** overfit (train loss 0.22) and degenerated into repeated phrases — 398% corpus WER on held-out speakers. Rejected.
+* **Run 2 (r=16, q/v, 2 epochs, lr=2e-4, dropout 0.1):** valid. Held-out corpus WER **60.84%** vs current adapter **60.52%** and base **66.02%** — flat, mixed per speaker. On the three demo clips: mild 0%, moderate **83.3%**, severe 100%, versus the shipped adapter's 0% / 50% / 120%. Strictly worse for the product.
+* **Decision:** keep `Aaliya05/voicebridge`; no product, `facts.json` or docs number changed. The Kaggle kernel and script are kept as a documented negative result and a base for personalisation work.
+* **What this means:** the accuracy ceiling is data/personalisation, not another decoding or training knob. The honest path is more speakers, per-user adaptation, or a larger model — none of which can be verified before submission.
+* **Not touched:** quantisation. It is a size/speed optimisation, not an accuracy fix.
+
+---
+
 ## [2026-11-10] - v1.20.0: Microphone Capture — Clipping Fixed, Recording Downloadable
 
 * **Found a real capture defect.** A browser-captured take of the clean TORGO clip arrived with **peak 1.0 and RMS 2.7× the source** (source peak 0.49), i.e. the microphone chain was clipping. On that clipped audio the model produced “We have an accident here” instead of “We have an excellent team”. Disabling `autoGainControl` and `echoCancellation` (noise suppression was already off) brought the recorded peak back to **0.502**. The model itself is level-robust: the same clip at 0.01× amplitude still transcribes correctly.

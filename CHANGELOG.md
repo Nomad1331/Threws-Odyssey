@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-10] - v1.22.0: Three-Speaker TORGO Adaptation — 0.0% / 16.7% / 0.0%
+
+* **What changed:** the shipped adapter is now `backend/models/voicebridge-torgo-three/`, produced by continuing Aaliya's LoRA on **443 utterances from the three demo speakers** (M02: 172, M04: 143, M05: 128). All **11 rows whose reference text matches one of the three demo sentences were excluded**, so no demo clip or its transcript was trained on.
+* **Measured result on the three demo clips:** mild **0.0%**, moderate **16.7%** (one word: “Their”→“the”), severe **0.0%**. Mean clip WER **5.6%**, corpus WER **6.2%**. Latency 1,602.9 ms mean; memory/disk unchanged.
+* **Scope — read this before quoting:** this is **speaker-dependent adaptation**, not speaker-independent dysarthria ASR. The adapter was trained and evaluated on the same three TORGO speakers; **no fourth speaker has been evaluated**. Severe speech from an unseen speaker remains unsupported. The previous 60.5% held-out-speaker number belongs to the earlier adapter, not this one.
+* **Shipped:** the 7.1 MB adapter is committed under `backend/models/` and loaded by default; `VOICEBRIDGE_ADAPTER_MODEL` still overrides it. No quantisation; no frontend change.
+* **Docs:** README, LIMITS, DEMO, DATASETS, COMPETITIVE, EDGE and SYSTEM_WALKTHROUGH updated so the severe-failure claims no longer contradict the measured result. `facts.json` regenerated twice; second run matched within tolerance; `claims_check.py` passes.
+
+---
+
 ## [2026-11-10] - v1.21.0: Speaker-Disjoint Retrain Attempt — Not Adopted
 
 * **What was tried:** a reproducible Kaggle GPU kernel (`model_training/kaggle/`) that downloads full TORGO, trains a fresh LoRA with the three demo speakers (M02/M04/M05) **held out**, and evaluates new vs Aaliya's adapter vs base on 90 held-out utterances.

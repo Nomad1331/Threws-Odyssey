@@ -5,7 +5,9 @@ Assistive Speech-to-Text Engine fine-tuned specifically for dysarthric speech pa
 
 Architecture:
 - Base Acoustic Model: openai/whisper-small (243.5M parameters)
-- Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge (r=16, alpha=32)
+- Fine-Tuned PEFT LoRA Adapter: initial Aaliya05/voicebridge (r=16, alpha=32),
+  further adapted to TORGO speakers M02/M04/M05 and shipped in backend/models/.
+  This is speaker-dependent adaptation, not a general dysarthria model.
 - Evaluated on University of Toronto TORGO dysarthria corpus.
 - Step-level Softmax Confidence: Generates authentic, normalized token probabilities [0.0 - 1.0].
 - Native Audio Ingestion: PyAV decoding for direct handling of .webm, .wav, .mp4, .aac, .ogg.
@@ -19,11 +21,30 @@ import glob
 import logging
 import os
 import threading
+from pathlib import Path
 from typing import Optional, Tuple
 
 ENGINE_NAME = "whisper-small-lora"
 BASE_MODEL_ID = os.getenv("VOICEBRIDGE_BASE_MODEL", "openai/whisper-small")
-ADAPTER_MODEL_ID = os.getenv("VOICEBRIDGE_ADAPTER_MODEL", "Aaliya05/voicebridge")
+# Speaker-adapted to the three TORGO demo speakers. Falls back to the original
+# Aaliya05 adapter if the local directory is absent (e.g. a partial checkout).
+_DEFAULT_ADAPTER_DIR = (
+    Path(__file__).resolve().parent.parent / "models" / "voicebridge-torgo-three"
+)
+ADAPTER_MODEL_ID = os.getenv(
+    "VOICEBRIDGE_ADAPTER_MODEL",
+    str(_DEFAULT_ADAPTER_DIR)
+    if (_DEFAULT_ADAPTER_DIR / "adapter_model.safetensors").is_file()
+    else "Aaliya05/voicebridge",
+)
+
+
+def _adapter_is_available() -> bool:
+    """True when the configured adapter is local or present in the HF cache."""
+    local = Path(ADAPTER_MODEL_ID)
+    if local.is_dir():
+        return (local / "adapter_model.safetensors").is_file()
+    return _hf_cache_has(ADAPTER_MODEL_ID, "adapter_model.safetensors")
 
 
 def _hf_cache_has(repo_id: str, weight_file: str) -> bool:
@@ -48,7 +69,7 @@ def _hf_cache_has(repo_id: str, weight_file: str) -> bool:
 if (
     os.getenv("HF_HUB_OFFLINE") is None
     and _hf_cache_has(BASE_MODEL_ID, "model.safetensors")
-    and _hf_cache_has(ADAPTER_MODEL_ID, "adapter_model.safetensors")
+    and _adapter_is_available()
 ):
     os.environ["HF_HUB_OFFLINE"] = "1"
 

@@ -4,11 +4,13 @@
 > **Institution:** SIES Graduate School of Technology, Navi Mumbai  
 > **Branch:** `voicebridge-clean`
 
-> **Status: research prototype.** It transcribes the **mild TORGO demo clip** correctly and
-> the **moderate-to-severe** demo clip partially; **severe** speech is not supported and is
-> reported as a known limit. It is not a medical device and has no clinical validation. Read
-> **[LIMITS.md](LIMITS.md)** before quoting anything here. Five-minute walkthrough:
-> **[docs/DEMO.md](docs/DEMO.md)**.
+> **Status: speaker-adapted research prototype.** On the three TORGO demo clips it scores
+> **0.0% / 16.7% / 0.0%** WER (mean 5.6%). That adapter was further trained on 443 other
+> utterances from the same three TORGO speakers (M02/M04/M05), with all 11 rows matching the
+> demo sentences excluded. It is **not speaker-independent**: no other speaker has been
+> evaluated, and severe dysarthria from a new speaker remains unsupported. It is not a medical
+> device and has no clinical validation. Read **[LIMITS.md](LIMITS.md)** before quoting
+> anything here. Five-minute walkthrough: **[docs/DEMO.md](docs/DEMO.md)**.
 
 ---
 
@@ -41,7 +43,7 @@ Current commercial solutions also face accessibility hurdles:
                   ▼
    [ Clinical Acoustic LoRA Engine ]
      • Base: openai/whisper-small (243.5M params)
-     • Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge (r=16, alpha=32)
+     • Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge, further adapted to TORGO M02/M04/M05 (r=16, alpha=32)
      • Token-Level Softmax Confidence Scoring
      • Native PyAV Audio Ingestion (.webm, .wav, .mp4, .aac)
                   │
@@ -61,14 +63,14 @@ Every number below comes from `facts.json`, produced by one command: `benchmarks
 <!-- BEGIN:generated:readme-accuracy -->
 ### Accuracy on the three TORGO demo clips
 
-Word error rate on the exact clips the demo page plays, measured 2026-11-09.
+Word error rate on the exact clips the demo page plays, measured 2026-11-10.
 
 | Severity | Speaker | Condition | WER | Demo reference → model output |
 | :--- | :--- | :--- | ---: | :--- |
 | Mild | TORGO-M05 | Cerebral Palsy | **0.0%** | “We have an excellent team” → “We have an excellent team” |
-| Moderate-to-Severe | TORGO-M04 | Post-Trauma (TBI) | **50.0%** | “Their house is grey and white” → “then there's the grey and white” |
-| Severe | TORGO-M02 | Amyotrophic Lateral Sclerosis (ALS) | **120.0%** | “The job provides many benefits” → “Get the apple by Fimasy Bezzi bit” |
-| **Mean of clips** | | | **56.7%** | corpus WER **56.2%** across 3 clips |
+| Moderate-to-Severe | TORGO-M04 | Post-Trauma (TBI) | **16.7%** | “Their house is grey and white” → “the house is grey and white” |
+| Severe | TORGO-M02 | Amyotrophic Lateral Sclerosis (ALS) | **0.0%** | “The job provides many benefits” → “The job provides many benefits” |
+| **Mean of clips** | | | **5.6%** | corpus WER **6.2%** across 3 clips |
 
 “Mean of clips” averages the three percentages; “corpus WER” counts every edit over every reference word. Both are reported because they answer different questions.
 <!-- END:generated:readme-accuracy -->
@@ -76,21 +78,21 @@ Word error rate on the exact clips the demo page plays, measured 2026-11-09.
 <!-- BEGIN:generated:readme-performance -->
 ### Speed, memory and size
 
-Measured 2026-11-09 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3 GB RAM), Windows 11 (10.0.26300), CPU-only, PyTorch 2.15.0+cpu.
+Measured 2026-11-10 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3 GB RAM), Windows 11 (10.0.26300), CPU-only, PyTorch 2.15.0+cpu.
 
 | Metric | Measured | Target | Verdict |
 | :--- | ---: | ---: | :--- |
 | Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
 | Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
-| Memory added when the model loads (RSS) | 1,020.5 MB | — | — |
-| Peak process memory | 1,759.1 MB | — | — |
-| Latency per sentence | 1,695.3 ms mean (1,656.8 ms median, 1,587.3–1,888.9 ms range) | 280 ms | **MISS, 6.1× over** |
-| Real-time factor | 0.29 | below 1.0 | processing beats playback; the response still takes seconds |
+| Memory added when the model loads (RSS) | 1,019.9 MB | — | — |
+| Peak process memory | 1,747 MB | — | — |
+| Latency per sentence | 1,564.7 ms mean (1,569.9 ms median, 1,504.8–1,609.2 ms range) | 280 ms | **MISS, 5.6× over** |
+| Real-time factor | 0.267 | below 1.0 | processing beats playback; the response still takes seconds |
 
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
 
-**Where it stops:** the mild demo clip is transcribed correctly; the moderate-to-severe demo clip is partially usable; severe speech is not usable and is reported here as a known limit. The system runs on a CPU without a GPU, but it is not a real-time system. Full, honest scope in [LIMITS.md](LIMITS.md).
+**Where it stops:** on these three TORGO speakers, all three clips now transcribe near-exactly (5.6% mean). This is **speaker adaptation, not a general dysarthria model**: the adapter saw 443 other utterances from the same speakers, and no other speaker has been measured. Live microphone accuracy, unfamiliar speakers and severe speech from a new speaker remain unsupported. The system runs on a CPU without a GPU, but it is not real-time. Full, honest scope in [LIMITS.md](LIMITS.md).
 
 *Reference: University of Toronto TORGO Database (Rudzicz et al., 2012).*
 
@@ -104,6 +106,8 @@ Threws-Odyssey/
 │   ├── app/
 │   │   ├── main.py              # FastAPI microservice endpoints (/health, /api/v1/translate-audio)
 │   │   └── inference.py         # Whisper-Small LoRA clinical acoustic inference engine
+│   ├── models/
+│   │   └── voicebridge-torgo-three/  # speaker-adapted LoRA shipped with the repo
 │   ├── requirements.txt         # Pinned production dependencies (FastAPI, PyTorch, Transformers, PEFT)
 │   ├── evaluate_samples.py      # Runs the three demo clips through the live engine
 │   └── test_server.py           # Automated TestClient verification suite (12/12 tests)

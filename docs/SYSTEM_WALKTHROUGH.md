@@ -39,7 +39,7 @@ Automatic Speech Recognition (ASR) systems (OpenAI Whisper, Google Speech API, A
                      │
                      ▼
   [ 4. Clinical Acoustic LoRA Engine ] <--- (backend/app/inference.py)
-  • Model: openai/whisper-small + Aaliya05/voicebridge LoRA adapter
+  • Model: openai/whisper-small + voicebridge-torgo-three LoRA adapter
   • PyTorch + PEFT runtime with token softmax confidence scoring
   • Native PyAV audio decoding (.webm, .wav, .mp4, .aac, .ogg)
   • Generates transcript string + normalized confidence score
@@ -93,7 +93,7 @@ Here is exactly what happens in memory and across the network from the moment th
 * It writes the bytes to an OS temporary file (`tempfile.NamedTemporaryFile`) so PyAV can open it as a normal file (PyAV does not accept an in-memory upload handle directly).
 * It calls `transcribe_audio(temp_path)` in `backend/app/inference.py`:
   * Native PyAV audio decoding converts `.webm`, `.wav`, `.mp4`, `.aac`, `.ogg` directly to 16,000 Hz mono float32. Decoding time is included in the end-to-end latency published in `facts.json`.
-  * The fine-tuned Clinical LoRA model (`openai/whisper-small` + `Aaliya05/voicebridge`) performs acoustic reconstruction.
+  * The fine-tuned Clinical LoRA model (`openai/whisper-small` + local `voicebridge-torgo-three` adapter) performs acoustic reconstruction.
   * Token-level softmax probabilities are calculated across step logits to generate authentic confidence scores.
 * The backend computes elapsed time and returns a validated Pydantic JSON response with `transcription` (string), `confidence_score` (float in [0, 1] or null) and `processing_time_ms` (int).
 * In the `finally` block, `os.unlink(temp_path)` removes the temporary file; if deletion fails (for example, the file is locked), the failure is logged rather than silently ignored.
@@ -115,7 +115,7 @@ Here is exactly what happens in memory and across the network from the moment th
 | :--- | :--- |
 | **`requirements.txt`** | Production dependencies for FastAPI microservice and clinical LoRA inference (`fastapi`, `uvicorn`, `python-multipart`, `faster-whisper`, `httpx`, `torch`, `transformers`, `peft`, `accelerate`). |
 | **`app/main.py`** | FastAPI application setup, CORS configuration, `@app.get("/health")`, and `@app.post("/api/v1/translate-audio")` route with tempfile cleanup. |
-| **`app/inference.py`** | Singleton `load_model()` and `transcribe_audio()` functions executing fine-tuned Whisper-Small LoRA (`Aaliya05/voicebridge`) with step-level softmax confidence scoring and native PyAV audio ingestion. |
+| **`app/inference.py`** | Singleton `load_model()` and `transcribe_audio()` functions executing fine-tuned Whisper-Small LoRA (`backend/models/voicebridge-torgo-three`, initial `Aaliya05/voicebridge`) with step-level softmax confidence scoring and native PyAV audio ingestion. |
 
 ### Frontend Application (`/frontend/src`)
 | File | Responsibility |

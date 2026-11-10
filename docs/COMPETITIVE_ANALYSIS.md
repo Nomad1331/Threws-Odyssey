@@ -55,7 +55,7 @@ Unlike generic voice assistants, several dedicated academic and industry researc
 | :--- | :--- | :--- | :--- |
 | **System Approach** | Closed-source, personalized commercial apps | Open-weights general-purpose foundation model | **Open-source parameter-efficient assistive pipeline** |
 | **Atypical Adaptation** | Extensive personalized training on user voice | Zero (Trained only on 680k hrs normative speech) | **Trained on TORGO clinical dysarthria archive (r=16, a=32)** |
-| **Baseline Severe WER** | Highly variable depending on user calibration | Collapses into hallucination loops on severe speech | **Measured per severity in `facts.json`: mild correct, moderate partial, severe fails** |
+| **Baseline Severe WER** | Highly variable depending on user calibration | Collapses into hallucination loops on severe speech | **Speaker-adapted demo: 0.0% / 16.7% / 0.0%; no fourth speaker evaluated** |
 | **Model Quantization** | Proprietary on-device / cloud engines | Untouched FP32 weights | **No quantization shipped — FP32 PyTorch** |
 | **Tested Hardware** | Device-specific (Pixel / iPhone / Cloud) | High-end CPU / GPU | **CPU-only x86_64 (see §5)** |
 | **CPU Latency (~5.85s clip)** | Cloud or mobile neural engine dependent | Varies by model size | **Measured in §5** |
@@ -84,13 +84,13 @@ All metrics below come from `facts.json`, written by `benchmarks/benchmark_produ
 * **Host:** Intel(R) Core(TM) i5-14400F (10 cores), Windows 11 (10.0.26300), CPU-only
 * **Model:** openai/whisper-small (243.5M parameters) + LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB (971.4 MB base + 7.1 MB adapter)
-* **Memory:** 1,020.5 MB RSS delta at load; 1,759.1 MB peak
-* **Latency:** 1,695.3 ms mean per sentence (RTF 0.29); target 280 ms → **MISS**
+* **Memory:** 1,019.9 MB RSS delta at load; 1,747 MB peak
+* **Latency:** 1,564.7 ms mean per sentence (RTF 0.267); target 280 ms → **MISS**
 * **Accuracy:**
   * TORGO-M05 (Cerebral Palsy): **0.0% WER** — “We have an excellent team” → “We have an excellent team”
-  * TORGO-M04 (Post-Trauma (TBI)): **50.0% WER** — “Their house is grey and white” → “then there's the grey and white”
-  * TORGO-M02 (Amyotrophic Lateral Sclerosis (ALS)): **120.0% WER** — “The job provides many benefits” → “Get the apple by Fimasy Bezzi bit”
-  * **Mean of clips:** 56.7% · **corpus WER:** 56.2%
+  * TORGO-M04 (Post-Trauma (TBI)): **16.7% WER** — “Their house is grey and white” → “the house is grey and white”
+  * TORGO-M02 (Amyotrophic Lateral Sclerosis (ALS)): **0.0% WER** — “The job provides many benefits” → “The job provides many benefits”
+  * **Mean of clips:** 5.6% · **corpus WER:** 6.2%
 <!-- END:generated:competitive-telemetry -->
 
 ---
@@ -99,7 +99,7 @@ All metrics below come from `facts.json`, written by `benchmarks/benchmark_produ
 
 | Juror Question | Answer (linked sources; competitor claims not independently tested) |
 | :--- | :--- |
-| **"Why is your Word Error Rate 50% on moderate speech? Isn't that high?"** | *"Yes, and the severe clip is worse still. That is the honest result: the system fixes mild dysarthric speech and only partially handles moderate speech. We report per-severity WER in `facts.json` instead of hiding it behind a blended average. Our contribution is a working CPU-only open pipeline plus the measurement that shows exactly where it stops working; we do not claim that speaker-independent severe dysarthria is solved."* |
+| **"Why is your Word Error Rate 16.7% on moderate speech? Isn't that high?"** | *"That 16.7% is one word out of six on the moderate TORGO clip, after adapting to that speaker. It is not a general dysarthria result: the adapter was trained on 443 other utterances from the three TORGO speakers, and no fourth speaker has been evaluated. We report per-clip WER in `facts.json` instead of hiding it behind a blended average, and we do not claim that speaker-independent severe dysarthria is solved."* |
 | **"Why did you compare with Sarvam AI earlier?"** | *"That was an early conceptual mistake in our drafts. Sarvam AI and AI4Bharat's IndicWhisper are excellent platforms for normative Indian languages, but they do not focus on clinical dysarthria, and our current evaluation is English-only on TORGO. We have removed that comparison. Our real comparative context is atypical speech research like Google Project Euphonia and the Speech Accessibility Project."* |
 | **"Did you deploy this on a Raspberry Pi?"** | *"No. Benchmarks ran on a desktop x86_64 CPU with no GPU. Raspberry Pi and embedded ARM targets are future work, not a validated deployment."* |
 | **"TORGO was recorded in a sound booth with head-mounted mics. How will this work in the real world?"** | *"That is a critical clinical limitation. In the real world, ambient noise, microphone distance, and acoustic reverberation further degrade the signal. That is why we capture 16kHz mono audio directly via modern browser audio APIs, and why we designed the physical interface with a large tactile touch button (112px), live visual volume feedback, and mandatory confirmation before vocalizing emergency alerts."* |

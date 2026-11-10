@@ -14,7 +14,7 @@
 <!-- BEGIN:generated:edge-product -->
 ## 1. Product benchmark — whisper-small + LoRA (the shipped engine)
 
-Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the only section of this file that describes the product.
+Measured 2026-11-10 by `python benchmarks/benchmark_product.py`. This is the only section of this file that describes the product.
 
 ### Environment
 
@@ -23,38 +23,38 @@ Measured 2026-11-09 by `python benchmarks/benchmark_product.py`. This is the onl
 * **OS:** Windows 11 (10.0.26300)
 * **Device:** cpu (no GPU used)
 * **PyTorch:** 2.15.0+cpu · **Transformers:** 5.22.2 · **PEFT:** 0.21.2 · **Python:** 3.12.9
-* **Model:** openai/whisper-small (243.5M parameters) + Aaliya05/voicebridge LoRA (1.77M, 0.73%)
+* **Model:** openai/whisper-small (243.5M parameters) + voicebridge-torgo-three LoRA (1.77M, 0.73%)
 * **Disk:** 978.5 MB total (971.4 MB base + 7.1 MB adapter)
-* **Model load time:** 1,230.4 ms
+* **Model load time:** 1,442.2 ms
 
 ### Accuracy (word error rate)
 
 | Clip | Severity | Condition | Duration | Reference | Model output | WER | S / D / I | Latency |
 | :--- | :--- | :--- | ---: | :--- | :--- | ---: | :---: | ---: |
-| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,619.1 ms |
-| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 3 / 0 / 0 | 1,658.5 ms |
-| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 4 / 0 / 2 | 1,808.4 ms |
-| **Totals** | **3 clips** |  |  |  |  | **mean 56.7%** |  | **1,695.3 ms** |
+| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,537.5 ms |
+| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “the house is grey and white” | **16.7%** | 1 / 0 / 0 | 1,572.2 ms |
+| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “The job provides many benefits” | **0.0%** | 0 / 0 / 0 | 1,584.5 ms |
+| **Totals** | **3 clips** |  |  |  |  | **mean 5.6%** |  | **1,564.7 ms** |
 
-* **Mean of clip WERs:** 56.7%
-* **Corpus WER (all edits ÷ all reference words):** 56.2%
+* **Mean of clip WERs:** 5.6%
+* **Corpus WER (all edits ÷ all reference words):** 6.2%
 * **S / D / I:** substitutions / deletions / insertions.
 
 ### Latency
 
 * **Protocol:** 2 warm-up runs per clip, then 5 timed runs.
-* **Mean:** 1,695.3 ms · **median:** 1,656.8 ms · **range:** 1,587.3–1,888.9 ms
-* **Real-time factor:** 0.29
-* **Target:** 280 ms → **MISS** (6.1× the target)
+* **Mean:** 1,564.7 ms · **median:** 1,569.9 ms · **range:** 1,504.8–1,609.2 ms
+* **Real-time factor:** 0.267
+* **Target:** 280 ms → **MISS** (5.6× the target)
 * **Measurement point:** wall time around inference.transcribe_audio, including audio decode
 
 ### Memory
 
-* **RSS before model load:** 376.9 MB
-* **RSS after model load:** 1,397.4 MB
-* **RSS delta:** **1,020.5 MB**
-* **Peak RSS during timed runs:** 1,759.1 MB
-* **Peak working set (OS counter):** 1,763.7 MB
+* **RSS before model load:** 378.8 MB
+* **RSS after model load:** 1,398.7 MB
+* **RSS delta:** **1,019.9 MB**
+* **Peak RSS during timed runs:** 1,747 MB
+* **Peak working set (OS counter):** 1,758.4 MB
 
 ### Interpretation
 
@@ -105,13 +105,14 @@ They are retained so the work is not lost, and they are excluded from every prod
 
 ### 2.2 Model & Architecture Demarcation
 
-* **Clinical Production Engine (not measured in this section):** `openai/whisper-small` (243.5M parameters) fine-tuned with PEFT LoRA adapter `Aaliya05/voicebridge` ($r=16, \alpha=32$).
+* **Clinical Production Engine (not measured in this section):** `openai/whisper-small` (243.5M parameters) with the initial PEFT LoRA adapter `Aaliya05/voicebridge` ($r=16, \alpha=32$), further adapted to the three TORGO demo speakers. The shipped adapter is in `backend/models/voicebridge-torgo-three/`.
 * **Edge AI Quantization Baseline (this section):** `openai/whisper-tiny` (39M parameters), evaluated to benchmark dynamic INT8 ONNX footprint reduction and sub-second CPU execution.
-* **LoRA Specification (`Aaliya05/voicebridge`):**
+* **LoRA Specification (initial `Aaliya05/voicebridge`):**
   * `base_model_name_or_path`: `openai/whisper-small`
   * `peft_type`: `LORA`
   * `r`: `16`, `lora_alpha`: `32`, `lora_dropout`: `0.05`
   * `target_modules`: `{'q_proj', 'v_proj'}` (attention projections in encoder and decoder)
+* **Shipped adaptation (`voicebridge-torgo-three`):** same base, r=16, alpha=32, q/v targets, 7.1 MB; further trained on 443 utterances from M02/M04/M05 with the 11 demo-sentence rows excluded. Speaker-dependent, not a general ASR claim.
 * **Merge Output:** the standalone merged model and `WhisperProcessor` were written to `model_training/voicebridge_merged/` during that experiment. Those files are large, gitignored, and not shipped with this repository.
 
 ### 2.3 Per-Component ONNX Export & Dynamic INT8 Quantization

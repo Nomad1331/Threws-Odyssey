@@ -429,6 +429,12 @@ def run(args) -> dict:
     base_bytes = cache_size("openai/whisper-small")
     adapter_bytes = cache_size("Aaliya05/voicebridge")
 
+    # Record a stable adapter label rather than an absolute local path.
+    adapter_value = inference.ADAPTER_MODEL_ID
+    adapter_path = Path(adapter_value)
+    if adapter_path.is_dir():
+        adapter_value = adapter_path.name
+
     facts = {
         "_meta": {
             "project": "VoiceBridge",
@@ -457,7 +463,8 @@ def run(args) -> dict:
         "product": {
             "engineName": inference.get_active_engine_name(),
             "baseModel": inference.BASE_MODEL_ID,
-            "adapter": inference.ADAPTER_MODEL_ID,
+            "adapter": adapter_value,
+            "adapterInitial": inference.ADAPTER_MODEL_ID if not adapter_path.is_dir() else "Aaliya05/voicebridge + local adaptation",
             "device": str(inference._device),
             "parameters": {
                 "total": total_params,

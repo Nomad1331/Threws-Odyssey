@@ -46,12 +46,12 @@ From `facts.json`, written by `benchmarks/benchmark_product.py` (the shipped `wh
 <!-- BEGIN:generated:datasets-accuracy -->
 | Sample file | Speaker (condition) | Duration | Reference | Model output | WER | Confidence |
 | :--- | :--- | ---: | :--- | :--- | ---: | ---: |
-| `torgo_mild_sample.wav` | TORGO-M05 (Cerebral Palsy) | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 90.1% |
-| `torgo_moderate_sample.wav` | TORGO-M04 (Post-Trauma (TBI)) | 5.87 s | “Their house is grey and white” | “then there's the grey and white” | **50.0%** | 60.7% |
-| `torgo_severe_sample.wav` | TORGO-M02 (Amyotrophic Lateral Sclerosis (ALS)) | 6.0 s | “The job provides many benefits” | “Get the apple by Fimasy Bezzi bit” | **120.0%** | 26.6% |
+| `torgo_mild_sample.wav` | TORGO-M05 (Cerebral Palsy) | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 89.3% |
+| `torgo_moderate_sample.wav` | TORGO-M04 (Post-Trauma (TBI)) | 5.87 s | “Their house is grey and white” | “the house is grey and white” | **16.7%** | 61.2% |
+| `torgo_severe_sample.wav` | TORGO-M02 (Amyotrophic Lateral Sclerosis (ALS)) | 6.0 s | “The job provides many benefits” | “The job provides many benefits” | **0.0%** | 65.4% |
 <!-- END:generated:datasets-accuracy -->
 
-*Key clinical insight:* the adapted model transcribes the mild clip exactly, partially reconstructs the moderate-to-severe clip, and fails on the severe clip. The earlier unadapted `whisper-tiny` INT8 comparison is retained as a labelled historical side study in [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md); it is not a product result.
+*Key clinical insight:* the shipped adapter transcribes all three demo clips near-exactly (0.0% / 16.7% / 0.0%) because it was further adapted to these three TORGO speakers on 443 other utterances, with the 11 rows matching the demo sentences excluded. This is **speaker adaptation**, not unseen-speaker accuracy; severe speech from a new speaker remains unsupported. The earlier unadapted `whisper-tiny` INT8 comparison is retained as a labelled historical side study in [`docs/EDGE_AI_BENCHMARK_RESULTS.md`](./EDGE_AI_BENCHMARK_RESULTS.md); it is not a product result.
 
 ---
 
@@ -61,7 +61,7 @@ From `facts.json`, written by `benchmarks/benchmark_product.py` (the shipped `wh
 * **Baseline Comparison Model:** `openai/whisper-tiny` (39 million parameters, evaluated for edge quantization footprint).
 * **Weight Freezing:** more than 99% of base model weights are frozen (preserving generalized English vocabulary, phonetics, and syntax).
 * **Trainable Projections:** Low-rank decomposition matrices ($r=16, \alpha=32$) are injected into the Query (`q_proj`) and Value (`v_proj`) attention projection layers across both the acoustic encoder and autoregressive decoder blocks (1.77M adapter parameters, 0.73% of total weights; see `facts.json`).
-* **Footprint:** Produces a 7.1 MB adapter file hosted on Hugging Face Hub (`Aaliya05/voicebridge`), enabling CPU-only execution with authentic token softmax confidence scoring.
+* **Footprint:** Produces a 7.1 MB adapter file. The initial adapter is `Aaliya05/voicebridge`; the shipped adapter is a further adaptation to the three TORGO demo speakers, stored in `backend/models/voicebridge-torgo-three/`, enabling CPU-only execution with authentic token softmax confidence scoring.
 
 ---
 

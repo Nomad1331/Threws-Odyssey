@@ -113,7 +113,7 @@ Here is exactly what happens in memory and across the network from the moment th
 ### Backend Microservice (`/backend`)
 | File | Responsibility |
 | :--- | :--- |
-| **`requirements.txt`** | Production dependencies for FastAPI microservice and clinical LoRA inference (`fastapi`, `uvicorn`, `python-multipart`, `faster-whisper`, `httpx`, `torch`, `transformers`, `peft`, `accelerate`). |
+| **`requirements.txt`** | Production dependencies for FastAPI and clinical LoRA inference (`fastapi`, `starlette`, `uvicorn`, `python-multipart`, `av`, `torch`, `transformers`, `peft`, `accelerate`). `faster-whisper` is not a product dependency; only the optional TORGO extraction script needs it. |
 | **`app/main.py`** | FastAPI application setup, CORS configuration, `@app.get("/health")`, and `@app.post("/api/v1/translate-audio")` route with tempfile cleanup. |
 | **`app/inference.py`** | Singleton `load_model()` and `transcribe_audio()` functions executing fine-tuned Whisper-Small LoRA (`backend/models/voicebridge-torgo-three`, initial `Aaliya05/voicebridge`) with step-level softmax confidence scoring and native PyAV audio ingestion. |
 

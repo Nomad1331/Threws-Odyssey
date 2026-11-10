@@ -1,12 +1,14 @@
 # VoiceBridge — Limits
 
-This file exists so nobody has to discover the limits the hard way. Every number
-here is rendered from `facts.json` by `benchmarks/render_docs.py`; nothing is typed.
+This file exists so nobody has to discover the limits the hard way. Headline
+benchmark numbers are rendered from `facts.json` by `benchmarks/render_docs.py`.
+Training counts and the separate speaker-disjoint result are labelled experiment
+metadata, not product measurements.
 
 <!-- BEGIN:generated:limits-summary -->
 - **Accuracy:** mild **0.0%**, moderate-to-severe **16.7%**, severe **0.0%** word error rate on the 3 demo clips (3 speakers). Mean of clips 5.6%; corpus WER 6.2%.
-- **Latency:** 1,564.7 ms mean per sentence against a 280 ms target — **MISS**.
-- **Memory:** 1,019.9 MB RSS delta at load; 1,747 MB peak. **Disk:** 978.5 MB.
+- **Latency:** 1,582.6 ms mean per sentence against a 280 ms target — **MISS**.
+- **Memory:** 1,019.6 MB RSS delta at load; 1,756.3 MB peak. **Disk:** 978.5 MB.
 - **Model:** openai/whisper-small + LoRA, cpu only; no GPU, Raspberry Pi or Coral Edge TPU validation.
 - **Sample size:** 3 clips from 3 speakers. Preliminary; not a clinical result.
 <!-- END:generated:limits-summary -->
@@ -50,6 +52,12 @@ THREWS Odyssey 2026 and has not been used by any patient outside the team.
   cut short by the model's generation limit.
 - **No Raspberry Pi, ARM, Coral or GPU validation.** Benchmarks ran on one x86_64 desktop
   CPU.
+- **Upstream dependency advisories are accepted, not fixed.** `npm audit --omit=dev`
+  reports a high/critical advisory against Next.js 14.2.35 (Server Actions denial of
+  service) and its bundled PostCSS (build-time CSS issues). This static App Router page
+  uses no Server Actions and no user-controlled CSS, so those paths are not reachable in
+  this build; fixing them requires a major Next.js 16 upgrade, which was not attempted
+  before submission. Re-audit after upgrading.
 - **Accessibility is designed, not audited.** The interface follows target-size and
   focus-visible practices (44x44 px minimum targets, visible focus rings, full keyboard
   operation), but no formal WCAG audit was performed.

@@ -84,10 +84,10 @@ Measured 2026-11-10 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 | :--- | ---: | ---: | :--- |
 | Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
 | Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
-| Memory added when the model loads (RSS) | 1,019.9 MB | — | — |
-| Peak process memory | 1,747 MB | — | — |
-| Latency per sentence | 1,564.7 ms mean (1,569.9 ms median, 1,504.8–1,609.2 ms range) | 280 ms | **MISS, 5.6× over** |
-| Real-time factor | 0.267 | below 1.0 | processing beats playback; the response still takes seconds |
+| Memory added when the model loads (RSS) | 1,019.6 MB | — | — |
+| Peak process memory | 1,756.3 MB | — | — |
+| Latency per sentence | 1,582.6 ms mean (1,593 ms median, 1,531–1,617.2 ms range) | 280 ms | **MISS, 5.7× over** |
+| Real-time factor | 0.27 | below 1.0 | processing beats playback; the response still takes seconds |
 
 “Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
@@ -122,7 +122,7 @@ Threws-Odyssey/
 │   │   │   ├── TranscriptDisplay.tsx      # Live transcript, replay & Web Speech TTS playback
 │   │   │   ├── QuickAssistGrid.tsx        # High-contrast AAC cards with 2-step confirmation
 │   │   │   ├── AudioWaveformCanvas.tsx    # Live audio level visualizer
-│   │   │   └── ClinicalBenchmarkDrawer.tsx# TORGO reference sample evaluation player
+│   │   │   └── ClinicalBenchmarkDrawer.tsx # TORGO reference sample evaluation player
 │   │   ├── hooks/
 │   │   │   └── useAudioRecorder.ts        # Clean MediaRecorder & Web Audio RMS hook
 │   │   └── lib/
@@ -149,7 +149,8 @@ Threws-Odyssey/
 ├── model_training/
 │   ├── VoiceBridge_Colab_Trainer.ipynb # Kaggle/Colab GPU LoRA fine-tuning notebook
 │   ├── torgo_streaming_test.py         # Hugging Face TORGO streaming evaluation script
-│   └── export_and_quantize_onnx.py     # Standalone ONNX export & INT8 quantization script
+│   ├── export_and_quantize_onnx.py     # Standalone ONNX export & INT8 quantization script
+│   └── kaggle/                         # Reproducible speaker-disjoint and three-speaker kernels
 │
 ├── facts.json                       # Single source of truth for all verified numbers
 ├── LIMITS.md                        # What it cannot do, in plain language

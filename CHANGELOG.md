@@ -12,10 +12,23 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-10] - v1.22.1: Audit Pass — Test, Provenance and Doc Fixes
+
+* **Fixed a real self-test bug:** the WER “negative control” compared “an excellent” with “a different”, which is **two** substitutions, not one. It expected 20% but correctly produced 40%; the metric was right and the test expectation was wrong. The control is now “excellent”→“squad” (one substitution) and fails if S/D/I or WER is wrong.
+* **Fixed adapter-size provenance:** `benchmark_product.py` recorded the size of the old `Aaliya05/voicebridge` HF cache entry. It now measures the shipped `backend/models/voicebridge-torgo-three/` directory, which is what the product loads.
+* **Recorded every pinned runtime version** in `facts.json` (`fastapi`, `starlette`, `uvicorn`, `python-multipart`, `av`, `accelerate` in addition to torch/transformers/peft/python), so the requirements header is true.
+* **Fixed stale dependency docs:** `SYSTEM_WALKTHROUGH.md` still listed removed `faster-whisper` and `httpx`; it now matches `backend/requirements.txt`.
+* **Fixed an over-broad claim:** `LIMITS.md` said “every number is rendered from facts.json”; training counts and the separate speaker-disjoint result are now labelled experiment metadata.
+* **Removed `webm_probe.webm`**, an unused 96 KB tracked test artifact, and the unused `adapterInitial` facts field.
+* **Known upstream advisory documented:** `npm audit --omit=dev` flags Next.js 14.2.35 Server Actions DoS and bundled PostCSS. This static page uses no Server Actions and no user-controlled CSS; a Next 16 upgrade is post-submission work. See LIMITS.
+* **Verification:** 12/12 backend tests, WER self-test 6/6, `pip check`, frontend build, lint, `tsc --noEmit`, `git diff --check`, `claims_check --provenance-only`, and two benchmark reproductions all pass.
+
+---
+
 ## [2026-11-10] - v1.22.0: Three-Speaker TORGO Adaptation — 0.0% / 16.7% / 0.0%
 
 * **What changed:** the shipped adapter is now `backend/models/voicebridge-torgo-three/`, produced by continuing Aaliya's LoRA on **443 utterances from the three demo speakers** (M02: 172, M04: 143, M05: 128). All **11 rows whose reference text matches one of the three demo sentences were excluded**, so no demo clip or its transcript was trained on.
-* **Measured result on the three demo clips:** mild **0.0%**, moderate **16.7%** (one word: “Their”→“the”), severe **0.0%**. Mean clip WER **5.6%**, corpus WER **6.2%**. Latency 1,602.9 ms mean; memory/disk unchanged.
+* **Measured result on the three demo clips:** mild **0.0%**, moderate **16.7%** (one word: “Their”→“the”), severe **0.0%**. Mean clip WER **5.6%**, corpus WER **6.2%**. Latency about **1.5 s** mean; memory/disk unchanged.
 * **Scope — read this before quoting:** this is **speaker-dependent adaptation**, not speaker-independent dysarthria ASR. The adapter was trained and evaluated on the same three TORGO speakers; **no fourth speaker has been evaluated**. Severe speech from an unseen speaker remains unsupported. The previous 60.5% held-out-speaker number belongs to the earlier adapter, not this one.
 * **Shipped:** the 7.1 MB adapter is committed under `backend/models/` and loaded by default; `VOICEBRIDGE_ADAPTER_MODEL` still overrides it. No quantisation; no frontend change.
 * **Docs:** README, LIMITS, DEMO, DATASETS, COMPETITIVE, EDGE and SYSTEM_WALKTHROUGH updated so the severe-failure claims no longer contradict the measured result. `facts.json` regenerated twice; second run matched within tolerance; `claims_check.py` passes.

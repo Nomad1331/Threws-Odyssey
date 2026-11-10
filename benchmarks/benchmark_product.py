@@ -1,10 +1,11 @@
 """
 VoiceBridge product benchmark (Phase 1)
 =======================================
-Measures the model that actually serves users -- openai/whisper-small +
-the PEFT LoRA adapter Aaliya05/voicebridge -- through the product's own
-inference code (backend/app/inference.py). Nothing is re-implemented here
-except the word-error-rate arithmetic, which is unit-tested in --self-test.
+Measures the model that actually serves users -- openai/whisper-small + the
+shipped PEFT LoRA adapter (voicebridge-torgo-three, initially adapted from
+Aaliya05/voicebridge) -- through the product's own inference code
+(backend/app/inference.py). Nothing is re-implemented here except the
+word-error-rate arithmetic, which is unit-tested in --self-test.
 
 What it records, all into facts.json:
   * per-clip transcript, confidence and word-level WER (S/D/I counts)
@@ -150,10 +151,22 @@ def self_test() -> int:
 
     # A check that cannot fail proves nothing. This pair is wrong on purpose and
     # must produce a non-zero WER; an identical pair would always pass.
-    wrong = word_error_rate("We have an excellent team", "We have a different team")
-    if wrong["werPct"] != 20.0:
+    # One substitution: "excellent" -> "squad". ("different" would also change
+    # "an" -> "a", which is two substitutions and was a bad test expectation.)
+    wrong = word_error_rate("We have an excellent team", "We have an excellent squad")
+    if (
+        wrong["werPct"] != 20.0
+        or wrong["substitutions"] != 1
+        or wrong["deletions"] != 0
+        or wrong["insertions"] != 0
+    ):
         failures.append(
-            ("negative control", "", wrong, "20.0 for one substitution in five words")
+            (
+                "We have an excellent team",
+                "We have an excellent squad",
+                wrong,
+                "20.0 for one substitution in five words",
+            )
         )
 
     for ref, hyp, got, want in failures:
@@ -213,12 +226,23 @@ def library_versions() -> dict:
         peft_version = peft.__version__
     except Exception:
         peft_version = "unknown"
-    return {
+
+    versions = {
         "torch": torch.__version__,
         "transformers": transformers.__version__,
         "peft": peft_version,
         "python": platform.python_version(),
     }
+    # Runtime packages pinned in backend/requirements.txt; record the installed
+    # versions so a fresh install cannot silently diverge from these numbers.
+    from importlib.metadata import PackageNotFoundError, version
+
+    for package in ("fastapi", "starlette", "uvicorn", "python-multipart", "av", "accelerate"):
+        try:
+            versions[package] = version(package)
+        except PackageNotFoundError:
+            versions[package] = "missing"
+    return versions
 
 
 def file_sha256(relative_path: str) -> str:
@@ -242,6 +266,11 @@ def cache_size(repo_id: str) -> int | None:
     except Exception:
         pass
     return None
+
+
+def directory_size(path: Path) -> int:
+    """Bytes on disk for a local adapter directory, including its config files."""
+    return sum(item.stat().st_size for item in path.rglob("*") if item.is_file())
 
 
 # --------------------------------------------------------------------------- #
@@ -427,13 +456,16 @@ def run(args) -> dict:
         sys.exit(2)
 
     base_bytes = cache_size("openai/whisper-small")
-    adapter_bytes = cache_size("Aaliya05/voicebridge")
 
-    # Record a stable adapter label rather than an absolute local path.
+    # Record a stable adapter label and measure the adapter that actually ships,
+    # not the older Hugging Face cache entry it was derived from.
     adapter_value = inference.ADAPTER_MODEL_ID
     adapter_path = Path(adapter_value)
     if adapter_path.is_dir():
+        adapter_bytes = directory_size(adapter_path)
         adapter_value = adapter_path.name
+    else:
+        adapter_bytes = cache_size("Aaliya05/voicebridge")
 
     facts = {
         "_meta": {
@@ -464,7 +496,6 @@ def run(args) -> dict:
             "engineName": inference.get_active_engine_name(),
             "baseModel": inference.BASE_MODEL_ID,
             "adapter": adapter_value,
-            "adapterInitial": inference.ADAPTER_MODEL_ID if not adapter_path.is_dir() else "Aaliya05/voicebridge + local adaptation",
             "device": str(inference._device),
             "parameters": {
                 "total": total_params,
@@ -490,7 +521,7 @@ def run(args) -> dict:
                 "totalMb": round(((base_bytes or 0) + (adapter_bytes or 0)) / 1e6, 1)
                 if base_bytes and adapter_bytes
                 else None,
-                "definition": "megabytes = 10^6 bytes, as reported by the Hugging Face cache index",
+                "definition": "megabytes = 10^6 bytes; base from the Hugging Face cache, adapter from the shipped directory when local",
             },
             "modelLoadMs": load_ms,
             "accuracy": {

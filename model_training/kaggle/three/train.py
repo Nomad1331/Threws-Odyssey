@@ -1,6 +1,10 @@
 """
 VoiceBridge — TORGO three-speaker adaptation (Kaggle GPU).
 
+Status: adopted in v1.22.0. Continued Aaliya05/voicebridge on 443 other
+utterances from M02/M04/M05, excluding the 11 demo-sentence rows. Demo WER:
+0.0% / 16.7% / 0.0%. Speaker-dependent, not general; see CHANGELOG v1.22.0.
+
 This is speaker-dependent adaptation, not a general ASR claim. It continues
 training Aaliya05/voicebridge on the *other* utterances from the three demo
 speakers (M02, M04, M05), while excluding every row whose reference text is one

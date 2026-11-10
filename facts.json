@@ -5,12 +5,12 @@
     "track": "Human-AI & Assistive Technology",
     "team": "Sleeper Cells",
     "institution": "SIES Graduate School of Technology",
-    "generatedAt": "2026-11-10T09:52:12+00:00",
+    "generatedAt": "2026-11-10T17:50:46+00:00",
     "generatedBy": "python benchmarks/benchmark_product.py",
     "script": "benchmarks/benchmark_product.py",
-    "scriptSha256": "f387dfc9e0c54a41",
+    "scriptSha256": "58bbdd86f0d8e901",
     "sourceHashes": {
-      "benchmarks/benchmark_product.py": "f387dfc9e0c54a41",
+      "benchmarks/benchmark_product.py": "58bbdd86f0d8e901",
       "backend/app/inference.py": "48196194a94820c7",
       "backend/evaluate_samples.py": "8f20e8beaa0799db"
     },
@@ -31,7 +31,13 @@
       "torch": "2.15.0+cpu",
       "transformers": "5.22.2",
       "peft": "0.21.2",
-      "python": "3.12.9"
+      "python": "3.12.9",
+      "fastapi": "0.162.0",
+      "starlette": "1.10.0",
+      "uvicorn": "0.54.0",
+      "python-multipart": "0.0.33",
+      "av": "13.1.0",
+      "accelerate": "1.15.0"
     },
     "note": "Every number here is produced by the command above. Nothing is hand-typed."
   },
@@ -39,7 +45,6 @@
     "engineName": "whisper-small-lora",
     "baseModel": "openai/whisper-small",
     "adapter": "voicebridge-torgo-three",
-    "adapterInitial": "Aaliya05/voicebridge + local adaptation",
     "device": "cpu",
     "parameters": {
       "total": 243504384,
@@ -59,9 +64,9 @@
       "adapterBytes": 7099284,
       "adapterMb": 7.1,
       "totalMb": 978.5,
-      "definition": "megabytes = 10^6 bytes, as reported by the Hugging Face cache index"
+      "definition": "megabytes = 10^6 bytes; base from the Hugging Face cache, adapter from the shipped directory when local"
     },
-    "modelLoadMs": 1442.2,
+    "modelLoadMs": 1408.5,
     "accuracy": {
       "referenceSource": "backend/evaluate_samples.py:SAMPLES (same sentences the demo page shows)",
       "metric": "word error rate after lowercasing and stripping punctuation; (S+D+I)/reference words",
@@ -87,16 +92,16 @@
           "errors": 0,
           "latencyMs": {
             "runs": [
-              1603.9,
-              1504.8,
-              1519.6,
-              1530.0,
-              1529.1
+              1531.0,
+              1596.2,
+              1593.0,
+              1563.0,
+              1597.1
             ],
-            "mean": 1537.5,
-            "median": 1529.1,
-            "min": 1504.8,
-            "max": 1603.9
+            "mean": 1576.1,
+            "median": 1593.0,
+            "min": 1531.0,
+            "max": 1597.1
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -118,16 +123,16 @@
           "errors": 1,
           "latencyMs": {
             "runs": [
-              1580.9,
-              1569.9,
-              1555.0,
-              1599.7,
-              1555.4
+              1609.8,
+              1593.6,
+              1601.2,
+              1570.3,
+              1567.3
             ],
-            "mean": 1572.2,
-            "median": 1569.9,
-            "min": 1555.0,
-            "max": 1599.7
+            "mean": 1588.4,
+            "median": 1593.6,
+            "min": 1567.3,
+            "max": 1609.8
           },
           "outputsIdenticalAcrossRuns": true
         },
@@ -149,16 +154,16 @@
           "errors": 0,
           "latencyMs": {
             "runs": [
-              1572.9,
-              1592.1,
-              1608.1,
-              1609.2,
-              1540.3
+              1617.2,
+              1554.1,
+              1579.8,
+              1557.8,
+              1607.6
             ],
-            "mean": 1584.5,
-            "median": 1592.1,
-            "min": 1540.3,
-            "max": 1609.2
+            "mean": 1583.3,
+            "median": 1579.8,
+            "min": 1554.1,
+            "max": 1617.2
           },
           "outputsIdenticalAcrossRuns": true
         }
@@ -167,11 +172,11 @@
     "latency": {
       "warmupRunsPerClip": 2,
       "timedRunsPerClip": 5,
-      "meanMs": 1564.7,
-      "medianMs": 1569.9,
-      "minMs": 1504.8,
-      "maxMs": 1609.2,
-      "realTimeFactor": 0.267,
+      "meanMs": 1582.6,
+      "medianMs": 1593.0,
+      "minMs": 1531.0,
+      "maxMs": 1617.2,
+      "realTimeFactor": 0.27,
       "targetMs": 280,
       "targetStatus": "MISS",
       "targetSource": "project latency target carried in facts.json since 2026-11-04",
@@ -180,11 +185,11 @@
       "status": "MISS"
     },
     "memory": {
-      "rssBeforeLoadMb": 378.8,
-      "rssAfterLoadMb": 1398.7,
-      "rssDeltaMb": 1019.9,
-      "peakRssDuringRunMb": 1747.0,
-      "processPeakWorkingSetMb": 1758.4,
+      "rssBeforeLoadMb": 379.5,
+      "rssAfterLoadMb": 1399.1,
+      "rssDeltaMb": 1019.6,
+      "peakRssDuringRunMb": 1756.3,
+      "processPeakWorkingSetMb": 1760.9,
       "totalSystemRamGb": 137.3,
       "peakSampling": "background sampler every 50 ms during the timed runs",
       "definition": "RSS delta = resident set after model load minus resident set after imports; peak = highest value sampled during the timed runs"

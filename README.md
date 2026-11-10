@@ -181,8 +181,15 @@ python -m venv .venv
 # Linux/macOS:
 # source .venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install CPU PyTorch first; requirements.txt pins 2.15.0 and must not pull CUDA.
+python -m pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+
+# Install the remaining pinned dependencies
+python -m pip install -r requirements.txt
+
+# Confirm you are inside the repo venv, not global/user Python.
+# Expected path ends with backend\.venv\Scripts\python.exe
+python -c "import sys; print(sys.executable)"
 
 # Run backend verification suite (12/12 tests)
 python test_server.py

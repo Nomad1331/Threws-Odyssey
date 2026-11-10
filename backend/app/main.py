@@ -26,20 +26,12 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-try:
-    from app.inference import (
-        AudioTooLongError,
-        get_active_engine_name,
-        load_model,
-        transcribe_audio,
-    )
-except ImportError:
-    from backend.app.inference import (
-        AudioTooLongError,
-        get_active_engine_name,
-        load_model,
-        transcribe_audio,
-    )
+from .inference import (
+    AudioTooLongError,
+    get_active_engine_name,
+    load_model,
+    transcribe_audio,
+)
 
 # Whitelist of permissible audio extensions to prevent creating executable suffixes in %TEMP%
 ALLOWED_AUDIO_EXTENSIONS = {".webm", ".wav", ".ogg", ".mp3", ".m4a", ".mp4", ".aac", ".flac"}

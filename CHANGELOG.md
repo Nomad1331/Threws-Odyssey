@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-10] - v1.22.2: Environment Guard and Import-Path Cleanup
+
+* **Aaliya’s `BloomPreTrainedModel` traceback is a global-Python issue, not a repo pin.** The traceback resolves PEFT under `C:\Users\aaliya\AppData\Roaming\Python\...\site-packages` (user site), while the repo uses `backend\.venv`. The clean-venv test loop in the message tested 4.45.2 first and `break`ed on success, so it never actually tested 5.22.2.
+* **Clean-room proof:** a fresh venv with the exact `backend/requirements.txt` set (`transformers 5.22.2`, `peft 0.21.2`, `torch 2.15.0+cpu`, FastAPI/Starlette/PyAV) imports `from app.main import app` and reports `VoiceBridge ASR Service` successfully. No dependency pin was changed; do not downgrade to 4.45.2 based on the global-site failure.
+* **Fixed a real code smell her AI flagged:** `main.py` caught any `ImportError` and retried `backend.app.inference`, which can hide the actual dependency error. It now uses the correct relative `from .inference import ...`; both `app.main:app` (from `backend/`) and `backend.app.main:app` (from root) were tested.
+* **Added setup guards:** README now installs the CPU torch wheel first and prints `sys.executable`; DEMO says a `BloomPreTrainedModel` error means you are on global Python, not `backend\.venv`.
+* **Verification:** 12/12 backend tests, clean full-requirements venv import, `pip check`, and claims provenance pass.
+
+---
+
 ## [2026-11-10] - v1.22.1: Audit Pass — Test, Provenance and Doc Fixes
 
 * **Fixed a real self-test bug:** the WER “negative control” compared “an excellent” with “a different”, which is **two** substitutions, not one. It expected 20% but correctly produced 40%; the metric was right and the test expectation was wrong. The control is now “excellent”→“squad” (one substitution) and fails if S/D/I or WER is wrong.

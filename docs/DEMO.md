@@ -19,8 +19,11 @@ Every number on screen is reproducible from `facts.json`.
    ```bash
    cd backend
    .\.venv\Scripts\activate      # Windows; source .venv/bin/activate elsewhere
+   python -c "import sys; print(sys.executable)"   # must be backend\.venv
    uvicorn app.main:app --host 127.0.0.1 --port 8000
    ```
+   If you see `ModuleNotFoundError: BloomPreTrainedModel`, you are running global
+   Python, not `backend\.venv`; recreate the venv from `backend/requirements.txt`.
    Wait for `VoiceBridge acoustic engine (whisper-small-lora) loaded`.
 
 2. **Frontend** (second terminal):

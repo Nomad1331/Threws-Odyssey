@@ -10,6 +10,7 @@ Vercel **Container Runtime** service:
 
 - `backend/Dockerfile.vercel` — Python 3.12, CPU torch, PyAV/ffmpeg, FastAPI on port 80.
 - `backend/models/voicebridge-torgo-three/` — the 7.1 MB speaker-adapted LoRA adapter.
+- `Nomad1331/voicebridge` — public model card and the same adapter on Hugging Face.
 - `Nomad1331/voicebridge-whisper-small-sharded` — four ~240 MB safetensors shards of
   `openai/whisper-small` (MIT). Sharding is what keeps each image layer below the
   Container Registry 2 GB compressed-layer limit.

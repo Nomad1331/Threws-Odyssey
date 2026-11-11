@@ -47,7 +47,7 @@ Current commercial solutions also face accessibility hurdles:
                   ▼
    [ Clinical Acoustic LoRA Engine ]
      • Base: openai/whisper-small (243.5M params)
-     • Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge, further adapted to TORGO M02/M04/M05 (r=16, alpha=32)
+     • Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge, further adapted to TORGO M02/M04/M05 (r=16, alpha=32) · [Nomad1331/voicebridge](https://huggingface.co/Nomad1331/voicebridge)
      • Token-Level Softmax Confidence Scoring
      • Native PyAV Audio Ingestion (.webm, .wav, .mp4, .aac)
                   │

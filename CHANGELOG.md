@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-11] - v1.25.0: Adapter Published; Vercel Deployment Final
+
+* **Published the trained adapter at [`Nomad1331/voicebridge`](https://huggingface.co/Nomad1331/voicebridge)** — `adapter_config.json`, `adapter_model.safetensors` (7.1 MB) and a model card. It is the same speaker-adapted adapter shipped in `backend/models/voicebridge-torgo-three/`; no suffix repo.
+* Model card states the scope honestly: continued from `Aaliya05/voicebridge` on 443 M02/M04/M05 utterances, 11 demo-sentence rows excluded, no fourth speaker evaluated, severe-unseen unsupported.
+* **Final public checks:** `https://voicebridge-api-six.vercel.app/health` healthy; `https://voicebridge-threws.vercel.app` 200; moderate clip returns “the house is grey and white”. Tunnel and local uvicorn are stopped.
+* **Autonomy:** no local process or tunnel to monitor. The Vercel container scales down after 5 minutes idle; first request is ~5–7 s, then warm. Hobby has no sub-daily Vercel Cron, so an optional external pinger every minute is the only keep-warm mechanism.
+* No model/API/facts numbers changed.
+
+---
+
 ## [2026-11-11] - v1.24.0: Vercel Container Backend — Live, No Tunnel
 
 * **Deployed the FastAPI backend to Vercel Container Runtime** as project `voicebridge-api`, framework forced to `container`. The frontend now points at `https://voicebridge-api-six.vercel.app`; the Cloudflare tunnel and local uvicorn are stopped and not needed.

@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-11] - v1.23.2: Custom Social Preview Card
+
+* Added a hand-built **1200×630 SVG social card** (`frontend/public/og-preview.svg`) and rendered PNG (`og-preview.png`): B&W mark, wordmark, “Two voices. One bridge.”, a short description, event footer and CPU-only research-prototype label.
+* Added Open Graph and Twitter metadata in `layout.tsx` with `metadataBase`, image dimensions and alt text; no screenshot of the app is used.
+* Fixed the mojibake bullet in the metadata description while editing it.
+* Verified on Vercel: `og:image` and `twitter:image` resolve to the PNG (HTTP 200, `image/png`), `twitter:card=summary_large_image`, old alias 404.
+* No model/API/facts changes.
+
+---
+
 ## [2026-11-11] - v1.23.1: B&W Version of the Team's Heart Mark
 
 * Replaced the previous mark with the team-supplied geometry: two heads at the top, a continuous outer heart, and an inner heart cutout.

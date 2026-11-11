@@ -20,10 +20,39 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://voicebridge-threws.vercel.app";
+const TITLE = "VoiceBridge | Assistive Speech Transcription";
+const DESCRIPTION =
+  "Assistive speech transcription for dysarthric speech (Cerebral Palsy, TBI, ALS). SIES GST - THREWS Odyssey 2026.";
+const SOCIAL_IMAGE = "/og-preview.png";
+
 export const metadata: Metadata = {
-  title: "VoiceBridge | Assistive Speech Transcription",
-  description:
-    "Assistive speech transcription for dysarthric speech (Cerebral Palsy, TBI, ALS). SIES GST • THREWS Odyssey 2026.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "VoiceBridge",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: SOCIAL_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: "VoiceBridge assistive speech transcription interface",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [SOCIAL_IMAGE],
+  },
 };
 
 export const viewport: Viewport = {

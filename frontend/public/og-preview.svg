@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f5f5f2"/>
+  <rect x="48" y="48" width="1104" height="534" rx="28" fill="#ffffff" stroke="#1a1a1a" stroke-opacity="0.12"/>
+
+  <!-- Logo tile: same B&W mark as the app and favicon. -->
+  <rect x="88" y="96" width="176" height="176" rx="36" fill="#1a1a1a"/>
+  <g transform="translate(100 108) scale(4)" fill="#f5f5f2">
+    <circle cx="12" cy="10" r="3.5"/>
+    <circle cx="28" cy="10" r="3.5"/>
+    <path fill-rule="evenodd" d="M20 35C20 35 6 25 6 16.5C6 11.8 9.5 8.5 14 8.5C16.8 8.5 19.2 9.8 20 12C20.8 9.8 23.2 8.5 26 8.5C30.5 8.5 34 11.8 34 16.5C34 25 20 35 20 35Z M20 28.5C20 28.5 11 21 11 15C11 12 13 10.5 15.5 10.5C17.2 10.5 18.8 11.5 20 13C21.2 11.5 22.8 10.5 24.5 10.5C27 10.5 29 12 29 15C29 21 20 28.5 20 28.5Z"/>
+  </g>
+
+  <g font-family="Segoe UI, Arial, sans-serif" fill="#1a1a1a">
+    <text x="300" y="168" font-size="64" font-weight="700" letter-spacing="-2">VoiceBridge</text>
+    <text x="300" y="232" font-size="32" font-weight="400" fill="#333333">Two voices. One bridge.</text>
+    <text x="300" y="292" font-size="22" font-weight="400" fill="#4a4a4a">Assistive speech transcription</text>
+    <text x="300" y="324" font-size="22" font-weight="400" fill="#4a4a4a">for dysarthric speech.</text>
+  </g>
+
+  <line x1="88" y1="430" x2="1112" y2="430" stroke="#1a1a1a" stroke-opacity="0.14"/>
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#4a4a4a">
+    <text x="88" y="485">SIES Graduate School of Technology · THREWS Odyssey 2026</text>
+    <text x="1112" y="485" text-anchor="end">CPU-only · Research prototype</text>
+  </g>
+</svg>

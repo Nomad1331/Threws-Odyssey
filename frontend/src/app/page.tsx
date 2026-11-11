@@ -176,8 +176,8 @@ export default function Home() {
       {/* 1. Header */}
       <header className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-text-primary text-canvas">
-            <Logo className="h-6 w-6" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-[9px] bg-text-primary text-canvas">
+            <Logo className="h-8 w-8" />
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text-primary">VoiceBridge</h1>

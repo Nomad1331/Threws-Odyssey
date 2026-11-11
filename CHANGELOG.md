@@ -12,6 +12,16 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-11] - v1.23.1: B&W Version of the Team's Heart Mark
+
+* Replaced the previous mark with the team-supplied geometry: two heads at the top, a continuous outer heart, and an inner heart cutout.
+* Rendered it **black and white** with `currentColor`; no gradient, no baked dark background.
+* Made the inner heart a **true transparent negative-space cutout** with `fill-rule="evenodd"`. The original code filled it with `#09090b`, which only looked correct on a black background.
+* Header mark increased to 32 px inside a 40 px ink tile; favicon uses the same geometry as cream-on-ink.
+* Build, lint, `/icon.svg`, and the public Vercel deployment verified. Old `frontend-lemon-three-13.vercel.app` returns 404.
+
+---
+
 ## [2026-11-11] - v1.23.0: VoiceBridge Logo Mark
 
 * Replaced the pale header microphone with a custom SVG mark: two circular heads and two mirrored, leaning silhouettes that meet at a point to form a heart, with the embrace left as negative space.

@@ -1,26 +1,28 @@
 /**
  * VoiceBridge logo mark.
  *
- * Two abstract figures — circular heads and mirrored, leaning silhouettes —
- * meet at a single point to form a heart. The gap between them is intentional
- * negative space: it reads as an embrace rather than a sliced heart.
+ * Two heads — patient and caregiver — lean toward each other while the outer
+ * silhouette forms a heart. The inner heart is a true transparent cutout
+ * (evenodd), so the mark works on light and dark surfaces without a dark fill.
  *
- * The mark uses currentColor so it can sit on light or dark surfaces without a
- * second asset. The same geometry is used by public/logo.svg and app/icon.svg.
+ * Geometry is shared with public/logo.svg and app/icon.svg. `currentColor`
+ * keeps the mark black/white (or themed) rather than hard-coding a gradient.
  */
 export function Logo({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 64 64"
+      viewBox="0 0 40 40"
       className={className}
       fill="currentColor"
       aria-hidden="true"
       focusable="false"
     >
-      <circle cx="21.5" cy="8.2" r="3.4" />
-      <circle cx="42.5" cy="8.2" r="3.4" />
-      <path d="M32 58C22.5 51.5 8.5 43 8.5 31C8.5 21 14.5 14 21.5 14C26.5 14 29 17 29.5 21C28.2 33 28.8 45 32 58Z" />
-      <path d="M32 58C41.5 51.5 55.5 43 55.5 31C55.5 21 49.5 14 42.5 14C38 14 35 17 34.5 21C35.8 33 35.2 45 32 58Z" />
+      <circle cx="12" cy="10" r="3.5" />
+      <circle cx="28" cy="10" r="3.5" />
+      <path
+        fillRule="evenodd"
+        d="M20 35C20 35 6 25 6 16.5C6 11.8 9.5 8.5 14 8.5C16.8 8.5 19.2 9.8 20 12C20.8 9.8 23.2 8.5 26 8.5C30.5 8.5 34 11.8 34 16.5C34 25 20 35 20 35Z M20 28.5C20 28.5 11 21 11 15C11 12 13 10.5 15.5 10.5C17.2 10.5 18.8 11.5 20 13C21.2 11.5 22.8 10.5 24.5 10.5C27 10.5 29 12 29 15C29 21 20 28.5 20 28.5Z"
+      />
     </svg>
   );
 }

@@ -25,7 +25,7 @@ const SITE_URL =
 const TITLE = "VoiceBridge | Assistive Speech Transcription";
 const DESCRIPTION =
   "Assistive speech transcription for dysarthric speech (Cerebral Palsy, TBI, ALS). SIES GST - THREWS Odyssey 2026.";
-const SOCIAL_IMAGE = "/og-preview.png";
+const SOCIAL_IMAGE = "/og-preview.jpg";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -43,6 +43,7 @@ export const metadata: Metadata = {
         url: SOCIAL_IMAGE,
         width: 1200,
         height: 630,
+        type: "image/jpeg",
         alt: "VoiceBridge assistive speech transcription interface",
       },
     ],

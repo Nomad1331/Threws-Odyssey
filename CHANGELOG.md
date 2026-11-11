@@ -12,6 +12,15 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-11] - v1.23.3: WhatsApp-Safe Social Card
+
+* Added `og-preview.jpg` (1200×630, 46.7 KB, progressive JPEG) and switched `og:image` / `twitter:image` to it. WhatsApp now receives a fresh URL, `image/jpeg` content type, `og:image:type=image/jpeg`, and dimensions.
+* Kept the editable SVG and PNG source. The old PNG URL is no longer referenced by metadata, which also bypasses a stale WhatsApp image cache.
+* Verified with a WhatsApp user-agent: page 200, image 200 `image/jpeg` 46,719 bytes, all OG/Twitter tags present; old frontend alias 404.
+* For an existing chat, send a fresh URL with a query (`?v=2`) because WhatsApp caches previews per URL.
+
+---
+
 ## [2026-11-11] - v1.23.2: Custom Social Preview Card
 
 * Added a hand-built **1200×630 SVG social card** (`frontend/public/og-preview.svg`) and rendered PNG (`og-preview.png`): B&W mark, wordmark, “Two voices. One bridge.”, a short description, event footer and CPU-only research-prototype label.

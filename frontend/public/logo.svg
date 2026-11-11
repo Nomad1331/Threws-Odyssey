@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="VoiceBridge: two figures embracing to form a heart">
+  <!-- Two heads, slightly inclined toward each other. -->
+  <circle cx="21.5" cy="8.2" r="3.4" fill="currentColor"/>
+  <circle cx="42.5" cy="8.2" r="3.4" fill="currentColor"/>
+
+  <!-- Left figure: the outer edge forms the left half of the heart, while the
+       inner edge curves toward the embrace and leaves a clean negative channel. -->
+  <path fill="currentColor" d="M32 58
+    C22.5 51.5 8.5 43 8.5 31
+    C8.5 21 14.5 14 21.5 14
+    C26.5 14 29 17 29.5 21
+    C28.2 33 28.8 45 32 58 Z"/>
+
+  <!-- Right figure: mirrored. The silhouettes meet only at the heart's point. -->
+  <path fill="currentColor" d="M32 58
+    C41.5 51.5 55.5 43 55.5 31
+    C55.5 21 49.5 14 42.5 14
+    C38 14 35 17 34.5 21
+    C35.8 33 35.2 45 32 58 Z"/>
+</svg>

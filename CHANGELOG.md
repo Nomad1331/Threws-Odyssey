@@ -12,6 +12,14 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-11] - v1.23.0: VoiceBridge Logo Mark
+
+* Replaced the pale header microphone with a custom SVG mark: two circular heads and two mirrored, leaning silhouettes that meet at a point to form a heart, with the embrace left as negative space.
+* Added the same geometry as `frontend/public/logo.svg`, the inline `Logo` component, and `app/icon.svg` (dark rounded-square favicon). Removed the old generic `favicon.ico`; no Vercel/Next default icon remains.
+* No model, API, facts or benchmark numbers changed. Build, lint, favicon route and the public Vercel deployment were verified.
+
+---
+
 ## [2026-11-10] - v1.22.2: Environment Guard and Import-Path Cleanup
 
 * **Aaliya’s `BloomPreTrainedModel` traceback is a global-Python issue, not a repo pin.** The traceback resolves PEFT under `C:\Users\aaliya\AppData\Roaming\Python\...\site-packages` (user site), while the repo uses `backend\.venv`. The clean-venv test loop in the message tested 4.45.2 first and `break`ed on success, so it never actually tested 5.22.2.

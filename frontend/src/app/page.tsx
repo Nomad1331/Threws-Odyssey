@@ -7,7 +7,8 @@ import { QuickAssistGrid } from "@/components/QuickAssistGrid";
 import { ClinicalBenchmarkDrawer } from "@/components/ClinicalBenchmarkDrawer";
 import { transcribeAudio, checkBackendHealth } from "@/lib/transcriptionService";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
-import { ChevronDown, ChevronUp, Mic } from "lucide-react";
+import { Logo } from "@/components/Logo";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 /**
  * VoiceBridge Application Root Stage (Next.js 14 App Router)
@@ -175,8 +176,8 @@ export default function Home() {
       {/* 1. Header */}
       <header className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-border bg-surface">
-            <Mic className="h-4 w-4 text-accent" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-text-primary text-canvas">
+            <Logo className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text-primary">VoiceBridge</h1>

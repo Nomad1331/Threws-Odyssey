@@ -14,6 +14,7 @@
 >
 > **Live demo:** [voicebridge-threws.vercel.app](https://voicebridge-threws.vercel.app) ·
 > **Backend:** [voicebridge-api-six.vercel.app](https://voicebridge-api-six.vercel.app/health) ·
+> **Demo video:** [49 s, narrated](https://voicebridge-threws.vercel.app/demo/voicebridge-demo.mp4) ·
 > deployment notes: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
 ---
@@ -148,6 +149,7 @@ Threws-Odyssey/
 │   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
 │   ├── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
 │   ├── DEPLOYMENT.md                # Vercel frontend + container backend notes
+│   ├── SUBMISSION.md                # Copy-ready problem, solution, links and video
 │   ├── DEMO.md                      # Five-minute judge walkthrough
 │   └── archive/                     # Internal planning/audit ledgers, superseded, not judge-facing
 │

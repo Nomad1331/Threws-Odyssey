@@ -12,6 +12,15 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-11] - v1.26.0: Submission Video
+
+* Added the 49-second demo video at `frontend/public/demo/voicebridge-demo.mp4` and published it at `https://voicebridge-threws.vercel.app/demo/voicebridge-demo.mp4` (1080p, narrated, HTTP range support verified).
+* Built from seven live-app frames: title, connected UI, TORGO archive, mild result, moderate result, severe result, Vercel end card; slow push-ins and captions.
+* Narration explicitly qualifies the results to the TORGO clips; the end card repeats the speaker-adaptation limit.
+* Added `docs/SUBMISSION.md` with copy-ready Project Title, Problem Statement, Proposed Solution, demo link and video link.
+
+---
+
 ## [2026-11-11] - v1.25.0: Adapter Published; Vercel Deployment Final
 
 * **Published the trained adapter at [`Nomad1331/voicebridge`](https://huggingface.co/Nomad1331/voicebridge)** — `adapter_config.json`, `adapter_model.safetensors` (7.1 MB) and a model card. It is the same speaker-adapted adapter shipped in `backend/models/voicebridge-torgo-three/`; no suffix repo.

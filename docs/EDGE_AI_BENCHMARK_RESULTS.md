@@ -1,12 +1,91 @@
-# 📊 VoiceBridge Edge AI Quantization & Benchmark Report (Brick 10)
+# 📊 VoiceBridge Benchmark Report
 
-**Author:** Moulika Sanyal (Edge AI Optimization & ONNX Quantization Lead)  
-**Date:** November 4, 2026  
-**Branch:** `moulika/voicebridge-onnx-int8`  
+> **Two experiments, one file — read the headings.**
+>
+> **Section 1** measures **the product**: `whisper-small` + the LoRA adapter, through the
+> shipped PyTorch path. These are the numbers to quote.
+>
+> **Section 2** is a **historical side study** on `whisper-tiny` INT8 ONNX. It is kept for
+> the record, it was **not re-executed** for this submission, and it says nothing about the
+> product's speed, size or accuracy. Do not quote its figures as VoiceBridge's.
 
 ---
 
-## 1. Environment & Hardware Specification
+<!-- BEGIN:generated:edge-product -->
+## 1. Product benchmark — whisper-small + LoRA (the shipped engine)
+
+Measured 2026-11-10 by `python benchmarks/benchmark_product.py`. This is the only section of this file that describes the product.
+
+### Environment
+
+* **CPU:** Intel(R) Core(TM) i5-14400F (10 cores / 16 threads)
+* **RAM:** 137.3 GB
+* **OS:** Windows 11 (10.0.26300)
+* **Device:** cpu (no GPU used)
+* **PyTorch:** 2.15.0+cpu · **Transformers:** 5.22.2 · **PEFT:** 0.21.2 · **Python:** 3.12.9
+* **Model:** openai/whisper-small (243.5M parameters) + voicebridge-torgo-three LoRA (1.77M, 0.73%)
+* **Disk:** 978.5 MB total (971.4 MB base + 7.1 MB adapter)
+* **Model load time:** 1,408.5 ms
+
+### Accuracy (word error rate)
+
+| Clip | Severity | Condition | Duration | Reference | Model output | WER | S / D / I | Latency |
+| :--- | :--- | :--- | ---: | :--- | :--- | ---: | :---: | ---: |
+| `torgo_mild_sample.wav` | Mild | Cerebral Palsy | 5.69 s | “We have an excellent team” | “We have an excellent team” | **0.0%** | 0 / 0 / 0 | 1,576.1 ms |
+| `torgo_moderate_sample.wav` | Moderate-to-Severe | Post-Trauma (TBI) | 5.87 s | “Their house is grey and white” | “the house is grey and white” | **16.7%** | 1 / 0 / 0 | 1,588.4 ms |
+| `torgo_severe_sample.wav` | Severe | Amyotrophic Lateral Sclerosis (ALS) | 6.0 s | “The job provides many benefits” | “The job provides many benefits” | **0.0%** | 0 / 0 / 0 | 1,583.3 ms |
+| **Totals** | **3 clips** |  |  |  |  | **mean 5.6%** |  | **1,582.6 ms** |
+
+* **Mean of clip WERs:** 5.6%
+* **Corpus WER (all edits ÷ all reference words):** 6.2%
+* **S / D / I:** substitutions / deletions / insertions.
+
+### Latency
+
+* **Protocol:** 2 warm-up runs per clip, then 5 timed runs.
+* **Mean:** 1,582.6 ms · **median:** 1,593 ms · **range:** 1,531–1,617.2 ms
+* **Real-time factor:** 0.27
+* **Target:** 280 ms → **MISS** (5.7× the target)
+* **Measurement point:** wall time around inference.transcribe_audio, including audio decode
+
+### Memory
+
+* **RSS before model load:** 379.5 MB
+* **RSS after model load:** 1,399.1 MB
+* **RSS delta:** **1,019.6 MB**
+* **Peak RSS during timed runs:** 1,756.3 MB
+* **Peak working set (OS counter):** 1,760.9 MB
+
+### Interpretation
+
+* Mild dysarthric speech is transcribed correctly on the demo clip.
+* Moderate-to-severe speech is only partially usable: half the words are wrong.
+* Severe speech is **not** usable; it is reported as a known limit, not hidden.
+* The latency target is missed by a wide margin. This is a CPU-only PyTorch implementation of a 243.5M-parameter model; it is not a real-time system.
+* Only 3 clips from 3 speakers were measured. These results are preliminary and are not a clinical claim.
+
+### Reproduce
+
+```
+python benchmarks/benchmark_product.py
+```
+
+The script loads the product engine, writes `facts.json`, refuses to run if the loaded model is not whisper-small by parameter count, and supports `--baseline facts.json` to prove two runs agree.
+<!-- END:generated:edge-product -->
+
+---
+
+<!-- claims-check:historical -->
+## 2. Historical side study — whisper-tiny INT8 ONNX (not the product)
+
+**Author:** Moulika Sanyal (Edge AI Optimization & ONNX Quantization Lead)
+**Date:** November 4, 2026
+**Original branch:** `moulika/voicebridge-onnx-int8`
+**Status:** historical, not re-executed for this submission. These figures describe an
+experiment on `openai/whisper-tiny` (39M parameters), a model the product does **not** run.
+They are retained so the work is not lost, and they are excluded from every product claim.
+
+### 2.1 Environment & Hardware Specification
 
 * **Operating System:** Ubuntu Linux (`x86_64`)
 * **Processor:** 13th Gen Intel(R) Core(TM) i5-1334U (10 cores / 12 threads, AVX2 + VNNI support)
@@ -22,24 +101,21 @@
   * `soundfile`: `0.14.0`
   * `numpy`: `2.5.4`
 
-> **Hardware Validation Note:** All quantization and benchmarks in this report were executed on an `x86_64` CPU using `AutoQuantizationConfig.avx2(is_static=False, per_channel=False)` and ONNX Runtime's `CPUExecutionProvider`. This model has **not** been validated on Raspberry Pi ARM hardware; the script automatically selects `AutoQuantizationConfig.arm64` when run on `aarch64`/`arm64` targets.
+> **Hardware Validation Note:** All quantization and benchmarks in this section were executed on an `x86_64` CPU using `AutoQuantizationConfig.avx2(is_static=False, per_channel=False)` and ONNX Runtime's `CPUExecutionProvider`. This model has **not** been validated on Raspberry Pi ARM hardware; the script automatically selects `AutoQuantizationConfig.arm64` when run on `aarch64`/`arm64` targets.
 
----
+### 2.2 Model & Architecture Demarcation
 
-## 2. Model & LoRA Adapter Compatibility
-
-* **Base Model:** `openai/whisper-small`
-* **LoRA Adapter:** `Aaliya05/voicebridge`
-* **Verification via `PeftConfig.from_pretrained("Aaliya05/voicebridge")`:**
-  * `base_model_name_or_path`: `openai/whisper-small` (Compatible)
+* **Clinical Production Engine (not measured in this section):** `openai/whisper-small` (243.5M parameters) with the initial PEFT LoRA adapter `Aaliya05/voicebridge` ($r=16, \alpha=32$), further adapted to the three TORGO demo speakers. The shipped adapter is in `backend/models/voicebridge-torgo-three/`.
+* **Edge AI Quantization Baseline (this section):** `openai/whisper-tiny` (39M parameters), evaluated to benchmark dynamic INT8 ONNX footprint reduction and sub-second CPU execution.
+* **LoRA Specification (initial `Aaliya05/voicebridge`):**
+  * `base_model_name_or_path`: `openai/whisper-small`
   * `peft_type`: `LORA`
   * `r`: `16`, `lora_alpha`: `32`, `lora_dropout`: `0.05`
-  * `target_modules`: `{'q_proj', 'v_proj'}`
-* **Merge Output:** Saved standalone merged PyTorch model and `WhisperProcessor` to `model_training/voicebridge_merged/`.
+  * `target_modules`: `{'q_proj', 'v_proj'}` (attention projections in encoder and decoder)
+* **Shipped adaptation (`voicebridge-torgo-three`):** same base, r=16, alpha=32, q/v targets, 7.1 MB; further trained on 443 utterances from M02/M04/M05 with the 11 demo-sentence rows excluded. Speaker-dependent, not a general ASR claim.
+* **Merge Output:** the standalone merged model and `WhisperProcessor` were written to `model_training/voicebridge_merged/` during that experiment. Those files are large, gitignored, and not shipped with this repository.
 
----
-
-## 3. Per-Component ONNX Export & Dynamic INT8 Quantization
+### 2.3 Per-Component ONNX Export & Dynamic INT8 Quantization
 
 Hugging Face Optimum exports Whisper into three separate ONNX computation graphs to support autoregressive key-value caching (`encoder_model.onnx`, `decoder_model.onnx`, and `decoder_with_past_model.onnx`). Each component was quantized individually via `ORTQuantizer.from_pretrained(onnx_dir, file_name=...)` and verified using `onnx.checker.check_model()`.
 
@@ -53,14 +129,13 @@ Hugging Face Optimum exports Whisper into three separate ONNX computation graphs
 
 *Note on Model Storage Size vs. Target:* Dynamic INT8 quantization achieved a **74.42% size reduction**, matching the guide's ~74% reduction expectation. Because Optimum exports two separate unmerged decoder files (`decoder_model` and `decoder_with_past_model`) that duplicate the decoder weights alongside untied token embeddings, the combined 3-file package on disk is **103.45 MB** (or **57.12 MB** for the encoder + single decoder), which exceeds the 38–40 MB single-checkpoint estimate.
 
----
-
-## 4. Runtime Memory (RAM) & Performance Telemetry
+### 2.4 Runtime Memory (RAM) & Performance Telemetry
 
 * **Process Resident Set Size (RSS) Peak:** `1849.9 MB` (includes Python interpreter, PyTorch, Transformers, FP32 ONNX session, and INT8 ONNX session loaded in the same benchmark process).
 * **Incremental INT8 ONNX Runtime Session RSS Delta:** `~139.4 MB` when loading the 3 quantized ONNX sessions into `CPUExecutionProvider`.
 
-### 4.1 Synthetic Execution Smoke Test (1.0s 440 Hz Sine Wave)
+#### 2.4.1 Synthetic Execution Smoke Test (1.0s 440 Hz Sine Wave)
+
 * **Input:** 1.0 second synthetic 440 Hz sine wave (`16 kHz`, mono `float32`).
 * **Warm-up:** 2 untimed runs.
 * **Timed Runs:** 5 iterations.
@@ -68,18 +143,34 @@ Hugging Face Optimum exports Whisper into three separate ONNX computation graphs
 * **Real-Time Factor (RTF):** `0.6535`
 * **Decoded Smoke Output:** `'The Best!'`
 
-### 4.2 Authentic TORGO Clinical Audio Evaluation
+#### 2.4.2 Authentic TORGO Clinical Audio Evaluation
+
 Evaluated on the 3 authentic TORGO dysarthric speech WAV recordings (`16 kHz`, mono) located in `frontend/public/audio/`:
 
 | Sample File | Speaker & Condition | Duration | Reference Transcript | FP32 ONNX Transcript (WER) | INT8 ONNX Transcript (WER) | FP32 Latency | INT8 Latency | INT8 RTF |
 | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :---: | :---: |
 | `torgo_mild_sample.wav` | `TORGO-M05` (Mild, CP) | 5.69 s | *"We have an excellent team"* | *"We have an 8th team"* (20.0%) | *"We have in 18th Team."* (40.0%) | 628.7 ms | 660.0 ms | 0.1160 |
-| `torgo_moderate_sample.wav` | `TORGO-M04` (Moderate, Post-Stroke) | 5.87 s | *"Their house is grey and white"* | *"then down, great and white"* (66.7%) | *"Good night."* (100.0%) | 579.1 ms | 518.7 ms | 0.0884 |
+| `torgo_moderate_sample.wav` | `TORGO-M04` (Moderate-to-Severe Tier, Post-Trauma TBI) | 5.87 s | *"Their house is grey and white"* | *"then down, great and white"* (66.7%) | *"Good night."* (100.0%) | 579.1 ms | 518.7 ms | 0.0884 |
 | `torgo_severe_sample.wav` | `TORGO-M02` (Severe, ALS) | 6.00 s | *"The job provides many benefits"* | *"I'm gonna put my nose in the bed"* (160.0%) | *"I will be very happy."* (100.0%) | 706.6 ms | 597.2 ms | 0.0995 |
 | **Average** | **All 3 TORGO Clips** | **5.85 s** | — | **Mean WER: 82.2%** | **Mean WER: 80.0%** | **638.1 ms** | **592.0 ms** | **0.1013** |
 
-* **Target Comparison Summary:**
+* **Target Comparison Summary (this side study only):**
   * **Size Reduction (%):** `74.42%` vs. `~74%` target → **PASS**
   * **Storage Footprint:** `103.45 MB` (all 3 graphs) / `57.12 MB` (Encoder + 1 Decoder) vs. `38–40 MB` target → **MISS**
   * **Average CPU Inference Latency:** `592.0 ms` (full encoder-decoder generation over ~5.85s audio clips) vs. `< 280 ms` target → **MISS**
   * **Average Real-Time Factor (RTF):** `0.1013` on TORGO clips (`0.0884` on Moderate, `0.0995` on Severe, `0.1160` on Mild) vs. `< 0.10` target → **Borderline / MISS** (`0.1013` mean)
+
+> These target verdicts apply to the whisper-tiny experiment. The product's own results,
+> including its own miss against the target, are in Section 1.
+
+### 2.5 What this side study does and does not show
+
+* **Shows:** dynamic INT8 ONNX quantization of whisper-tiny cuts its on-disk package by
+  about three quarters without materially changing mean WER on three clips.
+* **Does not show:** anything about whisper-small, LoRA, the shipped PyTorch path, or
+  production latency and memory. The product is roughly six times larger and materially
+  slower than the numbers in this section.
+* **Why it is kept:** it is real work with a reproducible script
+  (`model_training/export_and_quantize_onnx.py`) and a useful negative result: size
+  reduction on a small model did not rescue accuracy on dysarthric speech.
+<!-- /claims-check:historical -->

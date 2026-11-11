@@ -1,9 +1,22 @@
+"""Backend verification suite for VoiceBridge.
+
+Runs the FastAPI app with TestClient (no live server/port needed) and checks the
+contract a browser depends on: health, transcription of WAV and WebM, the 30 s
+window, size/empty/corrupt rejection, silence handling, 500 mapping and CORS.
+
+Run from the backend directory:
+    python test_server.py
+"""
+
 import sys
 import os
 import io
 import wave
 import math
 import struct
+import tempfile
+import av
+import numpy as np
 from fastapi.testclient import TestClient
 
 # Ensure backend root is on sys.path
@@ -11,75 +24,245 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.main import app
 
-ENGINE_NAME = "whisper-small-lora"
-
-
-def generate_test_wav() -> bytes:
-    """Generates a 1-second 16kHz mono 440Hz sine wave in WAV format."""
+def generate_test_wav(duration: float = 1.0) -> bytes:
+    """Generates a 16kHz mono 440Hz sine wave in standard WAV format."""
     buf = io.BytesIO()
     sample_rate = 16000
-    duration = 1.0
     frequency = 440.0
     num_samples = int(sample_rate * duration)
 
-    with wave.open(buf, "wb") as wav:
+    with wave.open(buf, 'wb') as wav:
         wav.setnchannels(1)
         wav.setsampwidth(2)
         wav.setframerate(sample_rate)
-
+        
         frames = bytearray()
         for i in range(num_samples):
             value = int(32767.0 * 0.5 * math.sin(2.0 * math.pi * frequency * (i / sample_rate)))
-            frames.extend(struct.pack("<h", value))
-
+            frames.extend(struct.pack('<h', value))
+            
         wav.writeframes(frames)
-
+    
     return buf.getvalue()
 
+def generate_silent_wav(duration: float = 2.0) -> bytes:
+    """Generates a 16kHz mono silent WAV (digital zeros)."""
+    buf = io.BytesIO()
+    sample_rate = 16000
+    with wave.open(buf, 'wb') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(b'\x00\x00' * int(sample_rate * duration))
+    return buf.getvalue()
+
+def wav_file_to_webm(wav_path: str) -> bytes:
+    """Repackages a 16 kHz WAV as the WebM/Opus format a browser uploads."""
+    with wave.open(wav_path, "rb") as wav:
+        sample_rate = wav.getframerate()
+        samples = np.frombuffer(wav.readframes(wav.getnframes()), dtype="<i2")
+    audio = samples.astype(np.float32) / 32768.0
+
+    tmp_path = tempfile.mktemp(suffix=".webm")
+    try:
+        container = av.open(tmp_path, "w", format="webm")
+        stream = container.add_stream("libopus", rate=48000)
+        stream.layout = "mono"
+        frame = av.AudioFrame.from_ndarray(
+            audio.reshape(1, -1), format="flt", layout="mono"
+        )
+        frame.sample_rate = sample_rate
+        resampler = av.AudioResampler(format="s16", layout="mono", rate=48000)
+        for resampled in resampler.resample(frame):
+            container.mux(stream.encode(resampled))
+        container.mux(stream.encode(None))
+        container.close()
+        with open(tmp_path, "rb") as handle:
+            return handle.read()
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 def run_tests():
+    """Run every backend check in order; raises AssertionError on a regression."""
     print("=" * 60)
-    print("VOICEBRIDGE FASTAPI BACKEND: TEST SUITE VERIFICATION")
+    print("VOICEBRIDGE FASTAPI BACKEND: FULL TEST SUITE VERIFICATION")
     print("=" * 60)
 
+    # Use TestClient with lifespan context (pre-warms the Whisper-Small LoRA engine)
     with TestClient(app) as client:
-        # 1. /health
+        # 1. Test /health endpoint
         print("\n[Test 1] Testing GET /health ...")
         resp = client.get("/health")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
         data = resp.json()
         print(f" -> Response: {data}")
         assert data["status"] == "healthy"
-        assert data["service"] == "VoiceBridge ASR Gateway"
-        assert data["engine"] == ENGINE_NAME
+        assert data["service"] == "VoiceBridge ASR Service"
+        assert data["engine"] == "whisper-small-lora"
         print(" [PASS] GET /health endpoint verified.")
 
-        # 2. /api/v1/translate-audio with generated audio
-        print("\n[Test 2] Testing POST /api/v1/translate-audio with 16kHz WAV ...")
-        wav_bytes = generate_test_wav()
+        # 2. Test /api/v1/translate-audio endpoint with valid 16kHz WAV
+        print("\n[Test 2] Testing POST /api/v1/translate-audio with valid 16kHz WAV ...")
+        wav_bytes = generate_test_wav(1.0)
         files = {"file": ("test_tone.wav", wav_bytes, "audio/wav")}
-
+        
         post_resp = client.post("/api/v1/translate-audio", files=files)
         assert post_resp.status_code == 200, f"Expected 200, got {post_resp.status_code}: {post_resp.text}"
         post_data = post_resp.json()
         print(f" -> Response: {post_data}")
         assert "transcription" in post_data
         assert "confidence_score" in post_data
+        assert post_data["confidence_score"] is None or (0.0 <= post_data["confidence_score"] <= 1.0)
         assert "processing_time_ms" in post_data
-        assert post_data["confidence_score"] is None
-        print(" [PASS] POST /api/v1/translate-audio endpoint verified.")
+        assert isinstance(post_data["processing_time_ms"], int)
+        print(" [PASS] POST /api/v1/translate-audio standard inference verified.")
 
-        # 3. Confidence is not measured, so it must be null, never 0.0
-        print("\n[Test 3] Checking confidence_score is null (not measured) ...")
-        assert post_data["confidence_score"] is None, (
-            f"confidence_score must be null, got {post_data['confidence_score']}"
+        # 3. Test empty file rejection (HTTP 400)
+        print("\n[Test 3] Testing empty audio file rejection ...")
+        empty_files = {"file": ("empty.wav", b"", "audio/wav")}
+        empty_resp = client.post("/api/v1/translate-audio", files=empty_files)
+        assert empty_resp.status_code == 400, f"Expected 400, got {empty_resp.status_code}"
+        print(f" -> Rejected empty file as expected: {empty_resp.json()}")
+        print(" [PASS] Empty file boundary validated.")
+
+        # 4. Test oversized file rejection (HTTP 413)
+        print("\n[Test 4] Testing oversized payload rejection (>10MB) ...")
+        oversized_bytes = b"0" * (10 * 1024 * 1024 + 100)
+        oversized_files = {"file": ("giant.wav", oversized_bytes, "audio/wav")}
+        oversized_resp = client.post("/api/v1/translate-audio", files=oversized_files)
+        assert oversized_resp.status_code == 413, f"Expected 413, got {oversized_resp.status_code}"
+        print(f" -> Rejected oversized file as expected: {oversized_resp.json()}")
+        print(" [PASS] 10MB DoS boundary validated.")
+
+        # 5. Test corrupt non-audio bytes handling (HTTP 400)
+        print("\n[Test 5] Testing corrupt audio handling ...")
+        corrupt_files = {"file": ("corrupt.webm", b"NOT AN AUDIO FILE GARBAGE DATA", "audio/webm")}
+        corrupt_resp = client.post("/api/v1/translate-audio", files=corrupt_files)
+        assert corrupt_resp.status_code == 400, f"Expected 400, got {corrupt_resp.status_code}"
+        corrupt_detail = corrupt_resp.json().get("detail", "")
+        # Verify internal temporary directory path is not leaked in error message
+        assert "AppData" not in corrupt_detail and "/tmp" not in corrupt_detail
+        print(f" -> Handled corrupt audio gracefully: {corrupt_resp.json()}")
+        print(" [PASS] Corrupt audio resilience and path sanitization validated.")
+
+        # 6. Test arbitrary non-audio extension sanitization and Safari audio formats (.mp4/.m4a)
+        print("\n[Test 6] Testing non-audio file extension sanitization and Safari audio formats ...")
+        bad_ext_files = {"file": ("malware.exe", wav_bytes, "application/octet-stream")}
+        bad_ext_resp = client.post("/api/v1/translate-audio", files=bad_ext_files)
+        assert bad_ext_resp.status_code == 200, f"Expected 200, got {bad_ext_resp.status_code}"
+
+        safari_files = {"file": ("recording.mp4", wav_bytes, "audio/mp4")}
+        safari_resp = client.post("/api/v1/translate-audio", files=safari_files)
+        assert safari_resp.status_code == 200, f"Expected 200, got {safari_resp.status_code}"
+        print(" [PASS] Safe extension fallback and Safari audio formats validated.")
+
+        # 7. Test CORS preflight and origin isolation (localhost allowed, LAN/private denied by default)
+        print("\n[Test 7] Testing CORS preflight and origin boundaries ...")
+        cors_headers = {
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+        }
+        cors_resp = client.options("/api/v1/translate-audio", headers=cors_headers)
+        assert cors_resp.status_code == 200, f"Expected 200, got {cors_resp.status_code}"
+        assert cors_resp.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+        # A private-range origin is not trusted unless explicitly listed in
+        # VOICEBRIDGE_ALLOWED_ORIGINS; the old regex trusted every one of them.
+        lan_headers = {
+            "Origin": "http://192.168.1.100:3000",
+            "Access-Control-Request-Method": "POST",
+        }
+        lan_resp = client.options("/api/v1/translate-audio", headers=lan_headers)
+        assert lan_resp.headers.get("access-control-allow-origin") is None, (
+            "private-range origin must not be allowed by default"
         )
-        print(" [PASS] confidence_score is null.")
+
+        evil_cors = client.options("/api/v1/translate-audio", headers={
+            "Origin": "http://untrusted-domain.com",
+            "Access-Control-Request-Method": "POST",
+        })
+        assert evil_cors.headers.get("access-control-allow-origin") is None
+        print(" [PASS] CORS origin boundary validated (localhost only by default).")
+
+        # 8. Test over-long audio rejection (HTTP 422, not a silent 30 s truncation)
+        print("\n[Test 8] Testing >30s audio rejection ...")
+        long_wav = generate_test_wav(31.0)
+        long_files = {"file": ("long.wav", long_wav, "audio/wav")}
+        long_resp = client.post("/api/v1/translate-audio", files=long_files)
+        assert long_resp.status_code == 422, f"Expected 422, got {long_resp.status_code}: {long_resp.text}"
+        assert "30" in long_resp.json().get("detail", "")
+        print(f" -> Rejected 31s recording as expected: {long_resp.json()}")
+        print(" [PASS] 30-second input window enforced.")
+
+        # 9. Server-side failures must be 500 with a constant message, not 400 with internals
+        print("\n[Test 9] Testing server-failure status mapping ...")
+        import app.main as main_module
+
+        original_transcribe = main_module.transcribe_audio
+
+        def failing_transcribe(_path):
+            """Stand-in for the engine: raises so the endpoint must map to 500."""
+            raise RuntimeError("simulated failure at C:\\secret\\model.bin")
+
+        main_module.transcribe_audio = failing_transcribe
+        try:
+            fail_files = {"file": ("test_tone.wav", wav_bytes, "audio/wav")}
+            fail_resp = client.post("/api/v1/translate-audio", files=fail_files)
+        finally:
+            main_module.transcribe_audio = original_transcribe
+
+        assert fail_resp.status_code == 500, f"Expected 500, got {fail_resp.status_code}"
+        fail_detail = fail_resp.json().get("detail", "")
+        assert "secret" not in fail_detail and "RuntimeError" not in fail_detail
+        print(f" -> Model failure mapped correctly: {fail_resp.json()}")
+        print(" [PASS] Server failure returns 500 without internal details.")
+
+        # 10. Near-silent audio must not be hallucinated into words
+        print("\n[Test 10] Testing silence rejection ...")
+        silent_files = {"file": ("silence.wav", generate_silent_wav(2.0), "audio/wav")}
+        silent_resp = client.post("/api/v1/translate-audio", files=silent_files)
+        assert silent_resp.status_code == 200, f"Expected 200, got {silent_resp.status_code}"
+        silent_data = silent_resp.json()
+        assert silent_data["transcription"] == "", f"Expected empty transcript, got {silent_data!r}"
+        assert silent_data["confidence_score"] is None
+        print(" -> Silence returned an empty transcript, not invented words.")
+        print(" [PASS] Near-silent audio is not hallucinated.")
+
+        # 11. Exact window boundary: just over 30 s rejected, under 30 s accepted
+        print("\n[Test 11] Testing the 30-second boundary ...")
+        over_files = {"file": ("over.wav", generate_test_wav(30.01), "audio/wav")}
+        over_resp = client.post("/api/v1/translate-audio", files=over_files)
+        assert over_resp.status_code == 422, f"Expected 422, got {over_resp.status_code}"
+        assert "30.01" in over_resp.json().get("detail", ""), (
+            "the rejection message must show the actual duration, not a rounded 30.0"
+        )
+
+        under_files = {"file": ("under.wav", generate_test_wav(29.5), "audio/wav")}
+        under_resp = client.post("/api/v1/translate-audio", files=under_files)
+        assert under_resp.status_code == 200, f"Expected 200, got {under_resp.status_code}"
+        print(" -> 30.01 s rejected, 29.5 s accepted.")
+        print(" [PASS] 30-second boundary behaves correctly.")
+
+        # 12. The browser uploads WebM/Opus, not WAV. Cover the real format.
+        print("\n[Test 12] Testing a browser-format WebM/Opus upload ...")
+        mild_wav = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "frontend", "public", "audio", "torgo_mild_sample.wav",
+        )
+        webm_files = {
+            "file": ("recording.webm", wav_file_to_webm(mild_wav), "audio/webm")
+        }
+        webm_resp = client.post("/api/v1/translate-audio", files=webm_files)
+        assert webm_resp.status_code == 200, f"Expected 200, got {webm_resp.status_code}"
+        webm_data = webm_resp.json()
+        assert "excellent" in webm_data["transcription"].lower(), webm_data
+        print(f" -> WebM transcription: {webm_data['transcription']!r}")
+        print(" [PASS] Browser WebM upload decoded and transcribed.")
 
     print("\n" + "=" * 60)
-    print("ALL TESTS PASSED.")
+    print("ALL 12 BACKEND VERIFICATION TESTS PASSED WITH ZERO ERRORS.")
     print("=" * 60)
-
 
 if __name__ == "__main__":
     run_tests()

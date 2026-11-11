@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="VoiceBridge: two figures embracing to form a heart">
+  <g fill="currentColor">
+    <!-- Two heads: patient and caregiver, leaning toward each other. -->
+    <circle cx="12" cy="10" r="3.5"/>
+    <circle cx="28" cy="10" r="3.5"/>
+
+    <!-- Outer heart body plus a true transparent inner cutout.
+         evenodd makes the second subpath negative space on any background,
+         unlike the original dark-fill version. -->
+    <path fill-rule="evenodd" d="M20 35C20 35 6 25 6 16.5C6 11.8 9.5 8.5 14 8.5C16.8 8.5 19.2 9.8 20 12C20.8 9.8 23.2 8.5 26 8.5C30.5 8.5 34 11.8 34 16.5C34 25 20 35 20 35Z M20 28.5C20 28.5 11 21 11 15C11 12 13 10.5 15.5 10.5C17.2 10.5 18.8 11.5 20 13C21.2 11.5 22.8 10.5 24.5 10.5C27 10.5 29 12 29 15C29 21 20 28.5 20 28.5Z"/>
+  </g>
+</svg>

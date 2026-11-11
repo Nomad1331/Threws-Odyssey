@@ -32,11 +32,21 @@ ENV/
 .env.production.local
 *.pem
 
+# Hackathon Tooling & Audit Scratches
+.bullseye/
+.dsh/
+audit_section.txt
+google_doc_export.*
+commands.md
+
 # Large Model Checkpoints & Adapters (Store in Cloud / Hugging Face)
 *.bin
 *.pt
 *.pth
 *.safetensors
+# The speaker-adapted product adapter is small (~7 MB) and must ship with the
+# repo so a fresh checkout runs without a Hugging Face download.
+!backend/models/voicebridge-torgo-three/adapter_model.safetensors
 *.onnx
 *.onnx_data
 *.zip

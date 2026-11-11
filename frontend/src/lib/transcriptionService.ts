@@ -1,100 +1,188 @@
 /**
- * VoiceBridge Transcription Service
- * The local FastAPI backend is the source of truth. Browser speech is retained
- * only as an explicitly labelled secondary result when the backend is down.
+ * VoiceBridge Backend Service Client
+ * ==================================
+ * Client for communicating with the local VoiceBridge FastAPI Whisper backend.
+ *
+ * Responsibilities:
+ * 1. Resolves and normalizes backend base URLs across environments and devices.
+ * 2. Checks microservice health and connectivity (/health endpoint).
+ * 3. Bundles binary Blobs into multipart/form-data payloads with container format detection.
+ * 4. Implements AbortController timeout safeguards to prevent hanging network calls.
+ * 5. Normalizes backend JSON responses (transcription text, confidence score, processing latency).
+ * 6. Provides clear, actionable error diagnostics if the backend service is offline.
  */
 
 export interface TranscriptionResult {
   text: string;
-  confidence: number | null; // null = not measured
+  confidence: number | null; // Normalized score between 0.0 and 1.0 (null if unmeasured)
   latencyMs: number;
-  source: "fastapi-backend" | "web-speech" | "unavailable";
+  source: "voicebridge-backend" | "unavailable";
   statusNotice?: string;
-  secondaryText?: string;
-  isFallback: boolean;
+  isError: boolean;
+  errorKind?: "network" | "server" | "timeout";
 }
 
-export async function transcribeAudio(
-  audioBlob: Blob,
-  browserTranscript?: string,
-  recognitionError?: string | null
-): Promise<TranscriptionResult> {
-  const startTime = performance.now();
-  const backendUnavailableNotice =
-    "Backend not running. Start the server with: uvicorn main:app --port 8000";
+/**
+ * Returns the normalized backend base URL without trailing slashes.
+ */
+export function getBackendBaseUrl(): string {
+  const raw = (process.env.NEXT_PUBLIC_BACKEND_URL || "").trim();
+  const base = raw || "http://127.0.0.1:8000";
+  return base.replace(/\/+$/, "");
+}
 
-  // The trained VoiceBridge backend is the only primary transcription source.
+/**
+ * Pings the backend /health endpoint to check server availability and model readiness.
+ * Returns true if the service responds with HTTP 200 within timeoutMs.
+ */
+export async function checkBackendHealth(timeoutMs = 2500): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${getBackendBaseUrl()}/health`, { signal: controller.signal });
+    return res.status === 200;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionResult> {
+  // Pre-validate payload boundaries client-side to prevent redundant network I/O
+  if (!audioBlob || audioBlob.size === 0) {
+    return {
+      text: "",
+      confidence: null,
+      latencyMs: 0,
+      source: "unavailable",
+      statusNotice: "No audio captured. Please try speaking again.",
+      isError: false,
+    };
+  }
+
+  const startTime = performance.now();
+  const backendUrl = `${getBackendBaseUrl()}/api/v1/translate-audio`;
+  // Kept alive until the response body has been read: clearing it when the
+  // headers arrive would let a stalled body hang the UI past the timeout.
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
   try {
     const formData = new FormData();
-    formData.append("file", audioBlob, "user_recording.webm");
+    let fileName = "recording.webm";
+    if (audioBlob.type.includes("wav")) {
+      fileName = "recording.wav";
+    } else if (audioBlob.type.includes("ogg")) {
+      fileName = "recording.ogg";
+    } else if (
+      audioBlob.type.includes("mp4") ||
+      audioBlob.type.includes("m4a") ||
+      audioBlob.type.includes("aac")
+    ) {
+      fileName = "recording.m4a";
+    } else if (audioBlob.type.includes("mp3") || audioBlob.type.includes("mpeg")) {
+      fileName = "recording.mp3";
+    }
+    formData.append("file", audioBlob, fileName);
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 60_000);
-    let response: Response;
-    try {
-      response = await fetch("http://127.0.0.1:8000/api/v1/translate-audio", {
-        method: "POST",
-        body: formData,
-        signal: controller.signal,
-      });
-    } finally {
-      window.clearTimeout(timeoutId);
-    }
+    timeoutId = setTimeout(() => controller.abort(), 30_000);
+
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+
+    const elapsed = Math.round(performance.now() - startTime);
 
     if (response.ok) {
       const data = await response.json();
-      const elapsed = Math.round(performance.now() - startTime);
       const text = typeof data.transcription === "string" ? data.transcription.trim() : "";
+      const rawLatency = data.processing_time_ms;
+      const validLatency =
+        typeof rawLatency === "number" && Number.isFinite(rawLatency)
+          ? Math.round(rawLatency)
+          : elapsed;
+
       if (!text) {
         return {
           text: "",
           confidence: null,
-          latencyMs: data.processing_time_ms ?? elapsed,
-          source: "unavailable",
-          statusNotice: "No speech recognized. Try again.",
-          isFallback: true,
+          latencyMs: validLatency,
+          source: "voicebridge-backend",
+          statusNotice: "No speech recognized. Please try speaking again.",
+          isError: false,
         };
       }
 
+      const isFiniteConfidence =
+        typeof data.confidence_score === "number" && Number.isFinite(data.confidence_score);
+
       return {
         text,
-        confidence: typeof data.confidence_score === "number" ? data.confidence_score : null,
-        latencyMs: data.processing_time_ms ?? elapsed,
-        source: "fastapi-backend",
-        statusNotice: "Processed by VoiceBridge FastAPI + Whisper-small LoRA",
-        isFallback: false,
+        confidence: isFiniteConfidence ? data.confidence_score : null,
+        latencyMs: validLatency,
+        source: "voicebridge-backend",
+        statusNotice: "Transcribed with VoiceBridge Clinical LoRA Engine",
+        isError: false,
       };
     }
 
-    let detail = "Audio transcription failed.";
+    // Server returned an HTTP error response
+    let errorMessage = `Server error (${response.status})`;
     try {
-      const errorData = await response.json();
-      if (typeof errorData.detail === "string" && errorData.detail.trim()) {
-        detail = errorData.detail.trim();
+      const errorJson = await response.json();
+      if (typeof errorJson.detail === "string") {
+        errorMessage = errorJson.detail;
+      } else if (Array.isArray(errorJson.detail) && errorJson.detail.length > 0) {
+        const firstErr = errorJson.detail[0];
+        errorMessage = typeof firstErr?.msg === "string" ? firstErr.msg : `Validation error (${response.status})`;
       }
     } catch {
-      // Use the generic message when the backend does not return JSON.
+      // Non-JSON response
     }
 
     return {
       text: "",
       confidence: null,
-      latencyMs: Math.round(performance.now() - startTime),
+      latencyMs: elapsed,
       source: "unavailable",
-      statusNotice: detail,
-      isFallback: true,
+      statusNotice: errorMessage,
+      isError: true,
+      errorKind: "server",
     };
-  } catch {
-    // The browser transcript is never promoted to the primary result.
-  }
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - startTime);
+    const isAbort =
+      (err instanceof DOMException || err instanceof Error) && err.name === "AbortError";
+    let statusNotice = "Backend server offline. Start with: uvicorn app.main:app --port 8000";
 
-  return {
-    text: "",
-    confidence: null,
-    latencyMs: Math.round(performance.now() - startTime),
-    source: "unavailable",
-    statusNotice: backendUnavailableNotice,
-    secondaryText: browserTranscript?.trim() || undefined,
-    isFallback: true,
-  };
+    const isNetworkError =
+      err instanceof TypeError &&
+      (err.message.includes("fetch") ||
+        err.message.includes("NetworkError") ||
+        err.message.includes("Load failed") ||
+        err.message.includes("Network request failed"));
+
+    if (isAbort) {
+      statusNotice = "Request timed out after 30 seconds.";
+    } else if (err instanceof Error && err.message && !isNetworkError) {
+      statusNotice = err.message;
+    }
+
+    return {
+      text: "",
+      confidence: null,
+      latencyMs: elapsed,
+      source: "unavailable",
+      statusNotice,
+      isError: true,
+      errorKind: isAbort ? "timeout" : "network",
+    };
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+  }
 }

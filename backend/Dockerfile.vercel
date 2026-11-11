@@ -1,0 +1,37 @@
+# Vercel container runtime for the VoiceBridge FastAPI backend.
+# whisper-small is baked in as four safetensors shards (~240 MB each), keeping
+# every registry layer below the 2 GB compressed-layer limit. No runtime model
+# download is needed, so the container writable filesystem can stay small.
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HUB_OFFLINE=1 \
+    VOICEBRIDGE_BASE_MODEL=/app/models/whisper-small
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg libgomp1 libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN python -m pip install --no-cache-dir --upgrade pip \
+    && python -m pip install --no-cache-dir torch==2.15.0 \
+       --index-url https://download.pytorch.org/whl/cpu
+RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# Config/tokenizer/index only: small layer.
+RUN HF_HUB_OFFLINE=0 python -c "from huggingface_hub import snapshot_download; snapshot_download('Nomad1331/voicebridge-whisper-small-sharded', local_dir='/app/models/whisper-small', allow_patterns=['*.json', '*.txt', '*.model'])"
+
+# One shard per layer, each ~240 MB.
+RUN HF_HUB_OFFLINE=0 python -c "from huggingface_hub import hf_hub_download; hf_hub_download('Nomad1331/voicebridge-whisper-small-sharded', 'model-00001-of-00004.safetensors', local_dir='/app/models/whisper-small')"
+RUN HF_HUB_OFFLINE=0 python -c "from huggingface_hub import hf_hub_download; hf_hub_download('Nomad1331/voicebridge-whisper-small-sharded', 'model-00002-of-00004.safetensors', local_dir='/app/models/whisper-small')"
+RUN HF_HUB_OFFLINE=0 python -c "from huggingface_hub import hf_hub_download; hf_hub_download('Nomad1331/voicebridge-whisper-small-sharded', 'model-00003-of-00004.safetensors', local_dir='/app/models/whisper-small')"
+RUN HF_HUB_OFFLINE=0 python -c "from huggingface_hub import hf_hub_download; hf_hub_download('Nomad1331/voicebridge-whisper-small-sharded', 'model-00004-of-00004.safetensors', local_dir='/app/models/whisper-small')"
+
+COPY app ./app
+COPY models ./models
+
+EXPOSE 80
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

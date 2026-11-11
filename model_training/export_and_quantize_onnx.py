@@ -5,7 +5,7 @@ Target: THREWS Odyssey 2026 • Brick 10: Edge AI & Quantization
 Author: Moulika Sanyal (Edge AI Lead) & Sleeper Cells Squad
 
 Description:
-1. Verifies Aaliya's fine-tuned LoRA adapter (Aaliya05/voicebridge) compatibility with openai/whisper-small.
+1. Verifies Aaliya's fine-tuned LoRA adapter (Aaliya05/voicebridge) compatibility with openai/whisper-small (or configured base model).
 2. Merges LoRA weights permanently into the base model (zero runtime PEFT overhead).
 3. Exports the full computation graph (Encoder + Decoder + Decoder with Past KV) to ONNX.
 4. Applies Dynamic INT8 Quantization individually to each exported ONNX component.
@@ -23,13 +23,13 @@ import shutil
 import logging
 import platform
 from pathlib import Path
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Any
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("voicebridge-quantization")
 
-BASE_MODEL_ID = "openai/whisper-small"
-LORA_ADAPTER_ID = "Aaliya05/voicebridge"
+BASE_MODEL_ID = os.getenv("VOICEBRIDGE_BASE_MODEL", "openai/whisper-small")
+LORA_ADAPTER_ID = os.getenv("VOICEBRIDGE_ADAPTER_MODEL", "Aaliya05/voicebridge")
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -48,9 +48,9 @@ TORGO_SAMPLES = [
     },
     {
         "filename": "torgo_moderate_sample.wav",
-        "severity": "Moderate",
+        "severity": "Moderate-to-Severe",
         "speaker": "TORGO-M04",
-        "condition": "Post-Stroke Dysarthria",
+        "condition": "Post-Trauma (TBI)",
         "reference": "Their house is grey and white",
     },
     {
@@ -127,6 +127,14 @@ def detect_cpu_quantization_config():
     if "avx2" in cpu_flags:
         logger.info("Detected x86_64 CPU with AVX2 support. Using AutoQuantizationConfig.avx2(is_static=False).")
         return AutoQuantizationConfig.avx2(is_static=False, per_channel=True), f"x86_64 (AVX2)"
+
+    if platform.machine().lower() in ("x86_64", "amd64", "i386", "i686"):
+        # Windows/macOS expose no /proc/cpuinfo. Assuming ARM64 there silently
+        # produced an INT8 graph built for the wrong instruction set.
+        logger.warning(
+            "CPU flags unavailable (no /proc/cpuinfo); assuming x86_64 AVX2 dynamic INT8 configuration."
+        )
+        return AutoQuantizationConfig.avx2(is_static=False, per_channel=True), "x86_64 (AVX2 assumed)"
 
     logger.warning(f"CPU flags did not explicitly advertise AVX2 on {arch}; falling back to default dynamic INT8 configuration.")
     return AutoQuantizationConfig.arm64(is_static=False, per_channel=True), f"{arch} (Generic Dynamic INT8)"
@@ -206,9 +214,9 @@ def get_encoder_decoder_size_mb(directory: str, quantized: bool = False) -> floa
 
 
 def step_1_merge_lora() -> str:
-    """Verify and merge LoRA adapter into base Whisper-small model."""
+    """Verify and merge LoRA adapter into base Whisper model (openai/whisper-small)."""
     logger.info("=" * 65)
-    logger.info("STEP 1: VERIFYING & MERGING LORA WEIGHTS INTO BASE WHISPER-SMALL")
+    logger.info(f"STEP 1: VERIFYING & MERGING LORA WEIGHTS INTO BASE {BASE_MODEL_ID.upper()}")
     logger.info("=" * 65)
 
     from peft import PeftConfig, PeftModel
@@ -569,6 +577,7 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
     )
     latency_status = "PASS" if avg_latency_ms < 280.0 else "MISS"
     rtf_status = "PASS" if avg_rtf < 0.1 else "MISS"
+    reduction_status = "PASS" if reduction_pct >= 74.0 else "MISS"
 
     _, hw_desc = detect_cpu_quantization_config()
 
@@ -578,7 +587,7 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
     logger.info(f"Host Hardware            : {hw_desc} (ONNX Runtime CPUExecutionProvider)")
     logger.info(f"FP32 ONNX Storage Size   : {raw_size_mb:.2f} MB (3 files) | {raw_unique_mb:.2f} MB (Encoder + 1 Decoder)")
     logger.info(f"INT8 ONNX Storage Size   : {quant_size_mb:.2f} MB (3 files) | {quant_unique_mb:.2f} MB (Encoder + 1 Decoder) [{size_status}]")
-    logger.info(f"Storage Size Reduction   : {reduction_pct:.2f}% (Target: ~74% reduction) [PASS]")
+    logger.info(f"Storage Size Reduction   : {reduction_pct:.2f}% (Target: ~74% reduction) [{reduction_status}]")
     logger.info(f"Process Runtime RAM (RSS): {peak_rss_mb:.1f} MB total process RSS (~{int8_session_rss_delta:.1f} MB INT8 session delta)")
     logger.info(f"Smoke Test (1s Sine Wave): {avg_synth_latency_ms:.1f} ms (RTF: {synth_rtf:.4f}) | Output: '{synth_text}'")
     if torgo_results:
@@ -591,7 +600,19 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
         logger.info(f"Inference Latency        : {avg_latency_ms:.1f} ms (Target: <280 ms) [{latency_status}]")
         logger.info(f"Real-Time Factor (RTF)   : {avg_rtf:.4f} (Target: <0.10) [{rtf_status}]")
     logger.info("-" * 65)
-    logger.info("✅ BRICK 10 COMPLETE: Model is verified and ready for edge deployment!\n")
+    checks = {
+        "storage_reduction": reduction_status,
+        "size": "PASS" if size_status == "PASS" else "MISS",
+        "latency": latency_status,
+        "rtf": rtf_status,
+    }
+    if all(value == "PASS" for value in checks.values()):
+        logger.info("✅ BRICK 10 COMPLETE: all size, storage, latency and RTF targets passed.\n")
+    else:
+        failed = ", ".join(f"{name}={value}" for name, value in checks.items() if value != "PASS")
+        logger.warning(
+            f"⚠️ BRICK 10 NOT READY: {failed}. Do not describe this model as edge-ready.\n"
+        )
 
     return {
         "raw_size_mb": raw_size_mb,
@@ -608,6 +629,7 @@ def step_4_verify_and_benchmark(quantized_dir: str) -> Dict[str, Any]:
 
 
 def main():
+    """Run merge → ONNX export → INT8 quantization → benchmark, end to end."""
     versions = check_dependencies()
     logger.info(
         "Environment verified: "

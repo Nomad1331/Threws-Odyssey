@@ -1,0 +1,207 @@
+{
+  "_meta": {
+    "project": "VoiceBridge",
+    "event": "THREWS Odyssey 2026",
+    "track": "Human-AI & Assistive Technology",
+    "team": "Sleeper Cells",
+    "institution": "SIES Graduate School of Technology",
+    "generatedAt": "2026-11-10T17:50:46+00:00",
+    "generatedBy": "python benchmarks/benchmark_product.py",
+    "script": "benchmarks/benchmark_product.py",
+    "scriptSha256": "58bbdd86f0d8e901",
+    "sourceHashes": {
+      "benchmarks/benchmark_product.py": "58bbdd86f0d8e901",
+      "backend/app/inference.py": "48196194a94820c7",
+      "backend/evaluate_samples.py": "8f20e8beaa0799db"
+    },
+    "host": {
+      "cpu": "Intel(R) Core(TM) i5-14400F",
+      "arch": "AMD64",
+      "logicalCpus": 16,
+      "physicalCpus": 10,
+      "cpuFreq": {
+        "maxMhz": 2500,
+        "currentMhz": 2500
+      },
+      "totalRamGb": 137.3,
+      "os": "Windows 11 (10.0.26300)",
+      "python": "3.12.9"
+    },
+    "versions": {
+      "torch": "2.15.0+cpu",
+      "transformers": "5.22.2",
+      "peft": "0.21.2",
+      "python": "3.12.9",
+      "fastapi": "0.162.0",
+      "starlette": "1.10.0",
+      "uvicorn": "0.54.0",
+      "python-multipart": "0.0.33",
+      "av": "13.1.0",
+      "accelerate": "1.15.0"
+    },
+    "note": "Every number here is produced by the command above. Nothing is hand-typed."
+  },
+  "product": {
+    "engineName": "whisper-small-lora",
+    "baseModel": "openai/whisper-small",
+    "adapter": "voicebridge-torgo-three",
+    "device": "cpu",
+    "parameters": {
+      "total": 243504384,
+      "totalMillions": 243.5,
+      "base": 241734912,
+      "baseMillions": 241.7,
+      "adapter": 1769472,
+      "adapterMillions": 1.77,
+      "adapterPercentOfTotal": 0.73,
+      "trainableInThisRun": 0,
+      "trainableNote": "0 is expected: the server loads the adapter frozen for inference (peft is_trainable=False). adapterPercentOfTotal is the share the training docs call 'trainable'.",
+      "loraAdapters": 1
+    },
+    "storage": {
+      "baseBytes": 971367937,
+      "baseMb": 971.4,
+      "adapterBytes": 7099284,
+      "adapterMb": 7.1,
+      "totalMb": 978.5,
+      "definition": "megabytes = 10^6 bytes; base from the Hugging Face cache, adapter from the shipped directory when local"
+    },
+    "modelLoadMs": 1408.5,
+    "accuracy": {
+      "referenceSource": "backend/evaluate_samples.py:SAMPLES (same sentences the demo page shows)",
+      "metric": "word error rate after lowercasing and stripping punctuation; (S+D+I)/reference words",
+      "sampleCount": 3,
+      "meanClipWerPct": 5.6,
+      "corpusWerPct": 6.2,
+      "clips": [
+        {
+          "clip": "torgo_mild_sample.wav",
+          "speaker": "TORGO-M05",
+          "severity": "Mild",
+          "condition": "Cerebral Palsy",
+          "durationSec": 5.69,
+          "reference": "We have an excellent team",
+          "hypothesis": "We have an excellent team",
+          "confidence": 0.893,
+          "werPct": 0.0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "referenceWords": 5,
+          "hypothesisWords": 5,
+          "errors": 0,
+          "latencyMs": {
+            "runs": [
+              1531.0,
+              1596.2,
+              1593.0,
+              1563.0,
+              1597.1
+            ],
+            "mean": 1576.1,
+            "median": 1593.0,
+            "min": 1531.0,
+            "max": 1597.1
+          },
+          "outputsIdenticalAcrossRuns": true
+        },
+        {
+          "clip": "torgo_moderate_sample.wav",
+          "speaker": "TORGO-M04",
+          "severity": "Moderate-to-Severe",
+          "condition": "Post-Trauma (TBI)",
+          "durationSec": 5.87,
+          "reference": "Their house is grey and white",
+          "hypothesis": "the house is grey and white",
+          "confidence": 0.612,
+          "werPct": 16.7,
+          "substitutions": 1,
+          "deletions": 0,
+          "insertions": 0,
+          "referenceWords": 6,
+          "hypothesisWords": 6,
+          "errors": 1,
+          "latencyMs": {
+            "runs": [
+              1609.8,
+              1593.6,
+              1601.2,
+              1570.3,
+              1567.3
+            ],
+            "mean": 1588.4,
+            "median": 1593.6,
+            "min": 1567.3,
+            "max": 1609.8
+          },
+          "outputsIdenticalAcrossRuns": true
+        },
+        {
+          "clip": "torgo_severe_sample.wav",
+          "speaker": "TORGO-M02",
+          "severity": "Severe",
+          "condition": "Amyotrophic Lateral Sclerosis (ALS)",
+          "durationSec": 6.0,
+          "reference": "The job provides many benefits",
+          "hypothesis": "The job provides many benefits",
+          "confidence": 0.654,
+          "werPct": 0.0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "referenceWords": 5,
+          "hypothesisWords": 5,
+          "errors": 0,
+          "latencyMs": {
+            "runs": [
+              1617.2,
+              1554.1,
+              1579.8,
+              1557.8,
+              1607.6
+            ],
+            "mean": 1583.3,
+            "median": 1579.8,
+            "min": 1554.1,
+            "max": 1617.2
+          },
+          "outputsIdenticalAcrossRuns": true
+        }
+      ]
+    },
+    "latency": {
+      "warmupRunsPerClip": 2,
+      "timedRunsPerClip": 5,
+      "meanMs": 1582.6,
+      "medianMs": 1593.0,
+      "minMs": 1531.0,
+      "maxMs": 1617.2,
+      "realTimeFactor": 0.27,
+      "targetMs": 280,
+      "targetStatus": "MISS",
+      "targetSource": "project latency target carried in facts.json since 2026-11-04",
+      "measurement": "wall time around inference.transcribe_audio, including audio decode",
+      "torchThreads": 10,
+      "status": "MISS"
+    },
+    "memory": {
+      "rssBeforeLoadMb": 379.5,
+      "rssAfterLoadMb": 1399.1,
+      "rssDeltaMb": 1019.6,
+      "peakRssDuringRunMb": 1756.3,
+      "processPeakWorkingSetMb": 1760.9,
+      "totalSystemRamGb": 137.3,
+      "peakSampling": "background sampler every 50 ms during the timed runs",
+      "definition": "RSS delta = resident set after model load minus resident set after imports; peak = highest value sampled during the timed runs"
+    },
+    "determinism": {
+      "outputsIdenticalAcrossRuns": true
+    }
+  },
+  "claims": {
+    "offlineStatus": "Client-server: browser posts to a local FastAPI service; model runs on the same machine",
+    "raspberryPiValidated": false,
+    "coralTpuValidated": false,
+    "medicalDeviceStatus": "Research prototype; not certified for clinical use"
+  }
+}

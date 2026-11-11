@@ -8,6 +8,21 @@ interface AudioWaveformCanvasProps {
   className?: string;
 }
 
+/**
+ * AudioWaveformCanvas: 60 FPS HTML5 Canvas Audio Visualizer
+ * ==========================================================
+ * Provides instant kinetic visual feedback to dysarthric speakers that their
+ * acoustic vocalizations are being registered by the system.
+ *
+ * Technical Details:
+ * 1. High-DPI Rendering: Automatically reads window.devicePixelRatio and scales
+ *    the canvas internal 2D drawing context to eliminate blurry rendering on Retina displays.
+ * 2. Real-Time RMS Bars: Samples 48 discrete time-domain amplitude windows directly from the
+ *    Web Audio API AnalyserNode byte buffer.
+ * 3. Memory & Frame Loop Safety: Guarantees cancelAnimationFrame cleanup upon component unmount
+ *    or when recording stops.
+ */
+
 export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
   isRecording,
   audioAnalyser,
@@ -22,55 +37,102 @@ export const AudioWaveformCanvas: React.FC<AudioWaveformCanvasProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Handle High-DPI screens cleanly
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+    const barCount = 48; // Number of vertical waveform bars
 
-    const width = rect.width;
-    const height = rect.height;
-    const centerY = height / 2;
+    // Read the theme token once per effect; the hardcoded hex ignored theme changes.
+    const themedBarColor =
+      getComputedStyle(canvas).getPropertyValue("--waveform").trim() || "#c4c4bf";
+
+    // Measure and configure high-DPI canvas coordinates
+    const setupCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        return { width: 0, height: 0, centerY: 0 };
+      }
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      return { width: rect.width, height: rect.height, centerY: rect.height / 2 };
+    };
+
+    let dims = setupCanvas();
 
     const dataArray = audioAnalyser
       ? new Uint8Array(audioAnalyser.frequencyBinCount)
       : null;
 
-    const barCount = 48; // Number of vertical waveform bars
-    const barSpacing = width / barCount;
-    const barWidth = Math.max(2, barSpacing * 0.45);
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      if (isRecording && audioAnalyser && dataArray) {
-        audioAnalyser.getByteTimeDomainData(dataArray);
-      }
+    const drawBars = (getAmplitude: (index: number) => number) => {
+      if (dims.width === 0 || dims.height === 0) return;
+      ctx.clearRect(0, 0, dims.width, dims.height);
+      const barSpacing = dims.width / barCount;
+      const barWidth = Math.max(2, barSpacing * 0.45);
 
       for (let i = 0; i < barCount; i++) {
         const x = i * barSpacing + (barSpacing - barWidth) / 2;
-        const sampleIndex = Math.floor((i / barCount) * (dataArray?.length ?? 1));
-        const sample = dataArray?.[sampleIndex] ?? 128;
-        const amplitude = isRecording ? Math.abs(sample - 128) / 128 : 0;
-        const barHeight = Math.max(4, height * 0.85 * amplitude);
-        ctx.fillStyle = "#c4c4bf";
+        const amplitude = getAmplitude(i);
+        const barHeight = Math.max(4, dims.height * 0.85 * amplitude);
+        ctx.fillStyle = themedBarColor;
 
-        const y = centerY - barHeight / 2;
-
+        const y = dims.centerY - barHeight / 2;
         ctx.beginPath();
         ctx.rect(x, y, barWidth, barHeight);
         ctx.fill();
       }
-
-      animationFrameRef.current = requestAnimationFrame(render);
     };
 
-    render();
+    // If idle, render static baseline once without wasting RAF GPU cycles
+    if (!isRecording) {
+      drawBars(() => 0);
+    } else {
+      const render = () => {
+        if (dims.width === 0) {
+          dims = setupCanvas();
+        }
+
+        if (audioAnalyser && dataArray) {
+          audioAnalyser.getByteTimeDomainData(dataArray);
+        }
+
+        drawBars((i) => {
+          const sampleIndex = Math.floor((i / barCount) * (dataArray?.length ?? 1));
+          const sample = dataArray?.[sampleIndex] ?? 128;
+          return Math.abs(sample - 128) / 128;
+        });
+
+        animationFrameRef.current = requestAnimationFrame(render);
+      };
+
+      render();
+    }
+
+    const handleResize = () => {
+      dims = setupCanvas();
+      if (!isRecording) {
+        drawBars(() => 0);
+      }
+    };
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(canvas);
+    } else {
+      window.addEventListener("resize", handleResize);
+    }
 
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      } else {
+        window.removeEventListener("resize", handleResize);
       }
     };
   }, [isRecording, audioAnalyser]);

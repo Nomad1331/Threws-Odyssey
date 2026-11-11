@@ -1,337 +1,210 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
-import { TactileMicButton, MicState } from "@/components/TactileMicButton";
+import React, { useState, useEffect, useCallback } from "react";
+import { TactileMicButton } from "@/components/TactileMicButton";
 import { TranscriptDisplay } from "@/components/TranscriptDisplay";
 import { QuickAssistGrid } from "@/components/QuickAssistGrid";
 import { ClinicalBenchmarkDrawer } from "@/components/ClinicalBenchmarkDrawer";
-import { transcribeAudio } from "@/lib/transcriptionService";
-import { ChevronDown, ChevronUp, Mic } from "lucide-react";
+import { transcribeAudio, checkBackendHealth } from "@/lib/transcriptionService";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { Logo } from "@/components/Logo";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
-interface IWindowSpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-}
-
-interface SpeechRecognitionResultItem {
-  transcript: string;
-confidence: number | null;
-}
-
-interface SpeechRecognitionResult {
-  [index: number]: SpeechRecognitionResultItem;
-  isFinal: boolean;
-  length: number;
-}
-
-interface SpeechRecognitionResultList {
-  [index: number]: SpeechRecognitionResult;
-  length: number;
-}
-
-interface SpeechRecognitionEvent extends Event {
-  resultIndex: number;
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-}
-
-type SourceType = "fastapi-backend" | "web-speech" | "unavailable";
+/**
+ * VoiceBridge Application Root Stage (Next.js 14 App Router)
+ * ==========================================================
+ * Orchestrates the primary 2-column accessible interface:
+ *
+ * Left Column:
+ * - TranscriptDisplay: Shows reconstructed speech, confidence score, wall-clock latency,
+ *   live waveform visualizer, and "Say it" browser Text-to-Speech playback.
+ *
+ * Right Column:
+ * - TactileMicButton: Large 112px motor-accessible button with live RMS volume pulsing,
+ *   haptic vibration feedback, and global spacebar hotkey listener.
+ * - QuickAssistGrid: 5 AAC emergency care phrases with 2-step confirmation window on Pain Alert.
+ *
+ * Footer:
+ * - Collapsible Clinical Verification Archive with authentic University of Toronto TORGO clips.
+ */
 
 export default function Home() {
-  const [micState, setMicState] = useState<MicState>("idle");
+  const {
+    state: micState,
+    audioLevel,
+    audioAnalyser,
+    recordedAudioUrl,
+    startRecording,
+    stopRecording,
+    clearRecordedAudio,
+    setIdle,
+  } = useAudioRecorder();
+
+  // Transcription state
   const [transcript, setTranscript] = useState<string>("");
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [confidenceScore, setConfidenceScore] = useState<number | null>(null);
-  const [audioAnalyser, setAudioAnalyser] = useState<AnalyserNode | null>(null);
-  const [audioLevel, setAudioLevel] = useState<number>(0);
-  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [statusNotice, setStatusNotice] = useState<string | undefined>(undefined);
-  const [secondaryTranscript, setSecondaryTranscript] = useState<string | undefined>(undefined);
-  const [source, setSource] = useState<SourceType | undefined>(undefined);
+  const [source, setSource] = useState<"voicebridge-backend" | "unavailable" | undefined>(undefined);
+
+  // UI state
   const [showJudgeConsole, setShowJudgeConsole] = useState<boolean>(false);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
+  const [sampleBusy, setSampleBusy] = useState<boolean>(false);
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recognitionRef = useRef<IWindowSpeechRecognition | null>(null);
-  const capturedTextRef = useRef<string>("");
-  const recognitionErrorRef = useRef<string | null>(null);
-
-  // Live microphone level for the waveform and mic button
+  // Check backend server health on mount and keep it fresh: if the frontend is
+  // opened while uvicorn is still loading, a one-shot check would say "offline"
+  // forever until the first transcription.
   useEffect(() => {
-    if (!audioAnalyser || micState !== "listening") {
-      setAudioLevel(0);
-      return;
-    }
-
-    let animId: number;
-    const dataArray = new Uint8Array(audioAnalyser.frequencyBinCount);
-
-    const checkVolume = () => {
-      audioAnalyser.getByteTimeDomainData(dataArray);
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        const norm = (dataArray[i] - 128) / 128;
-        sum += norm * norm;
-      }
-      const rms = Math.sqrt(sum / dataArray.length);
-      setAudioLevel(Math.min(rms * 5.0, 1.0));
-      animId = requestAnimationFrame(checkVolume);
+    let active = true;
+    const check = () => {
+      checkBackendHealth(2500).then((healthy) => {
+        if (active) setBackendConnected(healthy);
+      });
     };
-
-    checkVolume();
+    check();
+    const interval = setInterval(check, 5000);
     return () => {
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, [audioAnalyser, micState]);
-
-  // Revoke the object URL when it changes or on unmount
-  useEffect(() => {
-    return () => {
-      if (recordedAudioUrl && recordedAudioUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(recordedAudioUrl);
-      }
-    };
-  }, [recordedAudioUrl]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 2000);
-
-    fetch("http://127.0.0.1:8000/health", { signal: controller.signal })
-      .then((response) => setBackendConnected(response.status === 200))
-      .catch(() => setBackendConnected(false))
-      .finally(() => window.clearTimeout(timeoutId));
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      controller.abort();
+      active = false;
+      clearInterval(interval);
     };
   }, []);
 
-  // Toggle live microphone recording with MediaRecorder.
+  // Handle microphone start / stop toggle
   const handleToggleMic = useCallback(async () => {
+    if (micState === "processing" || sampleBusy) return;
+
     if (micState === "listening") {
-      setMicState("processing");
       setStatusNotice("Processing audio...");
+      try {
+        const audioBlob = await stopRecording();
 
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {
-          console.warn("Speech recognition stop notice:", e);
-        }
-      }
-
-      const finalizeProcessing = async () => {
-        let audioBlob: Blob;
-        if (audioChunksRef.current.length > 0) {
-          const mime = mediaRecorderRef.current?.mimeType || "audio/webm";
-          audioBlob = new Blob(audioChunksRef.current, { type: mime });
-        } else {
-          audioBlob = new Blob([], { type: "audio/webm" });
+        if (!audioBlob || audioBlob.size === 0) {
+          setStatusNotice("No audio captured. Please try speaking again.");
+          return;
         }
 
-        if (audioBlob.size > 0) {
-          const newUrl = URL.createObjectURL(audioBlob);
-          setRecordedAudioUrl((prev) => {
-            if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
-            return newUrl;
-          });
+        // Send audio to FastAPI backend
+        const result = await transcribeAudio(audioBlob);
+        setStatusNotice(result.statusNotice);
+        if (result.isError) {
+          // Keep the previous transcript and its measured telemetry intact;
+          // only the notice changes. A server error still means the backend is up.
+          setBackendConnected(result.errorKind === "server");
+          return;
         }
-
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-          mediaStreamRef.current = null;
-        }
-        if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-          await audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
-        setAudioAnalyser(null);
-        setAudioLevel(0);
-
-        const result = await transcribeAudio(
-          audioBlob,
-          capturedTextRef.current,
-          recognitionErrorRef.current
-        );
-
         setTranscript(result.text);
         setLatencyMs(result.latencyMs);
         setConfidenceScore(result.confidence);
-        setStatusNotice(result.statusNotice);
-        setSecondaryTranscript(result.secondaryText);
         setSource(result.source);
-        setMicState("idle");
-        // No auto-speak: the user taps "Say it" to hear the result.
-      };
-
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.onstop = () => {
-          finalizeProcessing();
-        };
-        try {
-          mediaRecorderRef.current.stop();
-        } catch (e) {
-          console.warn("MediaRecorder stop error:", e);
-          finalizeProcessing();
-        }
-      } else {
-        finalizeProcessing();
-      }
-    } else if (micState === "idle") {
-      capturedTextRef.current = "";
-      recognitionErrorRef.current = null;
-      audioChunksRef.current = [];
-      setStatusNotice("Capturing microphone stream...");
-
-      let stream: MediaStream | null = null;
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-          });
-          mediaStreamRef.current = stream;
-
-          const AudioContextClass =
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-          const ctx = new AudioContextClass();
-          audioContextRef.current = ctx;
-
-          const sourceNode = ctx.createMediaStreamSource(stream);
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 128;
-          sourceNode.connect(analyser);
-
-          setAudioAnalyser(analyser);
-        }
+        setBackendConnected(result.source === "voicebridge-backend");
       } catch (err) {
-        console.warn("Microphone hardware error:", err);
+        console.error("Transcription error:", err);
+        setStatusNotice("Failed to transcribe audio. Please try again.");
+        setBackendConnected(false);
+      } finally {
+        setIdle();
       }
-
-      if (stream) {
-        try {
-          let selectedMime = "audio/webm;codecs=opus";
-          if (typeof MediaRecorder !== "undefined") {
-            if (!MediaRecorder.isTypeSupported(selectedMime)) {
-              selectedMime = "audio/webm";
-              if (!MediaRecorder.isTypeSupported(selectedMime)) {
-                selectedMime = "";
-              }
-            }
-
-            const recorder = selectedMime
-              ? new MediaRecorder(stream, { mimeType: selectedMime })
-              : new MediaRecorder(stream);
-
-            audioChunksRef.current = [];
-            recorder.ondataavailable = (event: BlobEvent) => {
-              if (event.data && event.data.size > 0) {
-                audioChunksRef.current.push(event.data);
-              }
-            };
-
-            recorder.start(100);
-            mediaRecorderRef.current = recorder;
-          }
-        } catch (recErr) {
-          console.warn("MediaRecorder setup error:", recErr);
-        }
+    } else {
+      try {
+        await startRecording();
+        setStatusNotice(undefined);
+      } catch {
+        setStatusNotice("Microphone permission denied. Enable microphone access in browser.");
       }
-
-      const win = typeof window !== "undefined" ? (window as unknown as Record<string, unknown>) : {};
-      const SpeechRecognitionClass = (win.SpeechRecognition || win.webkitSpeechRecognition) as
-        | { new (): IWindowSpeechRecognition }
-        | undefined;
-
-      if (SpeechRecognitionClass) {
-        try {
-          const recognition = new SpeechRecognitionClass();
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.lang = "en-US";
-
-          recognition.onresult = (event: SpeechRecognitionEvent) => {
-            let fullText = "";
-            for (let i = 0; i < event.results.length; ++i) {
-              fullText += event.results[i][0].transcript + " ";
-            }
-            const clean = fullText.trim();
-            if (clean) capturedTextRef.current = clean;
-          };
-
-          recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-            console.warn("Speech recognition notice:", event.error);
-            recognitionErrorRef.current = event.error;
-          };
-
-          recognition.start();
-          recognitionRef.current = recognition;
-        } catch (e) {
-          console.warn("Speech recognition initialization failed:", e);
-        }
-      }
-
-      setMicState("listening");
     }
-  }, [micState]);
+  }, [micState, sampleBusy, startRecording, stopRecording, setIdle]);
 
-  const handleClear = () => {
+  // Reset transcript and audio buffer
+  const handleClear = useCallback(() => {
     setTranscript("");
     setLatencyMs(null);
     setConfidenceScore(null);
     setStatusNotice(undefined);
-    setSecondaryTranscript(undefined);
     setSource(undefined);
-    setRecordedAudioUrl((prev) => {
-      if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return null;
-    });
-  };
+    clearRecordedAudio();
+  }, [clearRecordedAudio]);
+
+  // Set transcript from QuickAssist presets. A preset is not a model result, so
+  // clear the previous recording's confidence/latency/source and its audio replay;
+  // otherwise a preset sentence sits next to an unrelated recording.
+  const handleSpeakPhrase = useCallback((phrase: string) => {
+    setTranscript(phrase);
+    setLatencyMs(null);
+    setConfidenceScore(null);
+    setSource(undefined);
+    setStatusNotice(undefined);
+    clearRecordedAudio();
+  }, [clearRecordedAudio]);
+
+  // Transcribe pre-recorded clinical sample audio
+  const handleRunSampleAudio = useCallback(async (audioUrl: string) => {
+    setSampleBusy(true);
+    setStatusNotice("Transcribing clinical sample audio...");
+    try {
+      const res = await fetch(audioUrl);
+      if (!res.ok) {
+        throw new Error(`Sample unavailable (HTTP ${res.status})`);
+      }
+      const blob = await res.blob();
+      if (!blob.type.startsWith("audio/")) {
+        throw new Error("Sample is not an audio file.");
+      }
+      const result = await transcribeAudio(blob);
+      setStatusNotice(result.statusNotice);
+      if (result.isError) {
+        setBackendConnected(result.errorKind === "server");
+        return;
+      }
+      setTranscript(result.text);
+      setLatencyMs(result.latencyMs);
+      setConfidenceScore(result.confidence);
+      setSource(result.source);
+      setBackendConnected(result.source === "voicebridge-backend");
+    } catch (err) {
+      console.error("Clinical sample transcription error:", err);
+      setStatusNotice(
+        err instanceof Error ? err.message : "Failed to transcribe sample."
+      );
+    } finally {
+      setSampleBusy(false);
+    }
+  }, []);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col bg-canvas px-4 py-6 text-text-primary sm:px-6 lg:px-8">
+      {/* 1. Header */}
       <header className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-border bg-surface">
-            <Mic className="h-4 w-4 text-accent" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-[9px] bg-text-primary text-canvas">
+            <Logo className="h-8 w-8" />
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text-primary">VoiceBridge</h1>
             <p className="text-sm text-text-secondary">
-              Dysarthria speech recognition research prototype
+              Assistive speech transcription for motor and dysarthric speech disorders
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 self-start rounded-[6px] border border-border bg-surface px-3 py-2 font-mono text-[10px] text-text-secondary sm:self-auto">
+
+        {/* Live Backend Connection Indicator */}
+        <div
+          role="status"
+          className="flex items-center gap-2 self-start rounded-[6px] border border-border bg-surface px-3 py-2 font-mono text-[10px] text-text-secondary sm:self-auto"
+        >
           <span className={`h-2 w-2 rounded-full ${backendConnected ? "bg-accent" : "bg-text-secondary"}`} />
           <span>
             {backendConnected
-              ? "Backend connected"
-              : "Backend not running. Start with: uvicorn backend.app.main:app --port 8000"}
+              ? "Backend connected (FastAPI • Clinical LoRA)"
+              : "Backend offline • Start with: uvicorn app.main:app --port 8000"}
           </span>
         </div>
       </header>
 
-      <section className="grid flex-1 grid-cols-1 items-start gap-8 py-8 lg:grid-cols-2 lg:gap-12">
-        <section className="flex flex-col items-center gap-5 w-full">
+      {/* 2. Main 2-Column Application Stage */}
+      <div className="grid flex-1 grid-cols-1 items-start gap-8 py-8 lg:grid-cols-2 lg:gap-12">
+        {/* Left Column: Reconstructed Speech Card & Waveform */}
+        <section aria-label="Speech transcription output" className="flex flex-col items-center gap-5 w-full">
           <TranscriptDisplay
             transcript={transcript}
             latencyMs={latencyMs}
@@ -339,7 +212,6 @@ export default function Home() {
             isProcessing={micState === "processing"}
             recordedAudioUrl={recordedAudioUrl}
             statusNotice={statusNotice}
-            secondaryTranscript={secondaryTranscript}
             source={source}
             audioAnalyser={audioAnalyser}
             isRecording={micState === "listening"}
@@ -347,42 +219,54 @@ export default function Home() {
           />
         </section>
 
-        <section className="flex w-full flex-col items-center gap-8 rounded-[6px] border border-border bg-surface p-5 sm:p-8">
+        {/* Right Column: Record Button & AAC Quick Assist Cards */}
+        <section aria-label="Recording controls and AAC presets" className="flex w-full flex-col items-center gap-8 rounded-[6px] border border-border bg-surface p-5 sm:p-8">
           <TactileMicButton
             state={micState}
             onToggle={handleToggleMic}
+            disabled={sampleBusy}
             audioLevel={audioLevel}
           />
-          <QuickAssistGrid onSpeakPhrase={(phrase) => setTranscript(phrase)} />
+          <p className="text-center font-mono text-[10px] text-text-secondary">
+            Recordings are limited to 30 seconds.
+          </p>
+          <QuickAssistGrid onSpeakPhrase={handleSpeakPhrase} />
         </section>
-      </section>
+      </div>
 
+      {/* 3. Footer: Clinical Verification Archive (TORGO Dataset) */}
       <footer className="w-full border-t border-border pt-6">
         <button
           type="button"
           onClick={() => setShowJudgeConsole((prev) => !prev)}
-          className="flex min-h-[44px] w-full items-center justify-between rounded-[6px] border border-border bg-surface px-4 text-left font-mono text-xs text-text-primary transition-colors hover:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-3"
+          aria-expanded={showJudgeConsole}
+          aria-controls="clinical-verification-archive"
+          className="flex min-h-[44px] w-full items-center justify-between rounded-[6px] border border-border bg-surface px-4 text-left font-mono text-xs text-text-primary transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           <span>Clinical Verification Archive (TORGO Dataset)</span>
-          {showJudgeConsole ? (
-            <ChevronUp className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronDown className="h-3.5 w-3.5" />
-          )}
+          {showJudgeConsole ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </button>
 
         {showJudgeConsole && (
-          <div className="mt-3 w-full max-w-3xl rounded-[6px] border border-border bg-surface p-4">
-            <div className="mb-4 space-y-2 text-sm text-text-secondary">
-              <p>TORGO dataset (Rudzicz, Namasivayam, Wolff, 2012). Used for research evaluation. Licence terms: see README.</p>
-              <p>Model results: pending evaluation run.</p>
+          <div
+            id="clinical-verification-archive"
+            className="mt-3 w-full rounded-[6px] border border-border bg-surface p-4"
+          >
+            <div className="mb-4 space-y-1 font-mono text-xs text-text-secondary">
+              <p>Reference corpus: University of Toronto TORGO Database (Rudzicz et al., 2012).</p>
+              <p>Clinical evaluation clips: M05 (Cerebral Palsy), M04 (Post-Trauma TBI), M02 (ALS).</p>
             </div>
-            <ClinicalBenchmarkDrawer />
+            <ClinicalBenchmarkDrawer
+              onRunInference={handleRunSampleAudio}
+              isProcessing={sampleBusy}
+            />
           </div>
         )}
 
         <div className="pt-5 text-center font-mono text-[10px] text-text-secondary">
-          Research prototype • Not a medical device • SIES GST
+          Research prototype • SIES Graduate School of Technology • THREWS Odyssey 2026
+          <br />
+          Measured accuracy refers to the TORGO demo clips; live microphone results vary.
         </div>
       </footer>
     </main>

@@ -11,6 +11,10 @@
 > evaluated, and severe dysarthria from a new speaker remains unsupported. It is not a medical
 > device and has no clinical validation. Read **[LIMITS.md](LIMITS.md)** before quoting
 > anything here. Five-minute walkthrough: **[docs/DEMO.md](docs/DEMO.md)**.
+>
+> **Live demo:** [voicebridge-threws.vercel.app](https://voicebridge-threws.vercel.app) ·
+> **Backend:** [voicebridge-api-six.vercel.app](https://voicebridge-api-six.vercel.app/health) ·
+> deployment notes: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
 ---
 
@@ -143,6 +147,7 @@ Threws-Odyssey/
 │   ├── EDGE_AI_BENCHMARK_RESULTS.md # Product benchmark + whisper-tiny INT8 side study
 │   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
 │   ├── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
+│   ├── DEPLOYMENT.md                # Vercel frontend + container backend notes
 │   ├── DEMO.md                      # Five-minute judge walkthrough
 │   └── archive/                     # Internal planning/audit ledgers, superseded, not judge-facing
 │

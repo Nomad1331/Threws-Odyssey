@@ -12,6 +12,17 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ---
 
+## [2026-11-11] - v1.24.0: Vercel Container Backend — Live, No Tunnel
+
+* **Deployed the FastAPI backend to Vercel Container Runtime** as project `voicebridge-api`, framework forced to `container`. The frontend now points at `https://voicebridge-api-six.vercel.app`; the Cloudflare tunnel and local uvicorn are stopped and not needed.
+* **Sharded the base model to fit the registry:** `openai/whisper-small` is stored as four ~240 MB safetensors shards in `Nomad1331/voicebridge-whisper-small-sharded`. Baking the original 978 MB `model.safetensors` as one layer failed with Vercel VCR **413 PAYLOAD_TOO_LARGE**; per-shard layers push cleanly.
+* **No runtime model download:** the first attempt downloaded the model into the container and died with `/tmp: No space left on device`. The sharded model is now in the image; `HF_HUB_OFFLINE=1` and `VOICEBRIDGE_BASE_MODEL` point at the baked directory.
+* **Measured on Hobby, iad1:** first `/health` after container start **4.9 s**; three clips **6.33 / 4.99 / 5.38 s** wall time; same 0.0% / 16.7% / 0.0% output. Hobby 2 GB did not OOM.
+* **Keep-alive caveat:** Vercel Hobby rejects a `* * * * *` cron (“limited to daily cron jobs”), so a keep-alive must be an external pinger. Container instances scale down after 5 minutes idle; once-a-minute is enough. Pings reduce, but do not eliminate, cold starts after deploy/eviction.
+* **Verified with the tunnel stopped and local port 8000 closed:** public page shows “Backend connected”; `/health` 200; all three clips transcribe. No model/API/facts numbers changed.
+
+---
+
 ## [2026-11-11] - v1.23.3: WhatsApp-Safe Social Card
 
 * Added `og-preview.jpg` (1200×630, 46.7 KB, progressive JPEG) and switched `og:image` / `twitter:image` to it. WhatsApp now receives a fresh URL, `image/jpeg` content type, `og:image:type=image/jpeg`, and dimensions.

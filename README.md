@@ -1,83 +1,80 @@
 # 🎙️ VoiceBridge
+
 ### Assistive Speech Transcription for Dysarthric Speech
+
 > **THREWS Odyssey 2026** — *Track: Human-AI & Assistive Technology*  
 > **Institution:** SIES Graduate School of Technology, Navi Mumbai  
-> **Branch:** `voicebridge-clean`
+> **Branch:** `main` · **Detailed report:** [REPORT.md](REPORT.md) · **History:** [CHANGELOG.md](CHANGELOG.md)
 
-> **Status: speaker-adapted research prototype.** On the three TORGO demo clips it scores
-> **0.0% / 16.7% / 0.0%** WER (mean 5.6%). That adapter was further trained on 443 other
-> utterances from the same three TORGO speakers (M02/M04/M05), with all 11 rows matching the
-> demo sentences excluded. It is **not speaker-independent**: no other speaker has been
-> evaluated, and severe dysarthria from a new speaker remains unsupported. It is not a medical
-> device and has no clinical validation. Read **[LIMITS.md](LIMITS.md)** before quoting
-> anything here. Five-minute walkthrough: **[docs/DEMO.md](docs/DEMO.md)**.
->
-> **Live demo:** [voicebridge-threws.vercel.app](https://voicebridge-threws.vercel.app) ·
-> **Backend:** [voicebridge-api-six.vercel.app](https://voicebridge-api-six.vercel.app/health) ·
-> **Demo video:** [49 s, narrated](https://voicebridge-threws.vercel.app/demo/voicebridge-demo.mp4) ·
-> deployment notes: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+**Live demo:** [voicebridge-threws.vercel.app](https://voicebridge-threws.vercel.app)  
+**Backend health:** [voicebridge-api-six.vercel.app/health](https://voicebridge-api-six.vercel.app/health)  
+**Demo video:** [49 s, narrated](https://voicebridge-threws.vercel.app/demo/voicebridge-demo.mp4)  
+**Model:** [Nomad1331/voicebridge](https://huggingface.co/Nomad1331/voicebridge)
+
+> **Status:** research prototype. The three TORGO demo clips are transcribed after
+> speaker adaptation; this is **not** a general dysarthria model. No fourth speaker
+> has been evaluated, live microphone accuracy is unmeasured, and it is not a
+> medical device. Read [REPORT.md](REPORT.md) for the full limits.
 
 ---
 
-## 📌 Problem & Motivation
+## What it is
 
-Commercial automatic speech recognition (ASR) foundation models achieve high accuracy on normative speech. However, for individuals with **dysarthria**—neuromotor speech impairments caused by Cerebral Palsy (CP), Amyotrophic Lateral Sclerosis (ALS), or Traumatic Brain Injury (TBI)—standard speech recognition frequently produces unusable output.
+Commercial ASR is trained mostly on fluent speech. For people with dysarthria —
+motor speech impairment from cerebral palsy, ALS, TBI, stroke or Parkinson's — it
+often returns unusable text. VoiceBridge is an accessible, CPU-only prototype that
+transcribes short phrases and presents them with confidence, latency, replay,
+text-to-speech and AAC phrase cards.
 
-Current commercial solutions also face accessibility hurdles:
-- **Cloud Dependency:** Some assistive tools require cloud streaming, posing privacy concerns and failing in offline environments.
-- **Hardware Barrier:** Running large speech models locally typically demands expensive, power-hungry discrete GPUs.
-- **Physical Usability:** Standard voice apps lack physical accommodations for users with accompanying motor spasticity or tremors.
-
-**VoiceBridge** addresses these challenges with a CPU-only transcription pipeline (no discrete GPU, no cloud API) coupled with an accessible assistive interface. It is a research prototype, not a medical device.
+It is designed for a normal laptop: no GPU, no external speech API, no cloud
+speech account.
 
 ---
 
-## 🏛️ System Architecture
-
-> 📖 **Looking for a deep-dive walkthrough?** See the complete [System Walkthrough & Code Tour](docs/SYSTEM_WALKTHROUGH.md) tracing every step from microphone click to synthesized speech.
+## Architecture
 
 ```
-[ Microphone Input / Assistive Switch ]
-                  │
-                  ▼
-   [ Web Audio API (16kHz Capture) ]
-                  │
-                  ▼  (HTTP POST Multipart)
-   [ FastAPI Backend Gateway (:8000) ]
-                  │
-                  ▼
-   [ Clinical Acoustic LoRA Engine ]
-     • Base: openai/whisper-small (243.5M params)
-     • Fine-Tuned PEFT LoRA Adapter: Aaliya05/voicebridge, further adapted to TORGO M02/M04/M05 (r=16, alpha=32) · [Nomad1331/voicebridge](https://huggingface.co/Nomad1331/voicebridge)
-     • Token-Level Softmax Confidence Scoring
-     • Native PyAV Audio Ingestion (.webm, .wav, .mp4, .aac)
-                  │
-                  ▼  (JSON Response)
-   [ Next.js Accessible Frontend (:3000) ]
-     • Transcript display with confidence and latency
-     • Text-to-Speech playback ("Say it")
-     • AAC Quick-Assist confirmation cards
+Browser (Next.js)
+  mic / TORGO archive / AAC cards
+        │  multipart audio
+        ▼
+FastAPI backend
+  validate → PyAV decode to 16 kHz mono
+  → whisper-small + PEFT LoRA (CPU, PyTorch)
+        │
+        ▼
+transcript + confidence + latency
 ```
+
+- **Frontend:** Next.js 14 App Router, React, Tailwind. Large tactile record
+  button, keyboard shortcut, live waveform, replay/download, browser TTS, AAC
+  cards with two-step Pain Alert.
+- **Backend:** FastAPI. 30 s limit, extension/size validation, near-silence
+  rejection, PyAV decoding, PEFT adapter, 12-test verification suite.
+- **Deployment:** Vercel frontend; Vercel Container Runtime backend with the model
+  sharded into four safetensors layers. Adapter baked into the image.
 
 ---
 
-## 📊 Measured Results
+## Measured results
 
-Every number below comes from `facts.json`, produced by one command: `benchmarks/benchmark_product.py`, which loads the same engine the server runs. No figure is typed by hand, and `benchmarks/claims_check.py` fails if this file ever disagrees with `facts.json`.
+Every number below comes from `facts.json`, produced by
+`benchmarks/benchmark_product.py`. `benchmarks/claims_check.py` fails if the
+generated blocks or source hashes disagree.
 
 <!-- BEGIN:generated:readme-accuracy -->
 ### Accuracy on the three TORGO demo clips
 
 Word error rate on the exact clips the demo page plays, measured 2026-11-10.
 
-| Severity | Speaker | Condition | WER | Demo reference → model output |
+| Severity | Speaker | Condition | WER | Demo reference -> model output |
 | :--- | :--- | :--- | ---: | :--- |
-| Mild | TORGO-M05 | Cerebral Palsy | **0.0%** | “We have an excellent team” → “We have an excellent team” |
-| Moderate-to-Severe | TORGO-M04 | Post-Trauma (TBI) | **16.7%** | “Their house is grey and white” → “the house is grey and white” |
-| Severe | TORGO-M02 | Amyotrophic Lateral Sclerosis (ALS) | **0.0%** | “The job provides many benefits” → “The job provides many benefits” |
+| Mild | TORGO-M05 | Cerebral Palsy | **0.0%** | "We have an excellent team" -> "We have an excellent team" |
+| Moderate-to-Severe | TORGO-M04 | Post-Trauma (TBI) | **16.7%** | "Their house is grey and white" -> "the house is grey and white" |
+| Severe | TORGO-M02 | Amyotrophic Lateral Sclerosis (ALS) | **0.0%** | "The job provides many benefits" -> "The job provides many benefits" |
 | **Mean of clips** | | | **5.6%** | corpus WER **6.2%** across 3 clips |
 
-“Mean of clips” averages the three percentages; “corpus WER” counts every edit over every reference word. Both are reported because they answer different questions.
+"Mean of clips" averages the three percentages; "corpus WER" counts every edit over every reference word. Both are reported because they answer different questions.
 <!-- END:generated:readme-accuracy -->
 
 <!-- BEGIN:generated:readme-performance -->
@@ -87,176 +84,116 @@ Measured 2026-11-10 on Intel(R) Core(TM) i5-14400F (10 cores / 16 threads, 137.3
 
 | Metric | Measured | Target | Verdict |
 | :--- | ---: | ---: | :--- |
-| Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | — | the model the server runs |
-| Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | — | — |
-| Memory added when the model loads (RSS) | 1,019.6 MB | — | — |
-| Peak process memory | 1,756.3 MB | — | — |
-| Latency per sentence | 1,582.6 ms mean (1,593 ms median, 1,531–1,617.2 ms range) | 280 ms | **MISS, 5.7× over** |
+| Model | whisper-small 243.5M parameters + LoRA 1.77M (0.73%) | - | the model the server runs |
+| Disk | 978.5 MB (971.4 MB base + 7.1 MB adapter) | - | - |
+| Memory added when the model loads (RSS) | 1,019.6 MB | - | - |
+| Peak process memory | 1,756.3 MB | - | - |
+| Latency per sentence | 1,582.6 ms mean (1,593 ms median, 1,531-1,617.2 ms range) | 280 ms | **MISS, 5.7x over** |
 | Real-time factor | 0.27 | below 1.0 | processing beats playback; the response still takes seconds |
 
-“Memory added” is resident memory after loading the model minus resident memory after imports; “peak” is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
+"Memory added" is resident memory after loading the model minus resident memory after imports; "peak" is the highest observed during the timed runs. Latency is wall time around `transcribe_audio`, including audio decode.
 <!-- END:generated:readme-performance -->
 
-**Where it stops:** on these three TORGO speakers, all three clips now transcribe near-exactly (5.6% mean). This is **speaker adaptation, not a general dysarthria model**: the adapter saw 443 other utterances from the same speakers, and no other speaker has been measured. Live microphone accuracy, unfamiliar speakers and severe speech from a new speaker remain unsupported. The system runs on a CPU without a GPU, but it is not real-time. Full, honest scope in [LIMITS.md](LIMITS.md).
-
-*Reference: University of Toronto TORGO Database (Rudzicz et al., 2012).*
+**Scope:** the adapter was trained on 443 other utterances from the same three
+TORGO speakers. The 11 rows matching the three demo sentences were excluded, but
+the speakers were in training. The 16.7% is one word (“Their” → “the”). No fourth
+speaker has been evaluated. Full details and caveats: [REPORT.md](REPORT.md).
 
 ---
 
-## 📂 Repository Structure
+## Quick start
+
+### Backend
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# CPU wheel first; requirements.txt pins 2.15.0
+python -m pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -r requirements.txt
+
+# Must print ...\backend\.venv\Scripts\python.exe
+python -c "import sys; print(sys.executable)"
+python test_server.py
+
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+If you see `ModuleNotFoundError: BloomPreTrainedModel`, you are running global
+Python, not `backend\.venv`; recreate the venv with the commands above.
+
+### Frontend
+
+```powershell
+cd frontend
+npm ci
+npm run build
+npm run lint
+npm start
+```
+
+The local frontend defaults to `http://127.0.0.1:8000`. To point it at the
+deployed backend, set `NEXT_PUBLIC_BACKEND_URL` at build time.
+
+### Verify
+
+```powershell
+backend\.venv\Scripts\python.exe backend\test_server.py
+backend\.venv\Scripts\python.exe benchmarks\benchmark_product.py
+backend\.venv\Scripts\python.exe benchmarks\benchmark_product.py --self-test
+backend\.venv\Scripts\python.exe benchmarks\claims_check.py
+```
+
+---
+
+## Repository
 
 ```
 Threws-Odyssey/
 ├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI microservice endpoints (/health, /api/v1/translate-audio)
-│   │   └── inference.py         # Whisper-Small LoRA clinical acoustic inference engine
-│   ├── models/
-│   │   └── voicebridge-torgo-three/  # speaker-adapted LoRA shipped with the repo
-│   ├── requirements.txt         # Pinned production dependencies (FastAPI, PyTorch, Transformers, PEFT)
-│   ├── evaluate_samples.py      # Runs the three demo clips through the live engine
-│   └── test_server.py           # Automated TestClient verification suite (12/12 tests)
-│
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx         # Main 2-column accessible interface
-│   │   │   └── layout.tsx       # Root layout & accessible typography
-│   │   ├── components/
-│   │   │   ├── TactileMicButton.tsx       # Large touch-target button with keyboard trigger
-│   │   │   ├── TranscriptDisplay.tsx      # Live transcript, replay & Web Speech TTS playback
-│   │   │   ├── QuickAssistGrid.tsx        # High-contrast AAC cards with 2-step confirmation
-│   │   │   ├── AudioWaveformCanvas.tsx    # Live audio level visualizer
-│   │   │   └── ClinicalBenchmarkDrawer.tsx # TORGO reference sample evaluation player
-│   │   ├── hooks/
-│   │   │   └── useAudioRecorder.ts        # Clean MediaRecorder & Web Audio RMS hook
-│   │   └── lib/
-│   │       └── transcriptionService.ts    # Frontend-to-backend API client
-│   └── package.json
-│
+│   ├── app/                     # FastAPI + inference engine
+│   ├── models/                  # speaker-adapted LoRA adapter
+│   ├── models/voicebridge-torgo-three/
+│   ├── requirements.txt
+│   ├── test_server.py           # 12 backend tests
+│   └── Dockerfile.vercel        # Vercel container backend
 ├── benchmarks/
-│   ├── benchmark_product.py     # Measures the shipped model, writes facts.json
-│   ├── render_docs.py           # Renders the benchmark blocks below from facts.json
-│   ├── claims_check.py          # Fails if a document number disagrees with facts.json
-│   ├── generate_figures.py      # 300 DPI publication chart generator
-│   └── extract_torgo_audio.py   # TORGO parquet sample extraction script
-│
-├── assets/benchmarks/           # 300 DPI figures generated from facts.json (accuracy; latency/footprint)
-│
-├── docs/
-│   ├── SYSTEM_WALKTHROUGH.md        # Complete end-to-end architecture & code tour
-│   ├── EDGE_AI_BENCHMARK_RESULTS.md # Product benchmark + whisper-tiny INT8 side study
-│   ├── COMPETITIVE_ANALYSIS.md      # Landscape analysis (Project Euphonia, Relate, Voiceitt)
-│   ├── DATASETS_AND_PROOF.md        # University of Toronto TORGO dataset documentation
-│   ├── DEPLOYMENT.md                # Vercel frontend + container backend notes
-│   ├── SUBMISSION.md                # Copy-ready problem, solution, links and video
-│   ├── DEMO.md                      # Five-minute judge walkthrough
-│   └── archive/                     # Internal planning/audit ledgers, superseded, not judge-facing
-│
+│   ├── benchmark_product.py     # writes facts.json
+│   ├── claims_check.py          # provenance + generated-block gate
+│   ├── render_docs.py           # renders README/REPORT blocks
+│   └── generate_figures.py
+├── frontend/
+│   ├── src/app/                 # page, layout, icon.svg
+│   ├── src/components/          # mic, transcript, AAC, archive, Logo
+│   ├── public/audio/            # three TORGO demo clips
+│   ├── public/logo.svg
+│   ├── public/og-preview.jpg
+│   └── public/demo/voicebridge-demo.mp4
 ├── model_training/
-│   ├── VoiceBridge_Colab_Trainer.ipynb # Kaggle/Colab GPU LoRA fine-tuning notebook
-│   ├── torgo_streaming_test.py         # Hugging Face TORGO streaming evaluation script
-│   ├── export_and_quantize_onnx.py     # Standalone ONNX export & INT8 quantization script
-│   └── kaggle/                         # Reproducible speaker-disjoint and three-speaker kernels
-│
-├── facts.json                       # Single source of truth for all verified numbers
-├── LIMITS.md                        # What it cannot do, in plain language
-├── LICENSE                          # MIT (code)
-├── CHANGELOG.md                     # Dated engineering ledger, including corrections
-└── README.md
+│   ├── kaggle/train.py          # speaker-disjoint experiment (not adopted)
+│   ├── kaggle/three/train.py    # shipped three-speaker adaptation
+│   └── VoiceBridge_Colab_Trainer.ipynb
+├── assets/benchmarks/           # generated figures
+├── facts.json                   # single source of truth for measured numbers
+├── README.md
+├── REPORT.md                    # full report, limits, deployment, submission copy
+└── CHANGELOG.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## Data and licence
 
-### Prerequisites
-- Python 3.12 (the version the benchmark was measured with)
-- Node.js 18+ and npm
+- **Code:** MIT (`LICENSE`).
+- **TORGO:** University of Toronto TORGO Database (Rudzicz et al., 2012),
+  distributed under the Linguistic Data Consortium user agreement. The three
+  demo WAVs are included for evaluation; redistribution may require LDC
+  permission.
+- **Base model:** `openai/whisper-small` (MIT).
+- **Adapter:** `Nomad1331/voicebridge`, derived from TORGO and
+  `Aaliya05/voicebridge`; same licensing question as the audio.
 
-### 1. Start the Backend API
-
-```bash
-cd backend
-
-# Create virtual environment (if not already created)
-python -m venv .venv
-
-# Activate virtual environment
-# Windows:
-.\.venv\Scripts\activate
-# Linux/macOS:
-# source .venv/bin/activate
-
-# Install CPU PyTorch first; requirements.txt pins 2.15.0 and must not pull CUDA.
-python -m pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
-
-# Install the remaining pinned dependencies
-python -m pip install -r requirements.txt
-
-# Confirm you are inside the repo venv, not global/user Python.
-# Expected path ends with backend\.venv\Scripts\python.exe
-python -c "import sys; print(sys.executable)"
-
-# Run backend verification suite (12/12 tests)
-python test_server.py
-
-# Start the FastAPI server
-uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-Backend will be available at: `http://127.0.0.1:8000` (Health check: `/health`).
-
-### 2. Start the Frontend App
-
-In a separate terminal:
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start Next.js development server
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 3. Verify the numbers
-
-From the repository root, with the backend virtualenv active:
-
-```bash
-python benchmarks/claims_check.py
-```
-
-It fails if any benchmark figure in the docs no longer matches `facts.json`.
-
----
-
-## ♿ Motor & Physical Accessibility Features
-
-VoiceBridge was built specifically with physical accessibility considerations:
-1. **Large Motor Targets:** The primary record button and AAC cards are at least 44x44 px, up to 112 px.
-2. **Keyboard Assistive Hotkey:** Press <kbd>SPACE</kbd> to start or stop recording when no other control has focus.
-3. **Accidental Press Protection:** Critical phrases (such as "Pain Alert") require a two-stage confirmation within a 3-second window to prevent unintended triggers caused by motor spasticity or tremors.
-4. **Haptic & Visual Feedback:** Device vibration on mobile touch and a live waveform canvas confirm microphone responsiveness.
-5. **Speech Synthesis:** Tap "Say it" to read out the reconstructed transcription through the browser's native text-to-speech engine.
-
----
-
-## 👥 Engineering Team
-
-**SIES Graduate School of Technology, Navi Mumbai**
-- **Talha** — Lead System Architect & Frontend Engineering
-- **Aaliya Hussain** — Machine Learning & Model Adaptation
-- **Moulika Sanyal** — Edge AI Optimization & Quantization
-- **Manas Suryawanshi** — Clinical Research & Documentation
-
----
-
-## 📜 Dataset Attribution & License
-
-- **Dataset:** University of Toronto TORGO Database for Dysarthric Articulation (Rudzicz, Namasivayam & Wolff, 2012). It is distributed under the Linguistic Data Consortium's user agreement. The three demo clips are TORGO recordings included for evaluation; redistribution may require LDC permission.
-- **Code:** MIT — see [LICENSE](LICENSE).
-- **Target Event:** THREWS Odyssey 2026.
-- **Scope and limits:** [LIMITS.md](LIMITS.md).
+The app is a research prototype, not a medical device. See [REPORT.md](REPORT.md)
+for the complete limitations, deployment notes and submission copy.

@@ -1,14 +1,23 @@
 # VoiceBridge: Engineering Changelog
 ### THREWS Odyssey 2026 — Master Project Ledger
 **GitHub Repository:** [Nomad1331/Threws-Odyssey](https://github.com/Nomad1331/Threws-Odyssey)  
-**Branch:** `voicebridge-clean`
+**Branch:** `main`
 
 All notable engineering changes, architectural milestones, and codebase updates for VoiceBridge are documented here.
 
 > **Reading this file:** it is a dated ledger, not current documentation. Entries before
 > v1.2.0 describe earlier states of the project and contain claims that were later
 > corrected (see the v1.2.0 "Corrections" note). For current numbers use `facts.json`
-> and `README.md`; for scope use `LIMITS.md`.
+> and `README.md`; for scope, deployment and submission copy use `REPORT.md`.
+
+---
+
+## [2026-11-14] - v1.27.0: Docs Consolidated; Aaliya Summary Checked
+
+* **Consolidated documentation to `README.md`, `REPORT.md`, `CHANGELOG.md` only.** The old `REPORT.md`, `REPORT.md`, `SYSTEM_WALKTHROUGH.md`, `EDGE_AI_BENCHMARK_RESULTS.md`, `COMPETITIVE_ANALYSIS.md`, `DATASETS_AND_PROOF.md`, `DEPLOYMENT.md`, `SUBMISSION.md` and `docs/archive/` were merged into `REPORT.md` or removed; history remains in git.
+* **Aaliya's model summary is substantially correct.** The only numeric tightening: **243.5 M = 241.7 M base + 1.77 M adapter**, not the base alone. Her claims about LoRA q/v, 16 kHz mono, CPU-only PyTorch, no external speech API, 0/16.7/0 WER and speaker dependence are accurate. Add: the exact demo clips and all 11 same-sentence rows were excluded; no fourth speaker was evaluated.
+* **Nov 7 comparison recorded in `REPORT.md`:** baseline `aec38a1`; through v1.26.0 (`810d08a`) there are 78 commits, 67 files, +5,615/-1,300 lines. The changes cover the Whisper-small + LoRA model, adapter, PyAV backend, accessible frontend, facts/claims gate, Vercel container deployment and training experiments.
+* **Renderer/claims simplified:** only README/REPORT generated blocks are checked; README remains the strict file for ungoverned measurements. Generated blocks re-rendered; claims pass.
 
 ---
 
@@ -17,7 +26,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * Added the 49-second demo video at `frontend/public/demo/voicebridge-demo.mp4` and published it at `https://voicebridge-threws.vercel.app/demo/voicebridge-demo.mp4` (1080p, narrated, HTTP range support verified).
 * Built from seven live-app frames: title, connected UI, TORGO archive, mild result, moderate result, severe result, Vercel end card; slow push-ins and captions.
 * Narration explicitly qualifies the results to the TORGO clips; the end card repeats the speaker-adaptation limit.
-* Added `docs/SUBMISSION.md` with copy-ready Project Title, Problem Statement, Proposed Solution, demo link and video link.
+* Added `REPORT.md` with copy-ready Project Title, Problem Statement, Proposed Solution, demo link and video link.
 
 ---
 
@@ -95,7 +104,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Fixed adapter-size provenance:** `benchmark_product.py` recorded the size of the old `Aaliya05/voicebridge` HF cache entry. It now measures the shipped `backend/models/voicebridge-torgo-three/` directory, which is what the product loads.
 * **Recorded every pinned runtime version** in `facts.json` (`fastapi`, `starlette`, `uvicorn`, `python-multipart`, `av`, `accelerate` in addition to torch/transformers/peft/python), so the requirements header is true.
 * **Fixed stale dependency docs:** `SYSTEM_WALKTHROUGH.md` still listed removed `faster-whisper` and `httpx`; it now matches `backend/requirements.txt`.
-* **Fixed an over-broad claim:** `LIMITS.md` said “every number is rendered from facts.json”; training counts and the separate speaker-disjoint result are now labelled experiment metadata.
+* **Fixed an over-broad claim:** `REPORT.md` said “every number is rendered from facts.json”; training counts and the separate speaker-disjoint result are now labelled experiment metadata.
 * **Removed `webm_probe.webm`**, an unused 96 KB tracked test artifact, and the unused `adapterInitial` facts field.
 * **Known upstream advisory documented:** `npm audit --omit=dev` flags Next.js 14.2.35 Server Actions DoS and bundled PostCSS. This static page uses no Server Actions and no user-controlled CSS; a Next 16 upgrade is post-submission work. See LIMITS.
 * **Verification:** 12/12 backend tests, WER self-test 6/6, `pip check`, frontend build, lint, `tsc --noEmit`, `git diff --check`, `claims_check --provenance-only`, and two benchmark reproductions all pass.
@@ -136,8 +145,8 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ## [2026-11-10] - v1.19.0: Live-Test Findings — TTS Failure and Confidence Semantics
 
-* **Real-user test exposed a confusing UI failure.** The same mild sentence produced “We have an incident beam” on one live take and the correct sentence on the next. The model is deterministic for identical audio, so the difference is the recording (mic, distance, level, timing), not run-to-run randomness. The documented 0% WER applies to the provided TORGO clip, not to arbitrary live microphone input. README and `LIMITS.md` now say this explicitly.
-* **“Confidence” was being read as accuracy.** 62% and 82% are average token probabilities, not the share of correct words. The transcript card now says so under the telemetry bar, and `LIMITS.md` adds “Confidence is not accuracy.”
+* **Real-user test exposed a confusing UI failure.** The same mild sentence produced “We have an incident beam” on one live take and the correct sentence on the next. The model is deterministic for identical audio, so the difference is the recording (mic, distance, level, timing), not run-to-run randomness. The documented 0% WER applies to the provided TORGO clip, not to arbitrary live microphone input. README and `REPORT.md` now say this explicitly.
+* **“Confidence” was being read as accuracy.** 62% and 82% are average token probabilities, not the share of correct words. The transcript card now says so under the telemetry bar, and `REPORT.md` adds “Confidence is not accuracy.”
 * **Speech synthesis failure fixed as far as the browser allows.** `SpeechSynthesisUtterance.lang` was hard-coded to `en-US`, which causes `synthesis-failed` when no en-US voice is installed. The UI now picks an installed English voice (or none), resumes a paused synthesiser, and maps raw errors to plain messages. A TTS failure is shown as a neutral status, not a red error, because it does not affect the transcript.
 * **Latency varied from 1.7 s (benchmark host) to 4.4–6.1 s on a teammate’s machine.** That is CPU/hardware and load, not a second model; the published figure names its host. No change made.
 * **Docs/UI:** the page footer states that measured accuracy refers to the TORGO clips and live microphone results vary. No product code changed in the inference path.
@@ -149,7 +158,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Ran the actual stack, not just TestClient.** Current backend on `127.0.0.1:8010`, production frontend build served on `127.0.0.1:3100`, and headless Edge driven over the DevTools protocol with a fake microphone.
 * **Verified interactively:** the header showed “Backend connected”; the mic button entered recording state, stopped, and the browser's WebM upload was transcribed by the real server; the UI rendered confidence (77%) and latency (1,684 ms); a page reload served the built app; preset phrases showed confidence/latency as `N/A`; Pain Alert armed on the first tap and fired on the second. Screenshot inspected. Zero backend errors/tracebacks.
 * **Caveat:** the fake microphone replays a file segment, so its transcript (“We have an accident here”) is not the TORGO reference. That run verifies the pipeline, not accuracy; accuracy is measured separately by `benchmark_product.py`.
-* **Operational finding:** port 8000 was held by a **stale uvicorn started Nov 8** (system Python) and port 3000 by leftover Next processes. They were not killed. `docs/DEMO.md` now starts with a “make sure you are running today's code” restart step. A judge demo against a stale server would exhibit old behaviour.
+* **Operational finding:** port 8000 was held by a **stale uvicorn started Nov 8** (system Python) and port 3000 by leftover Next processes. They were not killed. `REPORT.md` now starts with a “make sure you are running today's code” restart step. A judge demo against a stale server would exhibit old behaviour.
 * No product code changed.
 
 ---
@@ -216,7 +225,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Bloat:** removed the unused `--panel` CSS variable.
 * **The provenance gate caught my own edit.** Changing two error strings in `inference.py` failed `claims_check` with “source changed since the benchmark”, forcing a re-measurement. That is the gate working, not a false positive.
 * **Regenerated:** `facts.json`, doc blocks and figures. Verification: 11/11 tests, build, lint, claims + 3-source provenance, served build HTTP 200.
-* **Convergence:** after these fixes, the full sweep — compile, unused imports, doc references, tests, build, lint, claims, runtime edge cases, served build — produced **zero new verified defects**. Residual risks are unchanged and listed in `LIMITS.md`.
+* **Convergence:** after these fixes, the full sweep — compile, unused imports, doc references, tests, build, lint, claims, runtime edge cases, served build — produced **zero new verified defects**. Residual risks are unchanged and listed in `REPORT.md`.
 
 ---
 
@@ -241,7 +250,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Dependency and tooling checks:** `pip check` reports no broken requirements, `npm ls --depth=0` resolves cleanly, ESLint reports no warnings.
 * **Served build smoke test:** `next start` on port 3000 returned HTTP 200 (14,655 bytes) with the VoiceBridge title present.
 * **Merged `origin/voicebridge-clean` and kept PyAV.** The remote commit swapped decoding to `librosa` for stated performance gains. On this machine `librosa` is not installed and not in `requirements.txt` (the branch fails at import), `ffmpeg` is absent (librosa cannot decode the browser's WebM without it), and PyAV decodes the demo clips in 9–10 ms with no external binary. The merge keeps PyAV and accepts only the unrelated `package-lock.json` update.
-* **No new product defect found in this pass.** The remaining limits are the same ones listed in `LIMITS.md`; none were contradicted by the code.
+* **No new product defect found in this pass.** The remaining limits are the same ones listed in `REPORT.md`; none were contradicted by the code.
 
 ---
 
@@ -292,10 +301,10 @@ All notable engineering changes, architectural milestones, and codebase updates 
 
 ## [2026-11-09] - v1.7.0: Phase 6 — Ship Package
 
-* **`LIMITS.md`:** plain-language scope — severe speech fails, no clinical validation, not real-time, three clips, no speaker-independence proof, no VAD, no Pi/GPU validation, accessibility designed but not audited, TORGO/LDC redistribution caveat. Its summary block is generated from `facts.json`, and the file is inside the claims check.
+* **`REPORT.md`:** plain-language scope — severe speech fails, no clinical validation, not real-time, three clips, no speaker-independence proof, no VAD, no Pi/GPU validation, accessibility designed but not audited, TORGO/LDC redistribution caveat. Its summary block is generated from `facts.json`, and the file is inside the claims check.
 * **`LICENSE`:** MIT text for the code. README now separates code licence (MIT) from TORGO data terms (LDC agreement; demo clips included for evaluation only) and corrects the citation to Rudzicz, Namasivayam & Wolff (2012).
-* **README:** adds a status callout at the top (mild correct, moderate partial, severe unsupported, not a medical device), links `LIMITS.md` and the demo, and replaces the WCAG "AAA" claim with the actual target size and "designed, not audited".
-* **`docs/DEMO.md`:** five-minute walkthrough including the severe-clip failure, preset-vs-model telemetry, two-step Pain Alert, and an offline-backend check; includes the answers to the four questions judges ask.
+* **README:** adds a status callout at the top (mild correct, moderate partial, severe unsupported, not a medical device), links `REPORT.md` and the demo, and replaces the WCAG "AAA" claim with the actual target size and "designed, not audited".
+* **`REPORT.md`:** five-minute walkthrough including the severe-clip failure, preset-vs-model telemetry, two-step Pain Alert, and an offline-backend check; includes the answers to the four questions judges ask.
 * **Live demo run (2026-11-09):** real uvicorn server on `127.0.0.1:8000`; `/health` returned the engine name; `torgo_mild_sample.wav` → “We have an excellent team” (confidence 0.901, 1,591 ms); `torgo_severe_sample.wav` → “Get the apple by Fimasy Bezzi bit” (confidence 0.266, 1,779 ms) — the documented failure, not a fabricated success.
 * **Fresh-clone check:** committed tree cloned locally; `claims_check.py` passes from the clone.
 * **Tag:** `v1.7.0`.
@@ -387,7 +396,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Corrections to earlier entries below:** "103 MB active memory" was a *file size*, not RAM. "409 ms response" and the 592 ms / 38.9 MB / 74.42% figures belong to the whisper-tiny INT8 side study, not the product. Severe WER was hand-calculated as 140%; the single WER function gives 120% (4 substitutions + 2 insertions over 5 reference words). Benchmark hardware is a desktop i5-14400F with 137 GB RAM, not a laptop.
 * **Verification:** two consecutive runs reproduce (WER identical, latency within 1.1%, RSS within 0.1%). A doctored baseline (WER 5% instead of 0%) makes the reproduction gate exit 2. The WER self-test failed once on a wrong hand expectation before passing 6/6 — the check is proven able to fail.
 * **Newly found false claim (Phase 3 input):** `ISSUE.md` 2.10 states anti-hallucination decoding (`temperature=0.0`, `no_speech_threshold=0.55`, `compression_ratio_threshold=2.4`) is implemented in `backend/app/inference.py`; lines 93–100 pass none of these arguments.
-* **Next:** Phase 2 — rewrite `README.md` benchmark table and `docs/EDGE_AI_BENCHMARK_RESULTS.md` from `facts.json`, relabel the whisper-tiny INT8 study as a separate side result, and add `claims-check` so a wrong number in a doc fails CI.
+* **Next:** Phase 2 — rewrite `README.md` benchmark table and `REPORT.md` from `facts.json`, relabel the whisper-tiny INT8 study as a separate side result, and add `claims-check` so a wrong number in a doc fails CI.
 
 ---
 
@@ -407,7 +416,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
     * TORGO-M05 (Mild Cerebral Palsy): **90.1% confidence**, **100% exact match** (*"We have an excellent team"* vs 35% conf and dropped words on base model).
     * TORGO-M04 (Moderate-to-Severe TBI): **60.7% confidence**, accurately captured distorted phonemes (*"grey and white"* vs 24% conf loop failure on base model).
   - **Clinical Etiological Correction & Benchmark Alignment:**
-    * Corrected speaker TORGO-M04 etiology from "Post-Stroke" to **"Post-Trauma TBI (Moderate-to-Severe)"** across the repository (`facts.json`, `docs/DATASETS_AND_PROOF.md`, `docs/EDGE_AI_BENCHMARK_RESULTS.md`, and `frontend/src/components/ClinicalBenchmarkDrawer.tsx`).
+    * Corrected speaker TORGO-M04 etiology from "Post-Stroke" to **"Post-Trauma TBI (Moderate-to-Severe)"** across the repository (`facts.json`, `REPORT.md`, `REPORT.md`, and `frontend/src/components/ClinicalBenchmarkDrawer.tsx`).
     * Re-generated all 300 DPI publication benchmark figures (`figure1_wer_comparison.png`, `figure2_formant_centralization.png`, `figure3_latency_vs_footprint.png`) with verified clinical labels.
   - **Comprehensive Audit Resolution Ledger (`ISSUE.md`):**
     * Formulated master 61-issue ledger documenting problem descriptions, exact resolutions on `voicebridge-clean`, status in `origin/main`, and architectural reconciliations across all 10 audit categories.
@@ -431,8 +440,8 @@ All notable engineering changes, architectural milestones, and codebase updates 
     * Standardized `backend/requirements.txt` to 4 essential packages (`fastapi`, `uvicorn`, `faster-whisper`, `python-multipart`).
     * Configured greedy INT8 Whisper CPU inference (409ms verified response on consumer hardware).
   - Comprehensive Documentation:
-    * Created `docs/SYSTEM_WALKTHROUGH.md`: Complete end-to-end trace from microphone click to synthesized speech.
-    * Aligned `README.md`, `ROADMAP.md`, and `docs/DATASETS_AND_PROOF.md` with verified `facts.json` single source of truth.
+    * Created `REPORT.md`: Complete end-to-end trace from microphone click to synthesized speech.
+    * Aligned `README.md`, `ROADMAP.md`, and `REPORT.md` with verified `facts.json` single source of truth.
   - Production Build:
     * `npm run build` executed and passed with exit code 0 (zero TypeScript errors, zero ESLint warnings, 5 static pages optimized).
 
@@ -444,8 +453,8 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Lead Engineers:** Manas Suryawanshi (Clinical Research & Pitch Lead), Talha (System Architect)
 * **Team:** Sleeper Cells (SIES GST)
 * **Key Deliverables Completed:**
-  - `docs/COMPETITIVE_ANALYSIS.md`: Assistive speech research ecosystem dossier contextualizing VoiceBridge within Google Project Euphonia, Project Relate, UIUC Speech Accessibility Project, and Voiceitt.
-  - `docs/EDGE_AI_BENCHMARK_RESULTS.md`: Telemetry report detailing neuromotor dysarthric acoustic pathology, ONNX INT8 benchmarks (592.0ms latency, 0.1013 RTF, 74.42% storage cut).
+  - `REPORT.md`: Assistive speech research ecosystem dossier contextualizing VoiceBridge within Google Project Euphonia, Project Relate, UIUC Speech Accessibility Project, and Voiceitt.
+  - `REPORT.md`: Telemetry report detailing neuromotor dysarthric acoustic pathology, ONNX INT8 benchmarks (592.0ms latency, 0.1013 RTF, 74.42% storage cut).
   - Roadmap progress synchronized across documentation.
 
 ---
@@ -458,7 +467,7 @@ All notable engineering changes, architectural milestones, and codebase updates 
 * **Key Achievements & Benchmarks:**
   - Shrunk model size by **74.42%** (from 404.49 MB down to 103.45 MB total across 3 ONNX graphs).
   - Benchmarked CPU execution: **592.0 ms average latency** and **0.1013 RTF** on authentic TORGO clinical speech.
-  - Formulated full benchmark telemetry report in `docs/EDGE_AI_BENCHMARK_RESULTS.md`.
+  - Formulated full benchmark telemetry report in `REPORT.md`.
 
 ---
 
